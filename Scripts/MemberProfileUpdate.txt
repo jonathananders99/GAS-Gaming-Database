@@ -1,0 +1,2002 @@
+function check(){
+  var valsForMemberProfileUpdate = [0];//mora 1
+//  var valsForMemberProfileUpdate = [1];//camp 01
+//  var valsForMemberProfileUpdate = [0,1];//mora 1 and upper echelon
+  //[Group name location in dllscv]
+  memberProfileUpdate(valsForMemberProfileUpdate);
+}//end check
+
+//need to make sure eligibility uses correct number in array
+function memberProfileUpdate(valsForMemberProfileUpdate){
+  
+  //PXE Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv("date");
+  var pmdcms = curVals[0];
+  var pmdcmslri = curVals[2];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  var currentDateNum = dllscv[10][1];
+  var currentDate = FunctionContainer.dateReplace(dllscv[10][0]);
+  curVals = undefined;
+  
+  
+  //Event Debrief Hub all Event debriefs sheet
+  curVals = FunctionContainer.getedhaedscv("both", dllscv);
+  var edhaeds = curVals[0];
+  var edhaedscv = curVals[1];
+  var edhaedscvn = curVals[2];
+  curVals = undefined;
+  
+  
+  //Forge Hub Forge Entries sheet
+  curVals = FunctionContainer.getfhfescv("both", dllscv);
+  var fhfes = curVals[0];
+  var fhfescv = curVals[1];
+  var fhfescvn = curVals[2];
+  curVals = undefined;
+  
+  
+  //Member Update Hub all updates sheet
+  curVals = FunctionContainer.getmuhauscv("both", dllscv);
+  var muhaus = curVals[0];
+  var muhauscv = curVals[1];
+  var muhauscvn = curVals[2];
+  curVals = undefined;
+  
+  
+  //member update Hub New Member updates sheet
+  curVals = FunctionContainer.getmuhnmuscv("both", dllscv);
+  var muhnmuscv = curVals[1];
+  var muhnmuscvn = curVals[2];
+  curVals = undefined;
+  
+  
+  //misc form hub all entries sheet
+  curVals = FunctionContainer.getmfhaescv("both", dllscv);
+  var mfhaes = curVals[0];
+  var mfhaescv = curVals[1];
+  var mfhaescvn = curVals[2];
+  curVals = undefined;
+  
+  
+  
+  for(var z=0; z<valsForMemberProfileUpdate.length; z+=1){//start 1st for
+    
+    //declares necessary vars
+    
+    var curGroupMembers = [];
+    var curGroupLocation = [];
+    //[group,,,,,],[position,gamertag,rank,Generation,credentials,date enlisted]]
+    
+    //where all the member in the group will be pooled
+    var curGroupcv = [["curGroupMembers",curGroupMembers,[],[],[],[],[],[],[],[],[],[],[],[],[]]];
+    /*["sheetcv",[0]
+      sheetcv,[1]
+      [row to merge,row to merge],[2]
+      [if it needs to formated to main or not],[3]
+      sheet,[4]
+      sheet max rows num,[5]
+      [],[6]
+      [],[7]
+      [],[8]
+      [],[9]
+      [],[10]
+      [],[11]
+      [],[12]
+      [],[13]
+      []][14]
+    */
+    //order:
+    //Upper Echelon - Special Groups - Morai - Councils
+    var groupLocations = [
+      //Upper Echelon
+      [dllscv[0][156].toString(),156,1,["curGroupMembers"],0],
+      //Phoenix S.W.A.L
+      [dllscv[0][39].toString(),39,1,["curGroupMembers"],0],
+      //Lochos 13
+      [dllscv[1][39].toString(),39,1,["curGroupMembers"],1],
+      //Lochos 14
+      [dllscv[2][39].toString(),39,1,["curGroupMembers"],2],
+      //Lochos 15
+      [dllscv[3][39].toString(),39,1,["curGroupMembers"],3],
+      //Praetorian Guard
+      [dllscv[0][52].toString(),52,1,["curGroupMembers"],0],
+      //Seeker Intelligence
+      [dllscv[0][65].toString(),65,1,["curGroupMembers"],0],
+      //Vicarius Senate
+      [dllscv[0][78].toString(),78,1,["curGroupMembers"],0],
+      //Special Group 04
+      [dllscv[0][91].toString(),91,1,["curGroupMembers"],0],
+      //Special Group 05
+      [dllscv[0][104].toString(),104,1,["curGroupMembers"],0],
+      //Special Group 06
+      [dllscv[0][117].toString(),117,1,["curGroupMembers"],0],
+      //Special Group 07
+      [dllscv[0][130].toString(),130,1,["curGroupMembers"],0],
+      //Special Group 08
+      [dllscv[0][143].toString(),143,1,["curGroupMembers"],0],
+      //Special Sub-Group 01
+      [dllscv[1][143].toString(),143,1,["curGroupMembers"],1],
+      //Special Sub-Sub-Group 01
+      [dllscv[2][143].toString(),143,1,["curGroupMembers"],2],
+      //Special Sub-Sub-Group 02
+      [dllscv[3][143].toString(),143,1,["curGroupMembers"],3],
+      //Special Sub-Group 02
+      [dllscv[4][143].toString(),143,1,["curGroupMembers"],4],
+      //Special Sub-Sub-Group 03
+      [dllscv[5][143].toString(),143,1,["curGroupMembers"],5],
+      //Special Sub-Sub-Group 04
+      [dllscv[6][143].toString(),143,1,["curGroupMembers"],6],
+      //Mora 1
+      [dllscv[0][0].toString(),0,1,["curGroupMembers"],0],
+      //Camp 01
+      [dllscv[1][0].toString(),0,1,["curGroupMembers"],1],
+      //Camp 02
+      [dllscv[2][0].toString(),0,1,["curGroupMembers"],2],
+      //Camp 03
+      [dllscv[3][0].toString(),0,1,["curGroupMembers"],3],
+      //Lochos 01
+      [dllscv[4][0].toString(),0,1,["curGroupMembers"],4],
+      //Lochos 02
+      [dllscv[5][0].toString(),0,1,["curGroupMembers"],5],
+      //Lochos 03
+      [dllscv[6][0].toString(),0,1,["curGroupMembers"],6],
+      //Lochos 04
+      [dllscv[7][0].toString(),0,1,["curGroupMembers"],7],
+      //Extra Group 01
+      [dllscv[8][0].toString(),0,1,["curGroupMembers"],8],
+      //Extra Other Group 01
+      [dllscv[9][0].toString(),0,1,["curGroupMembers"],9],
+      //Mora 2
+      [dllscv[0][13].toString(),13,1,["curGroupMembers"],0],
+      //Camp 04
+      [dllscv[1][13].toString(),13,1,["curGroupMembers"],1],
+      //Camp 05
+      [dllscv[2][13].toString(),13,1,["curGroupMembers"],2],
+      //Camp 06
+      [dllscv[3][13].toString(),13,1,["curGroupMembers"],3],
+      //Lochos 05
+      [dllscv[4][13].toString(),13,1,["curGroupMembers"],4],
+      //Lochos 06
+      [dllscv[5][13].toString(),13,1,["curGroupMembers"],5],
+      //Lochos 07
+      [dllscv[6][13].toString(),13,1,["curGroupMembers"],6],
+      //Lochos 08
+      [dllscv[7][13].toString(),13,1,["curGroupMembers"],7],
+      //Extra Group 02
+      [dllscv[8][13].toString(),13,1,["curGroupMembers"],8],
+      //Extra Other Group 02
+      [dllscv[9][13].toString(),13,1,["curGroupMembers"],9],
+      //Mora 3
+      [dllscv[0][26].toString(),26,1,["curGroupMembers"],0],
+      //Camp 07
+      [dllscv[1][26].toString(),26,1,["curGroupMembers"],1],
+      //Camp 08
+      [dllscv[2][26].toString(),26,1,["curGroupMembers"],2],
+      //Camp 09
+      [dllscv[3][26].toString(),26,1,["curGroupMembers"],3],
+      //Lochos 09
+      [dllscv[4][26].toString(),26,1,["curGroupMembers"],4],
+      //Lochos 10
+      [dllscv[5][26].toString(),26,1,["curGroupMembers"],5],
+      //Lochos 11
+      [dllscv[6][26].toString(),26,1,["curGroupMembers"],6],
+      //Lochos 12
+      [dllscv[7][26].toString(),26,1,["curGroupMembers"],7],
+      //Extra Group 03
+      [dllscv[8][26].toString(),26,1,["curGroupMembers"],8],
+      //Extra Other Group 03
+      [dllscv[9][26].toString(),26,1,["curGroupMembers"],9]
+    ];
+    //[name of group, location in main array, number of rows below to go through, [sheets of inclusion], row in dllscv]
+    
+    //finds correct group
+    for(var i=0; i<groupLocations.length; i+=1){//start 2nd for
+      if(groupLocations[i][0]===dllscv[40][valsForMemberProfileUpdate[z]].toString()){//start 1st if
+        curGroupLocation.push(groupLocations[i]);
+      }//end 1st if
+    }//end 2nd for
+//    Logger.log(curGroupLocation);
+    
+    //gets all members in the group
+    FunctionContainer.memberFinderForMemberProfiles(curGroupcv,curGroupLocation,dllscv,pmdcmscv);
+    
+    
+    //deletes first two objects to leave just the members in curGroupcv[0][1]
+    curGroupMembers.shift();
+    curGroupMembers.shift();
+    
+    
+    //finds them in pmdcmscv
+    for(var i=0; i<curGroupMembers.length; i+=1){//start 2nd for
+      for(var x=0; x<pmdcmscv.length; x+=1){//start 3rd for
+        if(curGroupMembers[i][1].toString()===pmdcmscv[x][0].toString()){//start 1st if
+          
+          //gets an array of all file ids
+          var curGroupFileIds = FunctionContainer.splitEmUp(pmdcmscv[x][10]);
+          
+          
+          //current file id
+          var curFileId = "";
+          
+          
+          //finds file id with matching group name to current group and assigns it to curFileId
+          for(var y=0; y<curGroupFileIds.length; y+=1){//start 4th for
+            if(FunctionContainer.pmdcmsIdGroupNameRetrieval(curGroupFileIds[y])===dllscv[40][valsForMemberProfileUpdate[z]].toString()){//start 2nd if
+              curFileId = FunctionContainer.pmdcmsIdRetrieval(curGroupFileIds[y]);
+            }//end 2nd if
+          }//end 4th for
+          
+          var curGt = curGroupMembers[i][1].toString();
+
+          console.log(curGt);
+          //then declare vars including cmpgis and any other member profile sheets
+          var cmpgis = FunctionContainer.tripleTryOpenSheet(curFileId,"General Info");
+          var cmpeis = FunctionContainer.tripleTryOpenSheet(curFileId,"Extra Info");
+          var cmpmus = FunctionContainer.tripleTryOpenSheet(curFileId,"Member Updates");
+          var cmpas = FunctionContainer.tripleTryOpenSheet(curFileId,"Attendance");
+          var cmpfs = FunctionContainer.tripleTryOpenSheet(curFileId,"Forge");
+          var cmpfss = FunctionContainer.tripleTryOpenSheet(curFileId,"Form Submissions");
+          
+//          Logger.log(curGt);
+          
+          
+          //next is do get all complete record info as i can use that for quick finding info
+          
+          //Attendance
+          var curAttendanceArray = [];
+          var curAttendanceArrayDates = [];
+          var curEventsFormSubmissionArray = [];
+          var curEventsFormSubmissionArrayDates = [];
+          
+          for(var y=0; y<edhaedscvn.length; y+=1){//start 4th for
+            
+            //if event contains gt in its attendees cell
+            if(edhaedscvn[y][8].toString().indexOf(curGt)!==-1){//start 2nd if
+              curAttendanceArray.push([edhaedscvn[y][0],"Event Type: "+edhaedscvn[y][3].toString()+" ~ Leader: "+edhaedscvn[y][6].toString()+" ~ Debrief: "+edhaedscvn[y][9].toString()+" ~ Additional Notes: "+edhaedscvn[y][10].toString()]);
+              curAttendanceArrayDates.push([FunctionContainer.dateReplace(edhaedscv[y][0]),"Event Type: "+edhaedscvn[y][3].toString()+" ~ Leader: "+edhaedscvn[y][6].toString()+" ~ Debrief: "+edhaedscvn[y][9].toString()+" ~ Additional Notes: "+edhaedscvn[y][10].toString()]);
+            }//end 2nd if
+            
+            //if event submission personel = curgt
+            if(edhaedscvn[y][12].toString()===curGt){//start 2nd if
+              curEventsFormSubmissionArray.push([edhaedscvn[y][0],"Event Type: "+edhaedscvn[y][3].toString()+" ~ Leader: "+edhaedscvn[y][6].toString()+" ~ Debrief: "+edhaedscvn[y][9].toString()+" ~ Additional Notes: "+edhaedscvn[y][10].toString()]);
+              curEventsFormSubmissionArrayDates.push([FunctionContainer.dateReplace(edhaedscv[y][0]),"Event Type: "+edhaedscvn[y][3].toString()+" ~ Leader: "+edhaedscvn[y][6].toString()+" ~ Debrief: "+edhaedscvn[y][9].toString()+" ~ Additional Notes: "+edhaedscvn[y][10].toString()]);
+            }//end 2nd if
+            
+          }//end 4th for
+          
+          
+          //all types of Member Updates
+          var curMemberUpdatesArray = [];
+          var curMemberUpdatesArrayDates = [];
+          var curMemberReportsArray = [];
+          var curMemberReportsArrayDates = [];
+          var curMemberReprimandsArray = [];
+          var curMemberReprimandsArrayDates = [];
+          var curMemberReportsGivenArray = [];
+          var curMemberReportsGivenArrayDate = [];
+          var curMemberUpdatesFormSubmissionArray = [];
+          var curMemberUpdatesFormSubmissionArrayDates = [];
+          var curMemberRankArray = [];
+          var curMemberRankArrayDates = [];
+          var curMemberCredArray = [];
+          var curMemberCredArrayDates = [];
+          var curMemberGroupArray = [];
+          var curMemberGroupArrayDates = [];
+          var curMemberGamertagArray = [];
+          var curMemberGamertagArrayDates = [];
+          var curMemberNicknameArray = [];
+          var curMemberNicknameArrayDates = [];
+          var curMemberAvailabilityArray = [];
+          var curMemberAvailabilityArrayDates = [];
+          var curMemberLOAsArray = [];
+          var curMemberLOAsArrayDates = [];
+          var curMemberBirthdayArray = [];
+          var curMemberBirthdayArrayDates = [];
+          var curMemberMentorArray = [];
+          var curMemberMentorArrayDates = [];
+          var curMemberPCArray = [];
+          var curMemberPCArrayDates = [];
+          var curMemberEnlistmentHistoryArray = [];
+          var curMemberEnlistmentHistoryArrayDates = [];
+          
+          for(var y=0; y<muhauscvn.length; y+=1){//start 4th for
+            //if the member in question in the update is = gt and isnt a member report or Reprimand
+            if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()!=="Member Report"&&muhauscvn[y][0].toString()!=="Reprimand"){//start 2nd if
+              curMemberUpdatesArray.push([muhauscvn[y][3],"Type of Update: "+muhauscvn[y][0].toString()+" ~ Update Details: "+muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+              curMemberUpdatesArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),"Type of Update: "+muhauscvn[y][0].toString()+" ~ Update Details: "+muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+            }//end 2nd if
+            
+            //if the member in question in the update is = gt and is a member report
+            else if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="Member Report"){//start 2nd if/else
+              curMemberReportsArray.push([muhauscvn[y][3],muhauscvn[y][2].toString()+" ~ "+muhauscvn[y][4].toString()]);
+              curMemberReportsArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),muhauscvn[y][2].toString()+" ~ "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //if the member in question in the update is = gt and is a Reprimand
+            if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="Reprimand"){//start 2nd if/else
+              curMemberReprimandsArray.push([muhauscvn[y][3],muhauscvn[y][4].toString()]);
+              curMemberReprimandsArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //Rank Change
+            else if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="Rank Change"){//start 2nd if/else
+              curMemberRankArray.push([muhauscvn[y][3],muhauscvn[y][4].toString()]);
+              curMemberRankArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //Credential Change
+            else if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="Credential Change"){//start 2nd if/else
+              curMemberCredArray.push([muhauscvn[y][3],muhauscvn[y][4].toString()]);
+              curMemberCredArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //Group Change
+            else if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="Group Change"){//start 2nd if/else
+              curMemberGroupArray.push([muhauscvn[y][3],muhauscvn[y][4].toString()]);
+              curMemberGroupArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //Gamertag Change
+            else if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="Gamertag Change"){//start 2nd if/else
+              curMemberGamertagArray.push([muhauscvn[y][3],muhauscvn[y][4].toString()]);
+              curMemberGamertagArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //Nickname Change
+            else if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="Discord Nickname Change"){//start 2nd if/else
+              curMemberNicknameArray.push([muhauscvn[y][3],muhauscvn[y][4].toString()]);
+              curMemberNicknameArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //Availability Change
+            else if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="Availability Change"){//start 2nd if/else
+              curMemberAvailabilityArray.push([muhauscvn[y][3],muhauscvn[y][4].toString()]);
+              curMemberAvailabilityArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //LOA
+            else if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="LOA"){//start 2nd if/else
+              curMemberLOAsArray.push([muhauscvn[y][3],muhauscvn[y][4].toString()]);
+              curMemberLOAsArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //Birthday Change
+            else if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="Birthday Change"){//start 2nd if/else
+              curMemberBirthdayArray.push([muhauscvn[y][3],muhauscvn[y][4].toString()]);
+              curMemberBirthdayArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //Mentor Change
+            else if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="Mentor Change"){//start 2nd if/else
+              curMemberMentorArray.push([muhauscvn[y][3],muhauscvn[y][4].toString()]);
+              curMemberMentorArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //PC Change
+            else if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="Position Code Change"){//start 2nd if/else
+              curMemberPCArray.push([muhauscvn[y][3],muhauscvn[y][4].toString()]);
+              curMemberPCArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),muhauscvn[y][2].toString()+" ~ Reasoning: "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //Enlistment History
+            else if(muhauscvn[y][1].toString()===curGt&&muhauscvn[y][0].toString()==="Member Discharge"){//start 2nd if/else
+              curMemberEnlistmentHistoryArray.push([muhauscvn[y][3],muhauscvn[y][4].toString()]);
+              curMemberEnlistmentHistoryArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),"Member Discharge ~ "+muhauscvn[y][2].toString()+" ~ "+muhauscvn[y][4].toString()]);
+            }//end 2nd if/else
+            
+            //if the Submission Personnel in the update is = gt and the entry is a member report
+            if(muhauscvn[y][5].toString()===curGt&&muhauscvn[y][0].toString()==="Member Report"){//start 2nd if
+              curMemberReportsGivenArray.push([muhauscvn[y][3],"Given to: "+muhauscvn[y][1].toString()+" ~ "+muhauscvn[y][2].toString()+" ~ "+muhauscvn[y][4].toString()]);
+              curMemberReportsGivenArrayDate.push([FunctionContainer.dateReplace(muhauscv[y][3]),"Given to: "+muhauscvn[y][1].toString()+" ~ "+muhauscvn[y][2].toString()+" ~ "+muhauscvn[y][4].toString()]);
+            }//end 2nd if
+            
+            //if the Submission Personnel in the update is = gt and the entry isnt a member report
+            if(muhauscvn[y][5].toString()===curGt&&muhauscvn[y][0].toString()!=="Member Report"){//start 2nd if
+              curMemberUpdatesFormSubmissionArray.push([muhauscvn[y][3],"Given to: "+muhauscvn[y][1].toString()+" ~ "+muhauscvn[y][2].toString()+" ~ "+muhauscvn[y][4].toString()]);
+              curMemberUpdatesFormSubmissionArrayDates.push([FunctionContainer.dateReplace(muhauscv[y][3]),"Given to: "+muhauscvn[y][1].toString()+" ~ "+muhauscvn[y][2].toString()+" ~ "+muhauscvn[y][4].toString()]);
+            }//end 2nd if
+            
+          }//end 4th for
+          
+          
+          //Forge
+          var curForgeArray = [];
+          var curForgeArrayDates = [];
+          var curForgeFormSubmissionArray = [];
+          var curForgeFormSubmissionArrayDates = [];
+          
+          for(var y=fhfescvn.length-1; y>=0; y-=1){//start 4th for
+            //gets split personel to better find who was involved in the entry
+            var curForgePersonnel = FunctionContainer.forgePersonnelSpliterUpper(fhfescvn[y][3]);
+            
+            //goes thru each personel in the curForgePersonnel and if it = curGt it adds to array
+            for(var w=0; w<curForgePersonnel.length; w+=1){//start 5th for
+              if(curForgePersonnel[w].toString()===curGt){//start 2nd if
+                curForgeArray.push([fhfescvn[y][1],"Type of Entry: "+fhfescvn[y][0].toString()+" ~ Map in Question: "+fhfescvn[y][2].toString()+" ~ "+fhfescvn[y][3].toString()+" ~ "+fhfescvn[y][4].toString()]);
+                curForgeArrayDates.push([FunctionContainer.dateReplace(fhfescv[y][1]),"Type of Entry: "+fhfescvn[y][0].toString()+" ~ Map in Question: "+fhfescvn[y][2].toString()+" ~ "+fhfescvn[y][3].toString()+" ~ "+fhfescvn[y][4].toString()]);
+              }//end 2nd if
+            }//end 5th for
+            
+            //if the entry was submitted by curGt
+            if(fhfescvn[y][5].toString()===curGt){//start 2nd if
+              curForgeFormSubmissionArray.push([fhfescvn[y][1],"Type of Entry: "+fhfescvn[y][0].toString()+" ~ Map in Question: "+fhfescvn[y][2].toString()+" ~ "+fhfescvn[y][3].toString()+" ~ "+fhfescvn[y][4].toString()]);
+              curForgeFormSubmissionArrayDates.push([FunctionContainer.dateReplace(fhfescv[y][1]),"Type of Entry: "+fhfescvn[y][0].toString()+" ~ Map in Question: "+fhfescvn[y][2].toString()+" ~ "+fhfescvn[y][3].toString()+" ~ "+fhfescvn[y][4].toString()]);
+            }//end 2nd if
+            
+          }//end 4th for
+          
+          
+          
+          //New Member
+          var curNewMemberFormSubmissionArray = [];
+          var curNewMemberFormSubmissionArrayDates = [];
+          
+          for(var y=0; y<muhnmuscvn.length; y+=1){//start 4th for
+            
+            //if entry submission personel = curgt
+            if(muhnmuscvn[y][7].toString()===curGt){//start 2nd if
+              curNewMemberFormSubmissionArray.push([muhnmuscvn[y][3],"Member In Question: "+muhnmuscvn[y][0].toString()+" ~ Unblooded Mora: "+muhnmuscvn[y][2].toString()+" ~ LDI: "+muhnmuscvn[y][4].toString()+" ~ Additional Notes: "+muhnmuscvn[y][6].toString()]);
+              curNewMemberFormSubmissionArrayDates.push([FunctionContainer.dateReplace(muhnmuscv[y][3]),"Member In Question: "+muhnmuscvn[y][0].toString()+" ~ Unblooded Mora: "+muhnmuscvn[y][2].toString()+" ~ LDI: "+muhnmuscvn[y][4].toString()+" ~ Additional Notes: "+muhnmuscvn[y][6].toString()]);
+            }//end 2nd if
+            
+            //enlistment history
+            if(muhnmuscvn[y][0].toString()===curGt){//start 2nd if
+              curMemberEnlistmentHistoryArray.push([muhnmuscvn[y][3],"Member In Question: "+muhnmuscvn[y][0].toString()+" ~ Unblooded Mora: "+muhnmuscvn[y][2].toString()+" ~ LDI: "+muhnmuscvn[y][4].toString()+" ~ Additional Notes: "+muhnmuscvn[y][6].toString()]);
+              curMemberEnlistmentHistoryArrayDates.push([FunctionContainer.dateReplace(muhnmuscv[y][3]),"New Member ~ Member In Question: "+muhnmuscvn[y][0].toString()+" ~ Unblooded Mora: "+muhnmuscvn[y][2].toString()+" ~ LDI: "+muhnmuscvn[y][4].toString()+" ~ Additional Notes: "+muhnmuscvn[y][6].toString()]);
+            }//end 2nd if
+            
+          }//end 4th for
+
+
+          //sorts enlistment history
+          if(curMemberEnlistmentHistoryArray.length!==0){//start 2nd if
+            for(var y=0; y<curMemberEnlistmentHistoryArray.length-1; y+=1){//start 4th for
+              for(var r=y+1; r<curMemberEnlistmentHistoryArray.length; r+=1){//start 5th for
+                var curVal1 = curMemberEnlistmentHistoryArray[y];
+                var curVal2 = curMemberEnlistmentHistoryArrayDates[y];
+                if(curMemberEnlistmentHistoryArray[y][0] < curMemberEnlistmentHistoryArray[r][0]){//start 3rd if
+                  curMemberEnlistmentHistoryArray[y] = curMemberEnlistmentHistoryArray[r];
+                  curMemberEnlistmentHistoryArray[r] = curVal1;
+                  curMemberEnlistmentHistoryArrayDates[y] = curMemberEnlistmentHistoryArrayDates[r];
+                  curMemberEnlistmentHistoryArrayDates[r] = curVal2;
+                }//end 3rd if
+              }//end 5th for
+            }//end 4th for
+          }//end 2nd if
+          
+          
+          //misc forms
+          var curSchedulingFormSubmissionArray = [];
+          var curSchedulingFormSubmissionArrayDates = [];
+          var curEmbeddedMessageFormSubmissionArray = [];
+          var curEmbeddedMessageFormSubmissionArrayDates = [];
+          var curExpansionFormSubmissionArray = [];
+          var curExpansionFormSubmissionArrayDates = [];
+          var curFixerFormSubmissionArray = [];
+          var curFixerFormSubmissionArrayDates = [];
+          var curUpdateControlFormSubmissionArray = [];
+          var curUpdateControlFormSubmissionArrayDates = [];
+          var curPermissionFormSubmissionArray = [];
+          var curPermissionFormSubmissionArrayDates = [];
+          var curGroupReportFormSubmissionArray = [];
+          var curGroupReportFormSubmissionArrayDates = [];
+          
+          for(var y=0; y<mfhaescvn.length; y+=1){//start 4th for
+            
+            //if entry submission personel = curgt
+            if(mfhaescvn[y][4].toString()===curGt){//start 2nd if
+              //Scheduling
+              if(mfhaescvn[y][0].toString()==="Scheduling Form"){//start 3rd if
+                curSchedulingFormSubmissionArray.push([mfhaescvn[y][1],"Details: "+mfhaescvn[y][3].toString()]);
+                curSchedulingFormSubmissionArrayDates.push([FunctionContainer.dateReplace(mfhaescv[y][1]),"Details: "+mfhaescvn[y][3].toString()]);
+              }//end 3rd if
+              
+              //Embedded Message
+              if(mfhaescvn[y][0].toString()==="Embedded Message Form"){//start 3rd if
+                curEmbeddedMessageFormSubmissionArray.push([mfhaescvn[y][1],"Details: "+mfhaescvn[y][3].toString()]);
+                curEmbeddedMessageFormSubmissionArrayDates.push([FunctionContainer.dateReplace(mfhaescv[y][1]),"Details: "+mfhaescvn[y][3].toString()]);
+              }//end 3rd if
+              
+              //Fixer
+              if(mfhaescvn[y][0].toString()==="Fixer Form"){//start 3rd if
+                curExpansionFormSubmissionArray.push([mfhaescvn[y][1],"Details: "+mfhaescvn[y][3].toString()]);
+                curExpansionFormSubmissionArrayDates.push([FunctionContainer.dateReplace(mfhaescv[y][1]),"Details: "+mfhaescvn[y][3].toString()]);
+              }//end 3rd if
+              
+              //Update Control
+              if(mfhaescvn[y][0].toString()==="Update Control Form"){//start 3rd if
+                curFixerFormSubmissionArray.push([mfhaescvn[y][1],"Details: "+mfhaescvn[y][3].toString()]);
+                curFixerFormSubmissionArrayDates.push([FunctionContainer.dateReplace(mfhaescv[y][1]),"Details: "+mfhaescvn[y][3].toString()]);
+              }//end 3rd if
+              
+              //Permission
+              if(mfhaescvn[y][0].toString()==="Permission Form"){//start 3rd if
+                curPermissionFormSubmissionArray.push([mfhaescvn[y][1],"Details: "+mfhaescvn[y][3].toString()]);
+                curPermissionFormSubmissionArrayDates.push([FunctionContainer.dateReplace(mfhaescv[y][1]),"Details: "+mfhaescvn[y][3].toString()]);
+              }//end 3rd if
+              
+              //Group Report
+              if(mfhaescvn[y][0].toString()==="Group Report Form"){//start 3rd if
+                curGroupReportFormSubmissionArray.push([mfhaescvn[y][1],"Details: "+mfhaescvn[y][3].toString()]);
+                curGroupReportFormSubmissionArrayDates.push([FunctionContainer.dateReplace(mfhaescv[y][1]),"Details: "+mfhaescvn[y][3].toString()]);
+              }//end 3rd if
+            }//end 2nd if
+            
+          }//end 4th for
+          
+          
+          
+          ///*** GENERAL INFO SHEET ***///
+          
+          //Status
+          var curStatus = pmdcmscv[x][8].toString();
+          
+          
+          //Rank
+          var curRank = pmdcmscv[x][2].toString();
+          
+          
+          //Group(s)
+          var curGroups = pmdcmscv[x][3].toString();
+          
+          
+          //Enlistment Date
+          var curEnlistDate = FunctionContainer.dateReplace(pmdcmscv[x][20]);
+          
+          
+          //Credentials
+          //[authorities, signifiers, chessPieces, titles]
+          curVals = FunctionContainer.credTypeFilter(dllscv, FunctionContainer.splitEmUp(pmdcmscv[x][4].toString()));
+          var curAuthorities = FunctionContainer.array1LevelIntoString(curVals[0]);
+          var curSignifiers = FunctionContainer.array1LevelIntoString(curVals[1]);
+          var curChessPieces = FunctionContainer.array1LevelIntoString(curVals[2]);
+          var curTitles = FunctionContainer.array1LevelIntoString(curVals[3]);
+          curVals = undefined;
+          
+          
+          //Eligibility
+          //have not tested out if there is no most recent rank change
+          var comboOfVals = FunctionContainer.memberElegibility(pmdcmscv[x], muhauscvn, 
+                                                                currentDateNum, dllscv, muhauscv);
+          var curEli = comboOfVals[0].toString();
+          var curLastRankChangeDateNum = comboOfVals[1];
+          var curDaysFromRankChange = comboOfVals[2];
+          var curLastRankChangeDate = comboOfVals[3].toString();
+          var curLastRankChangeDetails = comboOfVals[4].toString();
+          comboOfVals = undefined;
+          
+          
+          //Events Attended Since Last Rank Change
+          var curEventsRankChange = 0;
+          
+          for(var y=0; y<curAttendanceArray.length; y+=1){//start 4th for
+            //if the event is larger than or equal to rank change date num
+            if(curAttendanceArray[y][0]>=curLastRankChangeDateNum){//start 2nd if
+              curEventsRankChange = curEventsRankChange+1;
+            }//end 2nd if
+          }//end 4th for
+          
+          
+          //Position Code
+          var curPC = FunctionContainer.positionCodeDiscordTransformer(pmdcmscv[x][7]);
+          
+          
+          //Most Recent Event
+          var curRecentEvent = "";
+          //if attendance array isnt empty
+          if(curAttendanceArray.length>0){//start 1st if
+            var curRecentEventDate = FunctionContainer.dateReplace(curAttendanceArrayDates[0][0]);
+            curRecentEvent = curRecentEventDate;
+          }//end 1st if
+          //if attendance array is empty
+          else if(curAttendanceArray.length===0){//start 2nd if
+            curRecentEvent = "N/A";
+          }//end 1st if
+          
+          
+          //Generation
+          var curGeneration = pmdcmscv[x][5].toString();
+          
+
+          //Birthday
+          var curBirthday = pmdcmscv[x][26].toString();
+          
+
+          //Mentor
+          var curMentor = pmdcmscv[x][25].toString();
+          if(curMentor === ""){//start 2nd if
+            curMentor = "N/A";
+          }//end 2nd if
+          
+          
+          //Mentees
+          var curMentees = [];
+          for(var y=0; y<pmdcmscv.length; y+=1){//start 4th for
+            //if the event is larger than or equal to rank change date num
+            if(pmdcmscv[y][25].toString() === curGt){//start 2nd if
+              curMentees.push([pmdcmscv[y][0].toString()]);
+            }//end 2nd if
+          }//end 4th for
+          if(curMentees.length === 0){//start 2nd if
+            curMentees = [["N/A"]];
+          }//end 2nd if
+          curMentees = FunctionContainer.array1LevelIntoString(curMentees);
+          
+          //General Availability (ET)
+          
+          //Sunday
+          if(pmdcmscv[x][13].toString() === ""){//start 2nd if
+            var curGASunday = "Not Available";
+          }//end 2nd if
+          else{var curGASunday = pmdcmscv[x][13].toString();}
+          
+          //Monday
+          if(pmdcmscv[x][14].toString() === ""){//start 2nd if
+            var curGAMonday = "Not Available";
+          }//end 2nd if
+          else{var curGAMonday = pmdcmscv[x][14].toString();}
+          
+          //Tuesday
+          if(pmdcmscv[x][15].toString() === ""){//start 2nd if
+            var curGATuesday = "Not Available";
+          }//end 2nd if
+          else{var curGATuesday = pmdcmscv[x][15].toString();}
+          
+          //Wednesday
+          if(pmdcmscv[x][16].toString() === ""){//start 2nd if
+            var curGAWednesday = "Not Available";
+          }//end 2nd if
+          else{var curGAWednesday = pmdcmscv[x][16].toString();}
+          
+          //Thursday
+          if(pmdcmscv[x][17].toString() === ""){//start 2nd if
+            var curGAThursday = "Not Available";
+          }//end 2nd if
+          else{var curGAThursday = pmdcmscv[x][17].toString();}
+          
+          //Friday
+          if(pmdcmscv[x][18].toString() === ""){//start 2nd if
+            var curGAFriday = "Not Available";
+          }//end 2nd if
+          else{var curGAFriday = pmdcmscv[x][18].toString();}
+          
+          //Saturday
+          if(pmdcmscv[x][19].toString() === ""){//start 2nd if
+            var curGASaturday = "Not Available";
+          }//end 2nd if
+          else{var curGASaturday = pmdcmscv[x][19].toString();}
+          
+          
+          //Most Recent Member Report
+          var curRecentReport = "";
+          
+          //if the report array isnt empty
+          if(curMemberReportsArray.length>0){//start 1st if
+            var curRecentReportDate = FunctionContainer.dateReplace(curMemberReportsArrayDates[0][0]);
+            curRecentReport = curRecentReportDate+" ~ "+curMemberReportsArray[0][1];
+          }//end 1st if
+          
+          //if report array is empty
+          else if(curMemberReportsArray.length===0){//start 2nd if
+            curRecentReport = "N/A";
+          }//end 1st if
+          
+          var cmpgiscv = 
+              [[curGt, "", "", "Last Updated"], 
+               ["", "", "", currentDate], 
+               ["Status", "Rank", "Group(s)", ""], 
+               [curStatus, curRank, curGroups, ""], 
+               ["Enlistment Date", "Chess Pieces", "", ""], 
+               [curEnlistDate, curChessPieces, "", ""], 
+               ["Signifiers", "", "Authorities", ""], 
+               [curSignifiers, "", curAuthorities, ""], 
+               ["Titles", "", "", ""], 
+               [curTitles, "", "", ""], 
+               ["Birthday", "Mentored By", "Mentoring", ""], 
+               [curBirthday, curMentor, curMentees, ""], 
+               ["Eligibility", "", "Days From Last Rank Change	", ""], 
+               [curEli, "", curDaysFromRankChange, ""], 
+               ["Events Attended Since Last Rank Change", "", "", "Position Code"], 
+               [curEventsRankChange, "", "", curPC], 
+               ["Most Recent Event Date", "", "", "Generation"], 
+               [curRecentEvent, "", "", curGeneration], 
+               ["General Availability (ET)", "", "", ""], 
+               ["Sunday:", curGASunday, "", ""], 
+               ["Monday:", curGAMonday, "", ""], 
+               ["Tuesday:", curGATuesday, "", ""], 
+               ["Wednesday:", curGAWednesday, "", ""], 
+               ["Thursday:", curGAThursday, "", ""], 
+               ["Friday:", curGAFriday, "", ""], 
+               ["Saturday:", curGASaturday, "", ""], 
+               ["Most Recent Member Report", "", "", ""], 
+               [curRecentReport, "", "", ""]];
+          
+          
+          
+          
+          ///*** EXTRA INFO SHEET ***///
+          
+          //Cushion Date
+          var curCushionDate = FunctionContainer.dateReplace(pmdcmscv[x][22]);
+          
+          
+          //Last Credential Change
+          var curLastCredChangeDate = "";
+          var curLastCredChangeDetails = "";
+          //finds the last time they were promoted if any
+          for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+            if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="Credential Change"){//start 2nd if
+              curLastCredChangeDate = FunctionContainer.dateReplace(muhauscv[y][3]);
+              curLastCredChangeDetails = muhauscv[y][2].toString();
+              y = muhauscv.length;
+            }//end 2nd if
+          }//end 4th for
+          
+          //if no last Cred change found it puts time of last promo as 
+          if(curLastCredChangeDate===""){//start 1st if
+            curLastCredChangeDate = "N/A";
+            curLastCredChangeDetails = "N/A";
+          }//end 2nd if
+          
+          
+          //Last Reprimand
+          var curLastReprimandDate = "";
+          var curLastReprimandDetails = "";
+          //finds the last time they were reprimanded if any
+          for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+            if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="Reprimand"){//start 2nd if
+              curLastReprimandDate = FunctionContainer.dateReplace(muhauscv[y][3]);
+              curLastReprimandDetails = muhauscv[y][2].toString();
+              y = muhauscv.length;
+            }//end 2nd if
+          }//end 4th for
+          
+          //if no last Cred change found it puts time of last promo as 
+          if(curLastReprimandDate===""){//start 1st if
+            curLastReprimandDate = "N/A";
+            curLastReprimandDetails = "N/A";
+          }//end 2nd if
+          
+          
+          //Last Mentor Change
+          var curLastMentorChangeDate = "";
+          var curLastMentorChangeDetails = "";
+          //finds the last time they had a mentor changed if any
+          for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+            if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="Mentor Change"){//start 2nd if
+              curLastMentorChangeDate = FunctionContainer.dateReplace(muhauscv[y][3]);
+              curLastMentorChangeDetails = muhauscv[y][2].toString();
+              y = muhauscv.length;
+            }//end 2nd if
+          }//end 4th for
+          
+          //if no last Cred change found it puts time of last promo as 
+          if(curLastMentorChangeDate===""){//start 1st if
+            curLastMentorChangeDate = "N/A";
+            curLastMentorChangeDetails = "N/A";
+          }//end 2nd if
+          
+          
+          //Last Group Change
+          var curLastGroupChangeDate = "";
+          var curLastGroupChangeDetails = "";
+          //finds the last time they had a group change if any
+          for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+            if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="Group Change"){//start 2nd if
+              curLastGroupChangeDate = FunctionContainer.dateReplace(muhauscv[y][3]);
+              curLastGroupChangeDetails = muhauscv[y][2].toString();
+              y = muhauscv.length;
+            }//end 2nd if
+          }//end 4th for
+          
+          //if no last Group change found it puts time of last promo as 
+          if(curLastGroupChangeDate===""){//start 1st if
+            curLastGroupChangeDate = "N/A";
+            curLastGroupChangeDetails = "N/A";
+          }//end 2nd if
+          
+          
+          //Last Availability Change
+          var curLastGAChangeDate = "";
+          var curLastGAChangeDetails = "";
+          //finds the last time they had a Availability Change if any
+          for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+            if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="Availability Change"){//start 2nd if
+              curLastGAChangeDate = FunctionContainer.dateReplace(muhauscv[y][3]);
+              curLastGAChangeDetails = muhauscv[y][2].toString();
+              y = muhauscv.length;
+            }//end 2nd if
+          }//end 4th for
+          
+          //if no last GA change found it puts time of last promo as 
+          if(curLastGAChangeDate===""){//start 1st if
+            curLastGAChangeDate = "N/A";
+            curLastGAChangeDetails = "N/A";
+          }//end 2nd if
+          
+          
+          //Last Gamertag Change
+          var curLastGtChangeDate = "";
+          var curLastGtChangeDetails = "";
+          //finds the last time they had a Gamertag Change if any
+          for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+            if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="Gamertag Change"){//start 2nd if
+              curLastGtChangeDate = FunctionContainer.dateReplace(muhauscv[y][3]);
+              curLastGtChangeDetails = muhauscv[y][2].toString();
+              y = muhauscv.length;
+            }//end 2nd if
+          }//end 4th for
+          
+          //if no last Gt change found it puts time of last promo as 
+          if(curLastGtChangeDate===""){//start 1st if
+            curLastGtChangeDate = "N/A";
+            curLastGtChangeDetails = "N/A";
+          }//end 2nd if
+          
+          
+          //Last Discord Nickname Change
+          var curLastDiscNameChangeDate = "";
+          var curLastDiscNameChangeDetails = "";
+          //finds the last time they had a Discord Nickname Change if any
+          for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+            if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="Discord Nickname Change"){//start 2nd if
+              curLastDiscNameChangeDate = FunctionContainer.dateReplace(muhauscv[y][3]);
+              curLastDiscNameChangeDetails = muhauscv[y][2].toString();
+              y = muhauscv.length;
+            }//end 2nd if
+          }//end 4th for
+          
+          //if no last DiscName change found it puts time of last promo as 
+          if(curLastDiscNameChangeDate===""){//start 1st if
+            curLastDiscNameChangeDate = "N/A";
+            curLastDiscNameChangeDetails = "N/A";
+          }//end 2nd if
+          
+          
+          //Members Recruited
+          var curNumMemsRecruited = 0;
+          var curMemsRecruited = [];
+          
+          for(var y=0; y<muhnmuscv.length; y+=1){//start 4th for
+            
+            //if the gamertag matches current gt
+            if(muhnmuscv[y][5].toString()===curGt){//start 2nd if
+              curNumMemsRecruited = curNumMemsRecruited+1;
+              curMemsRecruited.push(muhnmuscv[y][0].toString());
+            }//end 2nd if
+            
+          }//end 4th for
+          
+          //if curNumMemsRecruited is 0
+          if(curNumMemsRecruited===0){//start 1st if
+            curMemsRecruited = ["N/A"];
+          }//end 1st if
+          
+          //turns curMemsRecruited into string
+          curMemsRecruited = FunctionContainer.array1LevelIntoString(curMemsRecruited);
+          
+          
+          //Bootcamp info
+          var curUnbloodedGroup = "";
+          var curBcDate = "";
+          var curRecruitBy = "";
+          var curBcLdi = "";
+          var curAddNotes = "";
+          
+          for(var y=0; y<muhnmuscv.length; y+=1){//start 4th for
+            
+            //if the gamertag matches current gt
+            if(muhnmuscv[y][0].toString()===curGt){//start 2nd if
+              curUnbloodedGroup = muhnmuscv[y][2].toString();
+              curBcDate = FunctionContainer.dateReplace(muhnmuscv[y][3].toString());
+              curRecruitBy = muhnmuscv[y][5].toString();
+              curBcLdi = muhnmuscv[y][4].toString();
+              curAddNotes = muhnmuscv[y][6].toString();
+              
+              y = muhnmuscv.length;
+            }//end 2nd if
+            
+          }//end 4th for
+          
+          //if curUnbloodedGroup is ""
+          if(curUnbloodedGroup===""){//start 1st if
+            curUnbloodedGroup = "N/A";
+            curBcDate = "N/A";
+            curRecruitBy = "N/A";
+            curBcLdi = "N/A";
+            curAddNotes = "N/A";
+          }//end 1st if
+          
+          
+          //Leaves of Absence
+          var curNumLoa = 0;
+          var curRecentLoa = "";
+          
+          //finds the last time they went on loa if any
+          for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+            if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="LOA"&&muhauscv[y][2].toString().indexOf("Leaving on LOA starting on:")!==-1){//start 2nd if
+              curNumLoa = curNumLoa+1;
+            }//end 2nd if
+          }//end 4th for
+          
+          //if no last loa change found it puts time of last promo as 
+          if(curNumLoa===0){//start 1st if
+            curRecentLoa = "N/A";
+          }//end 2nd if
+          
+          //if has been on loa
+          else if(curNumLoa>0){//start 2nd if/else
+            
+            //leaving on loa
+            for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+              if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="LOA"&&muhauscv[y][2].toString().indexOf("Leaving on LOA starting on:")!==-1){//start 3rd if
+                curRecentLoa = "Left on LOA on: "+FunctionContainer.dateReplace(muhauscv[y][3].toString());
+                y = muhauscv.length;
+              }//end 3rd if
+            }//end 4th for
+            
+            //returning from loa
+            for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+              if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="LOA"&&muhauscv[y][2].toString().indexOf("Returned from LOA")!==-1){//start 3rd if
+                curRecentLoa = curRecentLoa+" ~ Returned from LOA on: "+FunctionContainer.dateReplace(muhauscv[y][3].toString());
+                y = muhauscv.length;
+              }//end 3rd if
+              else if(y===muhauscv.length-1){//start 3rd if
+                curRecentLoa = curRecentLoa+" ~ Has not returned yet";
+              }//end 3rd if
+            }//end 4th for
+            
+          }//end 2nd if/else
+          
+          
+          //Inquiries
+          var curNumInquiry = 0;
+          var curRecentInquiry = "";
+          
+          //finds the last time they went on loa if any
+          for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+            if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="Inquiry"&&muhauscv[y][2].toString().indexOf("Leaving on Inquiry starting on:")!==-1){//start 2nd if
+              curNumInquiry = curNumInquiry+1;
+            }//end 2nd if
+          }//end 4th for
+          
+          //if no last loa change found it puts time of last promo as 
+          if(curNumInquiry===0){//start 1st if
+            curRecentInquiry = "N/A";
+          }//end 2nd if
+          
+          //if has been on loa
+          else if(curNumInquiry>0){//start 2nd if/else
+            
+            //leaving on loa
+            for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+              if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="Inquiry"&&muhauscv[y][2].toString().indexOf("Leaving on Inquiry starting on:")!==-1){//start 3rd if
+                curRecentInquiry = "Left on Inquiry on: "+FunctionContainer.dateReplace(muhauscv[y][3].toString());
+                y = muhauscv.length;
+              }//end 3rd if
+            }//end 4th for
+            
+            //returning from loa
+            for(var y=0; y<muhauscv.length; y+=1){//start 4th for
+              if(muhauscv[y][1].toString()===pmdcmscv[x][0]&&muhauscv[y][0].toString()==="Inquiry"&&muhauscv[y][2].toString().indexOf("Returned from Inquiry")!==-1){//start 3rd if
+                curRecentInquiry = curRecentInquiry+" ~ Returned from Inquiry on: "+FunctionContainer.dateReplace(muhauscv[y][3].toString());
+                y = muhauscv.length;
+              }//end 3rd if
+              else if(y===muhauscv.length-1){//start 3rd if
+                curRecentInquiry = curRecentInquiry+" ~ Has not returned yet";
+              }//end 3rd if
+            }//end 4th for
+            
+          }//end 2nd if/else
+          
+          
+          //Inactivity
+          var curNumInactivity = 0;
+          var curRecentInactive = "";
+          var minActiveDays = dllscv[79][0];
+          var cushionDate = FunctionContainer.dateReplace(pmdcmscv[x][22]);
+          var cushionDateNum = pmdcmscv[x][23];
+          var curEnlistmentDate = FunctionContainer.dateReplace(pmdcmscv[x][20]);
+          var curEnlistmentDateNum = pmdcmscv[x][27];
+          
+          //if their enlistment day is further than minActiveDays days from today
+          if(currentDateNum-curEnlistmentDateNum>=minActiveDays){//start 3rd if
+            
+            //if attendance length is > 0;
+            if(curAttendanceArray.length>0){//start 4th if
+              
+              //if they havent been to practice for minActiveDays+ days from last event
+              if(curRecentInactive===""&&currentDateNum-curAttendanceArray[0][0]>=minActiveDays){//start 5th if
+                curRecentInactive = "Start Date: "+curAttendanceArrayDates[0][0]+" ~ End Date: "+currentDate;
+                curNumInactivity = curNumInactivity+1;
+              }//end 5th if
+              
+              //cycles thru curAttendanceList
+              for(var y=0; y<curAttendanceArray.length-1; y+=1){//start 4th for
+                if(curRecentInactive===""&&curAttendanceArray[y][0]-curAttendanceArray[y+1][0]>=minActiveDays){//start 5th if
+                  curRecentInactive = "Start Date: "+curAttendanceArrayDates[y][0]+" ~ End Date: "+curAttendanceArrayDates[y+1][0];
+                  curNumInactivity = curNumInactivity+1;
+                }//end 5th if
+                else if(curRecentInactive!==""&&curAttendanceArray[y][0]-curAttendanceArray[y+1][0]>=minActiveDays){//start 5th if
+                  curNumInactivity = curNumInactivity+1;
+                }//end 5th if
+              }//end 4th for
+              
+              //if enlistment day is more than cushion date
+              if(curEnlistmentDateNum>cushionDateNum){//start 5th if
+                
+                // if the curRecentInactive isnt filed in
+                //and if they were inactive from when they joined to their first event attended
+                if(curRecentInactive===""&&curAttendanceArray[curAttendanceArray.length-1][0]-curEnlistmentDateNum>=minActiveDays){//start 6th if
+                  curRecentInactive = "Start Date: "+curEnlistmentDate+" ~ End Date: "+curAttendanceArrayDates[curAttendanceArray.length-1][0];
+                  curNumInactivity = curNumInactivity+1;
+                }//end 6th if
+                
+                //if the curRecentInactive is filed in
+                //and if they were inactive from when they joined to their first event attended
+                else if(curRecentInactive!==""&&curAttendanceArray[curAttendanceArray.length-1][0]-curEnlistmentDateNum>=minActiveDays){//start 6th if/else
+                  curNumInactivity = curNumInactivity+1;
+                }//end 6th if/else
+                
+              }//end 5th if
+              
+              //if enlistment day is less than cushion date
+              else if(curEnlistmentDateNum<cushionDateNum){//start 5th if/else
+                
+                // if the curRecentInactive isnt filed in
+                //and if they were inactive from cushion date to their first event attended
+                if(curRecentInactive===""&&curAttendanceArray[curAttendanceArray.length-1][0]-cushionDateNum>=minActiveDays){//start 6th if
+                  curRecentInactive = "Start Date: "+cushionDate+" ~ End Date: "+curAttendanceArrayDates[curAttendanceArray.length-1][0];
+                  curNumInactivity = curNumInactivity+1;
+                }//end 6th if
+                
+                //if the curRecentInactive is filed in
+                //and if they were inactive from cushion date to their first event attended
+                else if(curRecentInactive!==""&&curAttendanceArray[curAttendanceArray.length-1][0]-cushionDateNum>=minActiveDays){//start 6th if/else
+                  curNumInactivity = curNumInactivity+1;
+                }//end 6th if/else
+                
+              }//end 5th if/else
+              
+            }//end 4th if
+            
+            //if attendance length is = 0;
+            else if(curAttendanceArray.length===0){//start 4th if/else
+              
+              //if enlistment day is more than cushion date
+              if(curEnlistmentDateNum>cushionDateNum){//start 5th if
+                
+                //if curEnlistmentDateNum minus currentDateNum is more than minActiveDays
+                if(currentDateNum-curEnlistmentDateNum>minActiveDays){//start 6th if
+                  //mark as inactive
+                  curNumInactivity = 1;
+                  curRecentInactive = "Start Date: "+curEnlistmentDate+" ~ End Date: "+currentDate;
+                }//end 6th if
+                
+                //if curEnlistmentDateNum minus currentDateNum is less than or equal to minActiveDays
+                else if(currentDateNum-curEnlistmentDateNum<=minActiveDays){//start 6th if
+                  //do nothing
+                }//end 6th if
+                
+              }//end 5th if
+              
+              //if enlistment day is less than cushion date
+              else if(curEnlistmentDateNum<cushionDateNum){//start 5th if/else
+                
+                //if cushion date minus currentDateNum is more than minActiveDays
+                if(currentDateNum-cushionDateNum>minActiveDays){//start 6th if
+                  //mark as inactive
+                  curNumInactivity = 1;
+                  curRecentInactive = "Start Date: "+cushionDate+" ~ End Date: "+currentDate;
+                }//end 6th if
+                
+                //if cushion date minus currentDateNum is less than or equal to minActiveDays
+                else if(currentDateNum-cushionDateNum<=minActiveDays){//start 6th if
+                  //do nothing
+                }//end 6th if
+                
+              }//end 5th if/else
+              
+            }//end 4th if/else
+            
+          }//end 3rd if
+          
+          //they have never been inactive
+          if(curRecentInactive===""){//start 3rd if
+            curRecentInactive = "N/A";
+          }//end 3rd if
+          
+          
+          //forge
+          var curNumMapsForged = 0;
+          var curRecentEntryDate = "";
+          var curRecentEntryDetails = "";
+          
+          //cycles thru forge array
+          for(var y=0; y<curForgeArray.length; y+=1){//start 4th for
+            
+            var curForgeEntryCreators = FunctionContainer.forgePersonnelSpliterUpperMapCreatorOnly(curForgeArray[y][1]);
+            for(var w=0; w<curForgeEntryCreators.length; w+=1){//start 5th for
+              
+              //if they are an og creator of asst creator
+              if(curGt===curForgeEntryCreators[w].toString()){//start 3rd if
+                curNumMapsForged = curNumMapsForged+1;
+                w = curForgeEntryCreators.length;
+              }//end 3rd if
+              
+            }//end 5th for
+          }//end 4th for
+          
+          //if they have any forge entries
+          if(curForgeArray.length>0){//start 3rd if
+            curRecentEntryDate = curForgeArrayDates[0][0].toString();
+            curRecentEntryDetails = curForgeArray[0][1].toString();
+          }//end 3rd if
+          
+          //if they dont have any forge entries
+          else if(curForgeArray.length===0){//start 3rd if
+            curRecentEntryDate = "N/A";
+            curRecentEntryDetails = "N/A";
+          }//end 3rd if
+          
+          
+          //Declares variable for 6 days ago
+          var todayMinus6 = currentDateNum-6;
+          
+          
+          //Events
+          //Attended ~ Colead ~ Lead
+          var curEventsAttend7 = 0;
+          var curEventsAttendRC = 0;
+          var curEventsAttendAll = 0;
+          var curEvents2ndLead7 = 0;
+          var curEvents2ndLeadRC = 0;
+          var curEvents2ndLeadAll = 0;
+          var curEventsMainLead7 = 0;
+          var curEventsMainLeadRC = 0;
+          var curEventsMainLeadAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<edhaedscvn.length; y+=1){//start 4th for
+            
+            //attendance
+            //within 7 days and went to the event
+            if(edhaedscvn[y][8].toString().indexOf(curGt)!==-1&&todayMinus6<=edhaedscvn[y][0]&&currentDateNum>=edhaedscvn[y][0]){//start 3rd if
+              curEventsAttend7 = curEventsAttend7+1;
+            }//end 3rd if
+            
+            //within last RC date and went to the event
+            if(edhaedscvn[y][8].toString().indexOf(curGt)!==-1&&curLastRankChangeDateNum<=edhaedscvn[y][0]&&currentDateNum>=edhaedscvn[y][0]){//start 3rd if
+              curEventsAttendRC = curEventsAttendRC+1;
+            }//end 3rd if
+            
+            //went to the event and the event wasnt in the future
+            if(edhaedscvn[y][8].toString().indexOf(curGt)!==-1&&currentDateNum>=edhaedscvn[y][0]){//start 3rd if
+              curEventsAttendAll = curEventsAttendAll+1;
+            }//end 3rd if
+            
+            //2ndLead
+            //within 7 days and was 2nd Lead
+            if(edhaedscvn[y][7].toString().indexOf(curGt)!==-1&&todayMinus6<=edhaedscvn[y][0]&&currentDateNum>=edhaedscvn[y][0]){//start 3rd if
+              curEvents2ndLead7 = curEvents2ndLead7+1;
+            }//end 3rd if
+            
+            //within last RC date and was 2nd Lead
+            if(edhaedscvn[y][7].toString().indexOf(curGt)!==-1&&curLastRankChangeDateNum<=edhaedscvn[y][0]&&currentDateNum>=edhaedscvn[y][0]){//start 3rd if
+              curEvents2ndLeadRC = curEvents2ndLeadRC+1;
+            }//end 3rd if
+            
+            //was 2ndLead and the event wasnt in the future
+            if(edhaedscvn[y][7].toString().indexOf(curGt)!==-1&&currentDateNum>=edhaedscvn[y][0]){//start 3rd if
+              curEvents2ndLeadAll = curEvents2ndLeadAll+1;
+            }//end 3rd if
+            
+            //MainLead
+            //within 7 days and was Main Lead
+            if(edhaedscvn[y][6].toString().indexOf(curGt)!==-1&&todayMinus6<=edhaedscvn[y][0]&&currentDateNum>=edhaedscvn[y][0]){//start 3rd if
+              curEventsMainLead7 = curEventsMainLead7+1;
+            }//end 3rd if
+            
+            //within last RC date and was Main Lead
+            if(edhaedscvn[y][6].toString().indexOf(curGt)!==-1&&curLastRankChangeDateNum<=edhaedscvn[y][0]&&currentDateNum>=edhaedscvn[y][0]){//start 3rd if
+              curEventsMainLeadRC = curEventsMainLeadRC+1;
+            }//end 3rd if
+            
+            //was Main Lead and the event wasnt in the future
+            if(edhaedscvn[y][6].toString().indexOf(curGt)!==-1&&currentDateNum>=edhaedscvn[y][0]){//start 3rd if
+              curEventsMainLeadAll = curEventsMainLeadAll+1;
+            }//end 3rd if
+            
+          }//end 4th for
+          
+          
+          //Reprimands of Dishonor
+          var curReprimands7 = 0;
+          var curReprimandsRC = 0;
+          var curReprimandsAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curMemberReprimandsArray.length; y+=1){//start 4th for
+            
+            //within 7 days
+            if(todayMinus6<=curMemberReprimandsArray[y][0]&&currentDateNum>=curMemberReprimandsArray[y][0]){//start 3rd if
+              curReprimands7 = curReprimands7+1;
+            }//end 3rd if
+            
+            //within last RC date
+            if(curLastRankChangeDateNum<=curMemberReprimandsArray[y][0]&&currentDateNum>=curMemberReprimandsArray[y][0]){//start 3rd if
+              curReprimandsRC = curReprimandsRC+1;
+            }//end 3rd if
+            
+            //feedbacks not in the future
+            if(currentDateNum>=curMemberReprimandsArray[y][0]){//start 3rd if
+              curReprimandsAll = curReprimandsAll+1;
+            }//end 3rd if
+            
+          }//end 4th for
+          
+          
+          //Member Reports Given
+          var curReportsGiven7 = 0;
+          var curReportsGivenRC = 0;
+          var curReportsGivenAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curMemberReportsGivenArray.length; y+=1){//start 4th for
+            
+            //within 7 days
+            if(todayMinus6<=curMemberReportsGivenArray[y][0]&&currentDateNum>=curMemberReportsGivenArray[y][0]){//start 3rd if
+              curReportsGiven7 = curReportsGiven7+1;
+            }//end 3rd if
+            
+            //within last RC date
+            if(curLastRankChangeDateNum<=curMemberReportsGivenArray[y][0]&&currentDateNum>=curMemberReportsGivenArray[y][0]){//start 3rd if
+              curReportsGivenRC = curReportsGivenRC+1;
+            }//end 3rd if
+            
+            //feedbacks not in the future
+            if(currentDateNum>=curMemberReportsGivenArray[y][0]){//start 3rd if
+              curReportsGivenAll = curReportsGivenAll+1;
+            }//end 3rd if
+            
+          }//end 4th for
+          
+          
+          //Member Reports Received
+          var curReportsReceived7 = 0;
+          var curReportsReceivedRC = 0;
+          var curReportsReceivedAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curMemberReportsArray.length; y+=1){//start 4th for
+            
+            //within 7 days
+            if(todayMinus6<=curMemberReportsArray[y][0]&&currentDateNum>=curMemberReportsArray[y][0]){//start 3rd if
+              curReportsReceived7 = curReportsReceived7+1;
+            }//end 3rd if
+            
+            //within last RC date
+            if(curLastRankChangeDateNum<=curMemberReportsArray[y][0]&&currentDateNum>=curMemberReportsArray[y][0]){//start 3rd if
+              curReportsReceivedRC = curReportsReceivedRC+1;
+            }//end 3rd if
+            
+            //feedbacks not in the future
+            if(currentDateNum>=curMemberReportsArray[y][0]){//start 3rd if
+              curReportsReceivedAll = curReportsReceivedAll+1;
+            }//end 3rd if
+            
+          }//end 4th for
+          
+          
+          //Forge Forms Submitted
+          var curForgeFormsSub7 = 0;
+          var curForgeFormsSubRC = 0;
+          var curForgeFormsSubAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curForgeFormSubmissionArray.length; y+=1){//start 4th for
+            
+            //within 7 days
+            if(todayMinus6<=curForgeFormSubmissionArray[y][0]&&currentDateNum>=curForgeFormSubmissionArray[y][0]){//start 3rd if
+              curForgeFormsSub7 = curForgeFormsSub7+1;
+            }//end 3rd if
+            
+            //within last RC date
+            if(curLastRankChangeDateNum<=curForgeFormSubmissionArray[y][0]&&currentDateNum>=curForgeFormSubmissionArray[y][0]){//start 3rd if
+              curForgeFormsSubRC = curForgeFormsSubRC+1;
+            }//end 3rd if
+            
+            //feedbacks not in the future
+            if(currentDateNum>=curForgeFormSubmissionArray[y][0]){//start 3rd if
+              curForgeFormsSubAll = curForgeFormsSubAll+1;
+            }//end 3rd if
+            
+          }//end 4th for
+          
+          
+          //Member Update Forms Submitted
+          var curMemberUpdateFormsSub7 = 0;
+          var curMemberUpdateFormsSubRC = 0;
+          var curMemberUpdateFormsSubAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curMemberUpdatesFormSubmissionArray.length; y+=1){//start 4th for
+            
+            //within 7 days
+            if(todayMinus6<=curMemberUpdatesFormSubmissionArray[y][0]&&currentDateNum>=curMemberUpdatesFormSubmissionArray[y][0]){//start 3rd if
+              curMemberUpdateFormsSub7 = curMemberUpdateFormsSub7+1;
+            }//end 3rd if
+            
+            //within last RC date
+            if(curLastRankChangeDateNum<=curMemberUpdatesFormSubmissionArray[y][0]&&currentDateNum>=curMemberUpdatesFormSubmissionArray[y][0]){//start 3rd if
+              curMemberUpdateFormsSubRC = curMemberUpdateFormsSubRC+1;
+            }//end 3rd if
+            
+            //feedbacks not in the future
+            if(currentDateNum>=curMemberUpdatesFormSubmissionArray[y][0]){//start 3rd if
+              curMemberUpdateFormsSubAll = curMemberUpdateFormsSubAll+1;
+            }//end 3rd if
+            
+          }//end 4th for
+          
+          
+          //Debrief Forms Submitted
+          var curDebriefFormsSub7 = 0;
+          var curDebriefFormsSubRC = 0;
+          var curDebriefFormsSubAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curEventsFormSubmissionArray.length; y+=1){//start 4th for
+            
+            //within 7 days
+            if(todayMinus6<=curEventsFormSubmissionArray[y][0]&&currentDateNum>=curEventsFormSubmissionArray[y][0]){//start 3rd if
+              curDebriefFormsSub7 = curDebriefFormsSub7+1;
+            }//end 3rd if
+            
+            //within last RC date
+            if(curLastRankChangeDateNum<=curEventsFormSubmissionArray[y][0]&&currentDateNum>=curEventsFormSubmissionArray[y][0]){//start 3rd if
+              curDebriefFormsSubRC = curDebriefFormsSubRC+1;
+            }//end 3rd if
+            
+            //feedbacks not in the future
+            if(currentDateNum>=curEventsFormSubmissionArray[y][0]){//start 3rd if
+              curDebriefFormsSubAll = curDebriefFormsSubAll+1;
+            }//end 3rd if
+            
+          }//end 4th for
+          
+          
+          //New Member Updates Forms Submitted
+          var curNewMemberFormsSub7 = 0;
+          var curNewMemberFormsSubRC = 0;
+          var curNewMemberFormsSubAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curNewMemberFormSubmissionArray.length; y+=1){//start 4th for
+            
+            //within 7 days
+            if(todayMinus6<=curNewMemberFormSubmissionArray[y][0]&&currentDateNum>=curNewMemberFormSubmissionArray[y][0]){//start 3rd if
+              curNewMemberFormsSub7 = curNewMemberFormsSub7+1;
+            }//end 3rd if
+            
+            //within last RC date
+            if(curLastRankChangeDateNum<=curNewMemberFormSubmissionArray[y][0]&&currentDateNum>=curNewMemberFormSubmissionArray[y][0]){//start 3rd if
+              curNewMemberFormsSubRC = curNewMemberFormsSubRC+1;
+            }//end 3rd if
+            
+            //feedbacks not in the future
+            if(currentDateNum>=curNewMemberFormSubmissionArray[y][0]){//start 3rd if
+              curNewMemberFormsSubAll = curNewMemberFormsSubAll+1;
+            }//end 3rd if
+            
+          }//end 4th for
+          
+          
+          //Scheduling Forms Submitted
+          var curSchedulingFormsSub7 = 0;
+          var curSchedulingFormsSubRC = 0;
+          var curSchedulingFormsSubAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curSchedulingFormSubmissionArray.length; y+=1){//start 4th for
+            //within 7 days
+            if(todayMinus6<=curSchedulingFormSubmissionArray[y][0]&&currentDateNum>=curSchedulingFormSubmissionArray[y][0]){//start 3rd if
+              curSchedulingFormsSub7 = curSchedulingFormsSub7+1;
+            }//end 3rd if
+            //within last RC date
+            if(curLastRankChangeDateNum<=curSchedulingFormSubmissionArray[y][0]&&currentDateNum>=curSchedulingFormSubmissionArray[y][0]){//start 3rd if
+              curSchedulingFormsSubRC = curSchedulingFormsSubRC+1;
+            }//end 3rd if
+            //feedbacks not in the future
+            if(currentDateNum>=curSchedulingFormSubmissionArray[y][0]){//start 3rd if
+              curSchedulingFormsSubAll = curSchedulingFormsSubAll+1;
+            }//end 3rd if
+          }//end 4th for
+          
+          
+          //EmbeddedMessage Forms Submitted
+          var curEmbeddedMessageFormsSub7 = 0;
+          var curEmbeddedMessageFormsSubRC = 0;
+          var curEmbeddedMessageFormsSubAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curEmbeddedMessageFormSubmissionArray.length; y+=1){//start 4th for
+            //within 7 days
+            if(todayMinus6<=curEmbeddedMessageFormSubmissionArray[y][0]&&currentDateNum>=curEmbeddedMessageFormSubmissionArray[y][0]){//start 3rd if
+              curEmbeddedMessageFormsSub7 = curEmbeddedMessageFormsSub7+1;
+            }//end 3rd if
+            //within last RC date
+            if(curLastRankChangeDateNum<=curEmbeddedMessageFormSubmissionArray[y][0]&&currentDateNum>=curEmbeddedMessageFormSubmissionArray[y][0]){//start 3rd if
+              curEmbeddedMessageFormsSubRC = curEmbeddedMessageFormsSubRC+1;
+            }//end 3rd if
+            //feedbacks not in the future
+            if(currentDateNum>=curEmbeddedMessageFormSubmissionArray[y][0]){//start 3rd if
+              curEmbeddedMessageFormsSubAll = curEmbeddedMessageFormsSubAll+1;
+            }//end 3rd if
+          }//end 4th for
+          
+          
+          //Expansion Forms Submitted
+          var curExpansionFormsSub7 = 0;
+          var curExpansionFormsSubRC = 0;
+          var curExpansionFormsSubAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curExpansionFormSubmissionArray.length; y+=1){//start 4th for
+            //within 7 days
+            if(todayMinus6<=curExpansionFormSubmissionArray[y][0]&&currentDateNum>=curExpansionFormSubmissionArray[y][0]){//start 3rd if
+              curExpansionFormsSub7 = curExpansionFormsSub7+1;
+            }//end 3rd if
+            //within last RC date
+            if(curLastRankChangeDateNum<=curExpansionFormSubmissionArray[y][0]&&currentDateNum>=curExpansionFormSubmissionArray[y][0]){//start 3rd if
+              curExpansionFormsSubRC = curExpansionFormsSubRC+1;
+            }//end 3rd if
+            //feedbacks not in the future
+            if(currentDateNum>=curExpansionFormSubmissionArray[y][0]){//start 3rd if
+              curExpansionFormsSubAll = curExpansionFormsSubAll+1;
+            }//end 3rd if
+          }//end 4th for
+          
+          
+          //Fixer Forms Submitted
+          var curFixerFormsSub7 = 0;
+          var curFixerFormsSubRC = 0;
+          var curFixerFormsSubAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curFixerFormSubmissionArray.length; y+=1){//start 4th for
+            //within 7 days
+            if(todayMinus6<=curFixerFormSubmissionArray[y][0]&&currentDateNum>=curFixerFormSubmissionArray[y][0]){//start 3rd if
+              curFixerFormsSub7 = curFixerFormsSub7+1;
+            }//end 3rd if
+            //within last RC date
+            if(curLastRankChangeDateNum<=curFixerFormSubmissionArray[y][0]&&currentDateNum>=curFixerFormSubmissionArray[y][0]){//start 3rd if
+              curFixerFormsSubRC = curFixerFormsSubRC+1;
+            }//end 3rd if
+            //feedbacks not in the future
+            if(currentDateNum>=curFixerFormSubmissionArray[y][0]){//start 3rd if
+              curFixerFormsSubAll = curFixerFormsSubAll+1;
+            }//end 3rd if
+          }//end 4th for
+          
+          
+          //UpdateControl Forms Submitted
+          var curUpdateControlFormsSub7 = 0;
+          var curUpdateControlFormsSubRC = 0;
+          var curUpdateControlFormsSubAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curUpdateControlFormSubmissionArray.length; y+=1){//start 4th for
+            //within 7 days
+            if(todayMinus6<=curUpdateControlFormSubmissionArray[y][0]&&currentDateNum>=curUpdateControlFormSubmissionArray[y][0]){//start 3rd if
+              curUpdateControlFormsSub7 = curUpdateControlFormsSub7+1;
+            }//end 3rd if
+            //within last RC date
+            if(curLastRankChangeDateNum<=curUpdateControlFormSubmissionArray[y][0]&&currentDateNum>=curUpdateControlFormSubmissionArray[y][0]){//start 3rd if
+              curUpdateControlFormsSubRC = curUpdateControlFormsSubRC+1;
+            }//end 3rd if
+            //feedbacks not in the future
+            if(currentDateNum>=curUpdateControlFormSubmissionArray[y][0]){//start 3rd if
+              curUpdateControlFormsSubAll = curUpdateControlFormsSubAll+1;
+            }//end 3rd if
+          }//end 4th for
+          
+          
+          //Permission Forms Submitted
+          var curPermissionFormsSub7 = 0;
+          var curPermissionFormsSubRC = 0;
+          var curPermissionFormsSubAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curPermissionFormSubmissionArray.length; y+=1){//start 4th for
+            //within 7 days
+            if(todayMinus6<=curPermissionFormSubmissionArray[y][0]&&currentDateNum>=curPermissionFormSubmissionArray[y][0]){//start 3rd if
+              curPermissionFormsSub7 = curPermissionFormsSub7+1;
+            }//end 3rd if
+            //within last RC date
+            if(curLastRankChangeDateNum<=curPermissionFormSubmissionArray[y][0]&&currentDateNum>=curPermissionFormSubmissionArray[y][0]){//start 3rd if
+              curPermissionFormsSubRC = curPermissionFormsSubRC+1;
+            }//end 3rd if
+            //feedbacks not in the future
+            if(currentDateNum>=curPermissionFormSubmissionArray[y][0]){//start 3rd if
+              curPermissionFormsSubAll = curPermissionFormsSubAll+1;
+            }//end 3rd if
+          }//end 4th for
+          
+          
+          //GroupReport Forms Submitted
+          var curGroupReportFormsSub7 = 0;
+          var curGroupReportFormsSubRC = 0;
+          var curGroupReportFormsSubAll = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<curGroupReportFormSubmissionArray.length; y+=1){//start 4th for
+            //within 7 days
+            if(todayMinus6<=curGroupReportFormSubmissionArray[y][0]&&currentDateNum>=curGroupReportFormSubmissionArray[y][0]){//start 3rd if
+              curGroupReportFormsSub7 = curGroupReportFormsSub7+1;
+            }//end 3rd if
+            //within last RC date
+            if(curLastRankChangeDateNum<=curGroupReportFormSubmissionArray[y][0]&&currentDateNum>=curGroupReportFormSubmissionArray[y][0]){//start 3rd if
+              curGroupReportFormsSubRC = curGroupReportFormsSubRC+1;
+            }//end 3rd if
+            //feedbacks not in the future
+            if(currentDateNum>=curGroupReportFormSubmissionArray[y][0]){//start 3rd if
+              curGroupReportFormsSubAll = curGroupReportFormsSubAll+1;
+            }//end 3rd if
+          }//end 4th for
+          
+          
+          //Permissions
+          var curPerms = pmdcmscv[x][6];
+          
+          
+          var cmpeiscv = 
+              [[curGt, "", "", "", "", ""], 
+               ["Last Rank Change", "", "", "Last Credential Change", "", ""], 
+               [curLastRankChangeDate, curLastRankChangeDetails, "", curLastCredChangeDate, curLastCredChangeDetails, ""], 
+               ["Last Reprimand", "", "", "Last Mentor Change", "", ""], 
+               [curLastReprimandDate, curLastReprimandDetails, "", curLastMentorChangeDate, curLastMentorChangeDetails, ""], 
+               ["Last Group Change", "", "", "Last Availability Change", "", ""], 
+               [curLastGroupChangeDate, curLastGroupChangeDetails, "", curLastGAChangeDate, curLastGAChangeDetails, ""], 
+               ["Last Gamertag Change", "", "", "Last Discord Nickname Change", "", ""], 
+               [curLastGtChangeDate, curLastGtChangeDetails, "", curLastDiscNameChangeDate, curLastDiscNameChangeDetails, ""], 
+               ["Members Recruited", "", "", "", "", ""],
+               ["Number of Members:", curNumMemsRecruited, "Members Recruited:", curMemsRecruited, "", ""],
+               ["Bootcamp", "", "", "", "", ""], 
+               ["Unblooded Group:", curUnbloodedGroup, "Bootcamp Date:", curBcDate, "Recruited By:", curRecruitBy], 
+               ["Bootcamp LDI:", curBcLdi, "Additional Notes:", curAddNotes, "", ""], 
+               ["Leaves of Absence", "", "", "", "", ""], 
+               ["Number of Leaves of Absence:", "", curNumLoa, "Most Recent LOA:", curRecentLoa, ""], 
+               ["Inactivity", "", "", "", "", ""], 
+               ["Number of Times of Inactivity:", curNumInactivity, "Most Recent Inactivity:", curRecentInactive, "Cushion Date:", curCushionDate], 
+               ["Forge", "", "", "", "", ""], 
+               ["Number of Maps Forged:", curNumMapsForged, "Most Recent Map Entry Info:", curRecentEntryDetails, "", ""], 
+               ["Most Recent Map Entry Date:", curRecentEntryDate, "", "", "", ""], 
+               ["Reprimands", "", "", "", "", ""], 
+               ["Last 7 Days:", curReprimands7, "Since Last Rank Change:", curReprimandsRC, "Total:", curReprimandsAll], 
+               ["Events Attended", "", "", "", "", ""], 
+               ["Last 7 Days:", curEventsAttend7, "Since Last Rank Change:", curEventsAttendRC, "Total:", curEventsAttendAll], 
+               ["Events Lead (Secondary Leader)", "", "", "", "", ""], 
+               ["Last 7 Days:", curEvents2ndLead7, "Since Last Rank Change:", curEvents2ndLeadRC, "Total:", curEvents2ndLeadAll],
+               ["Events Lead (Main Leader)", "", "", "", "", ""], 
+               ["Last 7 Days:", curEventsMainLead7, "Since Last Rank Change:", curEventsMainLeadRC, "Total:", curEventsMainLeadAll],
+               ["Member Reports Given", "", "", "", "", ""], 
+               ["Last 7 Days:", curReportsGiven7, "Since Last Rank Change:", curReportsGivenRC, "Total:", curReportsGivenAll],
+               ["Member Reports Received", "", "", "", "", ""], 
+               ["Last 7 Days:", curReportsReceived7, "Since Last Rank Change:", curReportsReceivedRC, "Total:", curReportsReceivedAll],
+               ["Forge Forms Submitted", "", "", "", "", ""], 
+               ["Last 7 Days:", curForgeFormsSub7, "Since Last Rank Change:", curForgeFormsSubRC, "Total:", curForgeFormsSubAll],
+               ["Member Update Forms Submitted", "", "", "", "", ""], 
+               ["Last 7 Days:", curMemberUpdateFormsSub7, "Since Last Rank Change:", curMemberUpdateFormsSubRC, "Total:", curMemberUpdateFormsSubAll],
+               ["Event Debrief Forms Submitted", "", "", "", "", ""], 
+               ["Last 7 Days:", curDebriefFormsSub7, "Since Last Rank Change:", curDebriefFormsSubRC, "Total:", curDebriefFormsSubAll],
+               ["New Member Forms Submitted", "", "", "", "", ""], 
+               ["Last 7 Days:", curNewMemberFormsSub7, "Since Last Rank Change:", curNewMemberFormsSubRC, "Total:", curNewMemberFormsSubAll],
+               ["Scheduling Forms Submitted", "", "", "", "", ""], 
+               ["Last 7 Days:", curSchedulingFormsSub7, "Since Last Rank Change:", curSchedulingFormsSubRC, "Total:", curSchedulingFormsSubAll],
+               ["Embedded Message Forms Submitted", "", "", "", "", ""], 
+               ["Last 7 Days:", curEmbeddedMessageFormsSub7, "Since Last Rank Change:", curEmbeddedMessageFormsSubRC, "Total:", curEmbeddedMessageFormsSubAll],
+               ["Expansion Forms Submitted", "", "", "", "", ""], 
+               ["Last 7 Days:", curExpansionFormsSub7, "Since Last Rank Change:", curExpansionFormsSubRC, "Total:", curExpansionFormsSubAll],
+               ["Fixer Forms Submitted", "", "", "", "", ""], 
+               ["Last 7 Days:", curFixerFormsSub7, "Since Last Rank Change:", curFixerFormsSubRC, "Total:", curFixerFormsSubAll],
+               ["Update Control Forms Submitted", "", "", "", "", ""], 
+               ["Last 7 Days:", curUpdateControlFormsSub7, "Since Last Rank Change:", curUpdateControlFormsSubRC, "Total:", curUpdateControlFormsSubAll],
+               ["Permission Forms Submitted", "", "", "", "", ""], 
+               ["Last 7 Days:", curPermissionFormsSub7, "Since Last Rank Change:", curPermissionFormsSubRC, "Total:", curPermissionFormsSubAll],
+               ["Group Report Forms Submitted", "", "", "", "", ""], 
+               ["Last 7 Days:", curGroupReportFormsSub7, "Since Last Rank Change:", curGroupReportFormsSubRC, "Total:", curGroupReportFormsSubAll],
+               ["ODIN Permissions", "", "", "", "", ""], 
+               [curPerms, "", "", "", "", ""]];
+          
+          
+          
+          
+          
+          
+          
+          
+          ///*** MEMBER UPDATES ***///
+          
+          
+          //gets starter array
+          var cmpmuscv = 
+            [
+              ["Member Reports", "", "", "Reprimands", "", "", "Rank Changes", "",
+               "", "Credential Changes", "", "", "Group Changes", "", "", "Gamertag Changes", "",
+               "", "Discord Nickname Changes", "", "", "Availability Changes", "", "", "LOAs Changes", "",
+               "", "Birthday Changes", "", "", "Mentor Changes", "", "", "Position Code Changes", "",
+               "", "Enlistment History", ""],
+              ["Date", "Report Details", "", "Date", "Reprimand Details", "", "Date", "Update Details",
+               "", "Date", "Update Details", "", "Date", "Update Details", "", "Date", "Update Details", 
+               "", "Date", "Update Details", "", "Date", "Update Details", "", "Date", "Update Details", 
+               "", "Date", "Update Details", "", "Date", "Update Details", "", "Date", "Update Details", 
+               "", "Date", "Details"]
+            ];
+          
+          
+          //gets and adds the necessary amount "rows" or arrays to cmpmuscv
+          var numOfRows = Math.max(curMemberReportsArray.length, curMemberReprimandsArray.length,
+                                   curMemberRankArray.length, curMemberCredArray.length, 
+                                   curMemberGroupArray.length, curMemberGamertagArray.length, 
+                                   curMemberNicknameArray.length, curMemberAvailabilityArray.length, 
+                                   curMemberLOAsArray.length, curMemberBirthdayArray.length, 
+                                   curMemberMentorArray.length, curMemberPCArray.length, 
+                                   curMemberEnlistmentHistoryArray.length
+                                  );
+          for(var y=0; y<numOfRows; y+=1){//start 4th for
+            //adds new row
+            cmpmuscv.push(["","","","","","","","","","","","","","","","","","","",
+                           "","","","","","","","","","","","","","","","","","",""]);
+            
+            //member reports
+            if(curMemberReportsArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][0] = curMemberReportsArrayDates[y][0];
+              cmpmuscv[y+2][1] = curMemberReportsArrayDates[y][1];
+            }//end 2nd if
+            
+            //Reprimands
+            if(curMemberReprimandsArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][3] = curMemberReprimandsArrayDates[y][0];
+              cmpmuscv[y+2][4] = curMemberReprimandsArrayDates[y][1];
+            }//end 2nd if
+            
+            //Rank Changes
+            if(curMemberRankArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][6] = curMemberRankArrayDates[y][0];
+              cmpmuscv[y+2][7] = curMemberRankArrayDates[y][1];
+            }//end 2nd if
+            
+            //Credential Changes
+            if(curMemberCredArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][9] = curMemberCredArrayDates[y][0];
+              cmpmuscv[y+2][10] = curMemberCredArrayDates[y][1];
+            }//end 2nd if
+            
+            //Group Changes
+            if(curMemberGroupArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][12] = curMemberGroupArrayDates[y][0];
+              cmpmuscv[y+2][13] = curMemberGroupArrayDates[y][1];
+            }//end 2nd if
+            
+            //Gamertag Changes
+            if(curMemberGamertagArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][15] = curMemberGamertagArrayDates[y][0];
+              cmpmuscv[y+2][16] = curMemberGamertagArrayDates[y][1];
+            }//end 2nd if
+            
+            //Discord Nickname Changes
+            if(curMemberNicknameArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][18] = curMemberNicknameArrayDates[y][0];
+              cmpmuscv[y+2][19] = curMemberNicknameArrayDates[y][1];
+            }//end 2nd if
+            
+            //Availability Changes
+            if(curMemberAvailabilityArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][21] = curMemberAvailabilityArrayDates[y][0];
+              cmpmuscv[y+2][22] = curMemberAvailabilityArrayDates[y][1];
+            }//end 2nd if
+            
+            //LOAs
+            if(curMemberLOAsArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][24] = curMemberLOAsArrayDates[y][0];
+              cmpmuscv[y+2][25] = curMemberLOAsArrayDates[y][1];
+            }//end 2nd if   
+            
+            //Birthday Changes
+            if(curMemberBirthdayArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][27] = curMemberBirthdayArrayDates[y][0];
+              cmpmuscv[y+2][28] = curMemberBirthdayArrayDates[y][1];
+            }//end 2nd if
+            
+            //Mentor Changes
+            if(curMemberMentorArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][30] = curMemberMentorArrayDates[y][0];
+              cmpmuscv[y+2][31] = curMemberMentorArrayDates[y][1];
+            }//end 2nd if
+            
+            //Position Code Change
+            if(curMemberPCArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][33] = curMemberPCArrayDates[y][0];
+              cmpmuscv[y+2][34] = curMemberPCArrayDates[y][1];
+            }//end 2nd if
+            
+            //Enlistment History
+            if(curMemberEnlistmentHistoryArrayDates.length>y){//start 2nd if
+              cmpmuscv[y+2][36] = curMemberEnlistmentHistoryArrayDates[y][0];
+              cmpmuscv[y+2][37] = curMemberEnlistmentHistoryArrayDates[y][1];
+            }//end 2nd if
+            
+          }//end 4th for
+          
+          
+          
+          
+          
+          
+          
+          
+          ///*** ATTENDANCE ***///
+          
+          //gets starter array
+          var cmpascv = [["Attendance", ""], ["Date", "Event Details"]];
+          
+          var numOfRows = curAttendanceArrayDates.length;
+          
+          for(var y=0; y<numOfRows; y+=1){//start 4th for
+            //adds new row
+            cmpascv.push(["",""]);
+            
+            //Attendance
+            if(curAttendanceArrayDates.length>y){//start 2nd if
+              cmpascv[y+2][0] = curAttendanceArrayDates[y][0];
+              cmpascv[y+2][1] = curAttendanceArrayDates[y][1];
+            }//end 2nd if
+          }//end 4th for
+          
+          
+          
+          
+          
+          
+          
+          ///*** FORGE ***///
+          
+          //gets starter array
+          var cmpfscv = [["Forge", ""], ["Date", "Forge Details"]];
+          
+          var numOfRows = curForgeArray.length;
+          
+          for(var y=0; y<numOfRows; y+=1){//start 4th for
+            //adds new row
+            cmpfscv.push(["",""]);
+            
+            //Forge
+            if(curForgeArrayDates.length>y){//start 2nd if
+              cmpfscv[y+2][0] = curForgeArrayDates[y][0];
+              cmpfscv[y+2][1] = curForgeArrayDates[y][1];
+            }//end 2nd if
+          }//end 4th for
+          
+          
+          
+          
+          
+          
+          
+          ///*** FORM SUBMISSIONS ***///
+          
+          //gets starter array
+          var cmpfsscv = 
+           [
+             ["Member Reports Given", "", "", "Event Forms", "", "", "Member Update Form (minus reports)", 
+              "", "", "Forge Forms", "", "", "New Member Forms", "", "", "Scheduling Forms", "", "",
+              "Embedded Message Forms", "", "", "Expansion Forms", "", "", "Fixer Forms", "", "",
+              "Update Control Forms", "", "", "Permission Forms", "", "", "Group Report Forms", ""], 
+             ["Date", "Form Entry Details", "", "Date", "Form Entry Details", "", "Date", "Form Entry Details", 
+              "", "Date", "Form Entry Details", "", "Date", "Form Entry Details", "", "Date", "Form Entry Details", 
+              "", "Date", "Form Entry Details", "", "Date", "Form Entry Details", "", "Date", "Form Entry Details", 
+              "", "Date", "Form Entry Details", "", "Date", "Form Entry Details", "", "Date", "Form Entry Details"]
+           ];
+          
+          
+          //gets and adds the necessary amount "rows" or arrays to cmpfsscv
+          var numOfRows = Math.max(curMemberReportsGivenArray.length,curEventsFormSubmissionArray.length,
+            curMemberUpdatesFormSubmissionArray.length,curForgeFormSubmissionArray.length,
+            curNewMemberFormSubmissionArray.length,curSchedulingFormSubmissionArray.length,
+            curEmbeddedMessageFormSubmissionArray.length, curExpansionFormSubmissionArray.length, 
+            curFixerFormSubmissionArray.length, curUpdateControlFormSubmissionArray.length, 
+            curPermissionFormSubmissionArray.length, curGroupReportFormSubmissionArray.length);
+          
+          
+          for(var y=0; y<numOfRows; y+=1){//start 4th for
+            //adds new row
+            cmpfsscv.push(["","","","","","","","","","","","","","","","","","",
+                           "","","","","","","","","","","","","","","","",""]);
+            
+            //member reports
+            if(curMemberReportsGivenArrayDate.length>y){//start 2nd if
+              cmpfsscv[y+2][0] = curMemberReportsGivenArrayDate[y][0];
+              cmpfsscv[y+2][1] = curMemberReportsGivenArrayDate[y][1];
+            }//end 2nd if
+            
+            //debrief
+            if(curEventsFormSubmissionArrayDates.length>y){//start 2nd if
+              cmpfsscv[y+2][3] = curEventsFormSubmissionArrayDates[y][0];
+              cmpfsscv[y+2][4] = curEventsFormSubmissionArrayDates[y][1];
+            }//end 2nd if
+            
+            //member updates
+            if(curMemberUpdatesFormSubmissionArrayDates.length>y){//start 2nd if
+              cmpfsscv[y+2][6] = curMemberUpdatesFormSubmissionArrayDates[y][0];
+              cmpfsscv[y+2][7] = curMemberUpdatesFormSubmissionArrayDates[y][1];
+            }//end 2nd if
+            
+            //forge
+            if(curForgeFormSubmissionArrayDates.length>y){//start 2nd if
+              cmpfsscv[y+2][9] = curForgeFormSubmissionArrayDates[y][0];
+              cmpfsscv[y+2][10] = curForgeFormSubmissionArrayDates[y][1];
+            }//end 2nd if
+            
+            //new member
+            if(curNewMemberFormSubmissionArrayDates.length>y){//start 2nd if
+              cmpfsscv[y+2][12] = curNewMemberFormSubmissionArrayDates[y][0];
+              cmpfsscv[y+2][13] = curNewMemberFormSubmissionArrayDates[y][1];
+            }//end 2nd if
+            
+            //Scheduling Forms
+            if(curSchedulingFormSubmissionArrayDates.length>y){//start 2nd if
+              cmpfsscv[y+2][15] = curSchedulingFormSubmissionArrayDates[y][0];
+              cmpfsscv[y+2][16] = curSchedulingFormSubmissionArrayDates[y][1];
+            }//end 2nd if
+            
+            //Embedded Message Forms
+            if(curEmbeddedMessageFormSubmissionArrayDates.length>y){//start 2nd if
+              cmpfsscv[y+2][18] = curEmbeddedMessageFormSubmissionArrayDates[y][0];
+              cmpfsscv[y+2][19] = curEmbeddedMessageFormSubmissionArrayDates[y][1];
+            }//end 2nd if
+            
+            //Expansion Forms
+            if(curExpansionFormSubmissionArrayDates.length>y){//start 2nd if
+              cmpfsscv[y+2][21] = curExpansionFormSubmissionArrayDates[y][0];
+              cmpfsscv[y+2][22] = curExpansionFormSubmissionArrayDates[y][1];
+            }//end 2nd if
+            
+            //Fixer Forms
+            if(curFixerFormSubmissionArrayDates.length>y){//start 2nd if
+              cmpfsscv[y+2][24] = curFixerFormSubmissionArrayDates[y][0];
+              cmpfsscv[y+2][25] = curFixerFormSubmissionArrayDates[y][1];
+            }//end 2nd if
+            
+            //Update Control Forms
+            if(curUpdateControlFormSubmissionArrayDates.length>y){//start 2nd if
+              cmpfsscv[y+2][27] = curUpdateControlFormSubmissionArrayDates[y][0];
+              cmpfsscv[y+2][28] = curUpdateControlFormSubmissionArrayDates[y][1];
+            }//end 2nd if
+            
+            //Permission Forms
+            if(curPermissionFormSubmissionArrayDates.length>y){//start 2nd if
+              cmpfsscv[y+2][30] = curPermissionFormSubmissionArrayDates[y][0];
+              cmpfsscv[y+2][31] = curPermissionFormSubmissionArrayDates[y][1];
+            }//end 2nd if
+            
+            //Group Report Forms
+            if(curGroupReportFormSubmissionArrayDates.length>y){//start 2nd if
+              cmpfsscv[y+2][33] = curGroupReportFormSubmissionArrayDates[y][0];
+              cmpfsscv[y+2][34] = curGroupReportFormSubmissionArrayDates[y][1];
+            }//end 2nd if
+            
+          }//end 4th for
+          
+          
+          //next is to paste then format info to sheets in order: gis - eis - crs - fss
+          //gis
+          FunctionContainer.tripleTrySetSSValues(cmpgis,1,1,cmpgiscv.length,cmpgiscv[0].length,cmpgiscv);
+          
+          
+          //eis
+          FunctionContainer.tripleTrySetSSValues(cmpeis,1,1,cmpeiscv.length,cmpeiscv[0].length,cmpeiscv);
+          
+          
+          //mus
+          //deletes previous data
+          var cmpmusmri = FunctionContainer.tripleTryGetMaxRows(cmpmus);
+          if(cmpmusmri>2){//start 2nd if
+            FunctionContainer.tripleTryDeleteRows(cmpmus,3,cmpmusmri-2);
+          }//end 2nd if
+          
+          if(cmpmuscv.length>2){//start 2nd if
+            //adds necessary rows to the sheet
+            FunctionContainer.tripleTryAddRows(cmpmus,2,cmpmuscv.length-2);
+            
+            //paste data
+            FunctionContainer.tripleTrySetSSValues(cmpmus,1,1,cmpmuscv.length,cmpmuscv[0].length,cmpmuscv);
+            
+            //formats each portion
+            for(var y=1; y<40; y+=3){//start 4th for
+              cmpmus.getRange(3,y,cmpmuscv.length-2,2).setFontWeight('normal').setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP).setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000').setBorder(null, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK).setBorder(true, null, null, null, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID);
+            }//end 4th for
+            
+            //sets row size
+            FunctionContainer.tripleTrySetRowsSize(cmpmus, 3, cmpmuscv.length-2, 50);
+          }//end 2nd if
+          
+          
+          //as
+          //deletes previous data
+          var cmpasmri = FunctionContainer.tripleTryGetMaxRows(cmpas);
+          if(cmpasmri>2){//start 2nd if
+            FunctionContainer.tripleTryDeleteRows(cmpas,3,cmpasmri-2);
+          }//end 2nd if
+          
+          if(cmpascv.length>2){//start 2nd if
+            //adds necessary rows to the sheet
+            FunctionContainer.tripleTryAddRows(cmpas,2,cmpascv.length-2);
+            
+            //paste data
+            FunctionContainer.tripleTrySetSSValues(cmpas,1,1,cmpascv.length,cmpascv[0].length,cmpascv);
+            
+            //formats each portion
+            cmpas.getRange(3,1,cmpascv.length-2,2).setFontWeight('normal').setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP).setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000').setBorder(null, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK).setBorder(true, null, null, null, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID);
+            
+            //sets row size
+            FunctionContainer.tripleTrySetRowsSize(cmpas, 3, cmpascv.length-2, 150);
+          }//end 2nd if
+          
+          //fs
+          //deletes previous data
+          var cmpfsmri = FunctionContainer.tripleTryGetMaxRows(cmpfs);
+          if(cmpfsmri>2){//start 2nd if
+            FunctionContainer.tripleTryDeleteRows(cmpfs,3,cmpfsmri-2);
+          }//end 2nd if
+          
+          if(cmpfscv.length>2){//start 2nd if
+            //adds necessary rows to the sheet
+            FunctionContainer.tripleTryAddRows(cmpfs,2,cmpfscv.length-2);
+            
+            //paste data
+            FunctionContainer.tripleTrySetSSValues(cmpfs,1,1,cmpfscv.length,cmpfscv[0].length,cmpfscv);
+            
+            //formats each portion
+            cmpfs.getRange(3,1,cmpfscv.length-2,2).setFontWeight('normal').setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP).setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000').setBorder(null, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK).setBorder(true, null, null, null, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID);
+            
+            //sets row size
+            FunctionContainer.tripleTrySetRowsSize(cmpfs, 3, cmpfscv.length-2, 150);
+          }//end 2nd if
+          
+          
+          //fss
+          //deletes previous data
+          var cmpfssmri = FunctionContainer.tripleTryGetMaxRows(cmpfss);
+          if(cmpfssmri>2){//start 2nd if
+            FunctionContainer.tripleTryDeleteRows(cmpfss,3,cmpfssmri-2);
+          }//end 2nd if
+          
+          if(cmpfsscv.length>2){//start 2nd if
+            //adds necessary rows to the sheet
+            FunctionContainer.tripleTryAddRows(cmpfss,2,cmpfsscv.length-2);
+            
+            //paste data
+            FunctionContainer.tripleTrySetSSValues(cmpfss,1,1,cmpfsscv.length,cmpfsscv[0].length,cmpfsscv);
+            
+            //formats each portion
+            for(var y=1; y<36; y+=3){//start 4th for
+              cmpfss.getRange(3,y,cmpfsscv.length-2,2).setFontWeight('normal').setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP).setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000').setBorder(null, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK).setBorder(true, null, null, null, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID);
+            }//end 4th for
+            
+            //sets row size
+            FunctionContainer.tripleTrySetRowsSize(cmpfss, 3, cmpfsscv.length-2, 150);
+          }//end 2nd if
+          
+        }//end 1st if
+      }//end 3rd for 
+    }//end 2nd for
+  }//end 1st for
+}//end memberProfileUpdate

@@ -1,0 +1,366 @@
+function schedulingFormResponseUpdate(){
+  errorCheck("schedulingFormResponseUpdate","SchedulingFormResponseUpdate");
+}//end schedulingFormResponseUpdate
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  
+  //Scheduling Form Response Sheet
+  var sfrs = FunctionContainer.tripleTryOpenSheet("","SF Responses");
+  var sfrslri = FunctionContainer.tripleTryGetLastRow(sfrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  var sfrscv = FunctionContainer.tripleTryGetValues(sfrs,sfrslri,1,1,26)[0];
+//  FunctionContainer.positionsInsideArray(sfrscv);
+  
+  
+  /*
+  [Timestamp[0], 
+  Email Address[1], 
+  Code[2], 
+  Update Discord?[3], 
+  New Event or Modify Existing Event?[4], 
+  
+  //New Event
+  Title[5], 
+  Event Group(s)[6], 
+  Event Date[7], 
+  Start Time (ET)[8], 
+  Expected Length[9], 
+  Leader[10], 
+  Extra Details[11], 
+  
+  //Modify Event
+  Title of Event That Will be Modified (Only Events Within 365 Days)[12], 
+  Operation[13], 
+  Title Change[14], 
+  Event Group(s) Change[15], 
+  Event Date Change[16], 
+  Start Time Change[17], 
+  Expected Length Change[18], 
+  Leader Change[19], 
+  Extra Details Change[20], 
+  [21], [22], [23], [24], [25]
+  */
+  
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(sfrscv[1].toString().trim(),pmdcmscv);
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    FunctionContainer.indFormErrorReport(perpitraitor, "scheduling form", "inputed an email not in the database", sfrslri, dllscv[88][10].toString());
+  }//end 2nd if
+  
+  
+  //trims everything and checks for illegal characters
+  var formTrimList = [1,2,5,11,14,20];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    sfrscv[formTrimList[i]] = sfrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(sfrscv[formTrimList[i]].indexOf("~")!==-1||sfrscv[formTrimList[i]].indexOf("^")!==-1||sfrscv[formTrimList[i]]===" "){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "scheduling form", "included special characters ~ or ^ (perp will not recieve pm with details because ^ and ~ interfere with the bot commands)", sfrslri, dllscv[88][10].toString());
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  var timesArray = [["30 Mins", (1/48)], ["45 Mins", (1/32)], ["1 Hour", (1/24)], ["1 Hour & 15 Mins", (5/96)],
+    ["1 Hour & 30 Mins", (1/16)], ["1 Hour & 45 Mins", (7/96)], ["2 Hours", (1/12)], ["2 Hours & 15 Mins", (3/32)],
+    ["2 Hours & 30 Mins", (5/48)], ["2 Hours & 45 Mins", (11/96)], ["3 Hours", (1/8)]];
+  
+  
+  //Scheduling Form Date Sheet
+  var sfds = FunctionContainer.tripleTryOpenSheet("","SF Dates");
+  
+  
+  var newVsModify = sfrscv[4].toString();
+  
+  
+  if(newVsModify === "New Event"){//start 1st if
+    var title = sfrscv[5].toString();
+    var groups = sfrscv[6].toString();
+    var date = FunctionContainer.dateReplace(sfrscv[7]);
+    var startTime = FunctionContainer.timeRetrieval12Cycle(sfrscv[8]);
+    var length = sfrscv[9].toString();
+    var leader = sfrscv[10].toString();
+    //blank or not
+    if(sfrscv[11].toString() !== ""){//start 2nd if
+      var details = sfrscv[11].toString();
+    }//end 2nd if
+    else{var details = "N/A"}
+    
+    var lengthNum = "";
+    for(var i=0; i<timesArray.length; i+=1){//start 1st for
+      if(timesArray[i][0].toString() === length){//start 1st if
+        lengthNum = timesArray[i][1];
+      }//end 1st if
+    }//end 1st for
+    
+    //gets actual start and end date and time for event
+    FunctionContainer.tripleTrySetSSValues(sfds, 1, 1, 1, 3, [[date, startTime, lengthNum]]);
+    SpreadsheetApp.flush();
+    curVals = FunctionContainer.tripleTryGetValues(sfds, 1, 1, 1, 6);
+    var startDateAndTime = curVals[0][3];
+    var endDateAndTime = curVals[0][4];
+    var startDateAndTimeNum = curVals[0][5];
+    curVals = undefined;
+    
+    var errorInfo = "\n\n • Title: **" + title + "**\n\n • Groups: **" + groups + "**\n\n • Date: **" + date
+      + "**\n\n • Start Time: **" + startTime + "**\n\n • Expected Length: **" + length
+      + "**\n\n • Leader: **" + leader + "**\n\n • Extra Details: **" + details + "**";
+    
+    var entryDetails = "New Event ~ Title: " + title + " ~ Groups: " + groups + " ~ Date: " + date
+      + " ~ Start Time: " + startTime + " ~ Expected Length: " + length
+      + " ~ Leader: " + leader + " ~ Extra Details: " + details;
+  }//end 1st if
+  
+  
+  //modify
+  else if(newVsModify === "Modify Existing Event"){//start 1st if
+    var calendar = CalendarApp.getCalendarById(dllscv[85][11].toString());
+    
+    var eventChoice = sfrscv[12].toString();
+    
+    var operation = sfrscv[13].toString();
+    
+    if(sfrscv[14].toString() !== ""){//start 2nd if
+      var newTitle = sfrscv[14].toString();
+    }//end 2nd if
+    else{var newTitle = "N/A"}
+    
+    if(sfrscv[15].toString() !== ""){//start 2nd if
+      var newGroups = sfrscv[15].toString();
+    }//end 2nd if
+    else{var newGroups = "N/A"}
+    
+    if(sfrscv[16].toString() !== ""){//start 2nd if
+      var newDate = FunctionContainer.dateReplace(sfrscv[16].toString());
+    }//end 2nd if
+    else{var newDate = "N/A"}
+    
+    if(sfrscv[17].toString() !== ""){//start 2nd if
+      var newStartTime = FunctionContainer.timeRetrieval12Cycle(sfrscv[17]);
+    }//end 2nd if
+    else{var newStartTime = "N/A"}
+    
+    if(sfrscv[18].toString() !== ""){//start 2nd if
+      var newLength = sfrscv[18].toString();
+    }//end 2nd if
+    else{var newLength = "N/A"}
+    
+    if(sfrscv[19].toString() !== ""){//start 2nd if
+      var newLeader = sfrscv[19].toString();
+    }//end 2nd if
+    else{var newLeader = "N/A"}
+    
+    if(sfrscv[20].toString() !== ""){//start 2nd if
+      var newDetails = sfrscv[20].toString();
+    }//end 2nd if
+    else{var newDetails = "N/A"}
+    
+    var lengthNum = "";
+    for(var i=0; i<timesArray.length; i+=1){//start 1st for
+      if(timesArray[i][0].toString() === newLength){//start 1st if
+        lengthNum = timesArray[i][1];
+      }//end 1st if
+    }//end 1st for
+    
+    
+    var errorInfo = "\n\n • Event Selected: **" + eventChoice + "**\n\n • Title Change: **" 
+      + newTitle + "**\n\n • Group Change: **" + newGroups + "**\n\n • Date Change: **" + newDate 
+      + "**\n\n • Start Time Change: **" + newStartTime + "**\n\n • Expected Length: **" + newLength
+      + "**\n\n • Leader Change: **" + newLeader + "**\n\n • Extra Details Change: **" + newDetails + "**";
+    
+    var entryDetails = "Modify Existing Event ~ Event Selected: " + eventChoice + " ~ Title Change: " 
+      + newTitle + " ~ Group Change: " + newGroups + " ~ Date Change: " + newDate 
+      + " ~ Start Time Change: " + newStartTime + " ~ Expected Length: " + newLength
+      + " ~ Leader Change: " + newLeader + " ~ Extra Details Change: " + newDetails 
+      + " ~ Operation: " + operation;
+  }//end 1st if
+  
+  //ICE if all else fails
+  else{throw new Error("Event operation not recognized")}
+  
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "sf", sfrscv[2].toString())){//start 1st if
+    if(newVsModify === "New Event"){//start 2nd if
+      //checks to see if date is in the past
+      if(dllscv[10][15] > (startDateAndTimeNum)){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Scheduling Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "scheduling form", "tried to put the event date as a date in the past", sfrslri, dllscv[88][10].toString());
+      }//end 3rd if
+      
+      var calendar = CalendarApp.getCalendarById(dllscv[85][11].toString());
+      
+      //checks to see if there is already event with these params
+      var events = calendar.getEvents(dllscv[10][0], dllscv[10][2]);
+      for(var i=0; i<events.length; i+=1){//start 1st for
+        if(events[i].getTitle() === title  &&  FunctionContainer.dateReplace(events[i].getStartTime()) === date){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Scheduling Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "scheduling form", "They tried to create an event with the same name and day as one already in calendar", sfrslri, dllscv[88][10].toString());
+        }//end 3rd if
+      }//end 1st for
+      
+      
+      calendar.createEvent(title, startDateAndTime, endDateAndTime, {location: leader, description: "Event Group(s): "+groups+" ~ Extra Details: "+details}).setColor(11);
+      
+    }//end 2nd if
+    
+    if(newVsModify === "Modify Existing Event"){//start 2nd if
+      
+      //delete
+      if(operation === "Delete"){//start 3rd if
+        //finds old event and deletes it
+        var events = calendar.getEvents(dllscv[10][0], dllscv[10][2]);
+        for(var i=0; i<events.length; i+=1){//start 1st for
+          if(events[i].getTitle() + " ~ " + FunctionContainer.dateReplace(events[i].getStartTime()) === eventChoice){//start 4th if
+            events[i].deleteEvent();
+          }//end 4th if
+        }//end 1st for
+      }//end 3rd if
+      
+      
+      //modify
+      else{//start 3rd if
+        //finds old event info
+        var events = calendar.getEvents(dllscv[10][0], dllscv[10][2]);
+        var allEventInfo = [];
+        for(var i=0; i<events.length; i+=1){//start 1st for
+          if(events[i].getTitle() + " ~ " + FunctionContainer.dateReplace(events[i].getStartTime()) === eventChoice){//start 4th if
+            var eventPos = i;
+            var oldTitle = events[i].getTitle();
+            var oldId = events[i].getId();
+            var oldDate = FunctionContainer.dateReplace(events[i].getStartTime());
+            var oldStartTime = FunctionContainer.timeRetrieval12Cycle(events[i].getStartTime());
+            var oldEndTime = FunctionContainer.timeRetrieval12Cycle(events[i].getEndTime());
+            var oldLeader = events[i].getLocation();
+            var oldGroupAndDetails = FunctionContainer.getEventGroupAndDetails(events[i].getDescription());
+            var oldGroups = oldGroupAndDetails[0];
+            var oldDetails = oldGroupAndDetails[1];
+            i = events.length + 1;
+          }//end 4th if
+        }//end 1st for
+        
+        //date change
+        var curEventDate = oldDate;
+        if(newDate !== "N/A"){//start 4th if
+          curEventDate = newDate;
+        }//end 3rd if
+        
+        //start time change
+        var curEventStartTime = oldStartTime;
+        if(newStartTime !== "N/A"){//start 4th if
+          curEventStartTime = newStartTime;
+        }//end 4th if
+        
+        //group change
+        var curEventGroups = oldGroups;
+        if(newGroups !== "N/A"){//start 4th if
+          curEventGroups = newGroups;
+        }//end 4th if
+        
+        //details change
+        var curEventDetails = oldDetails;
+        if(newDetails !== "N/A"){//start 4th if
+          curEventDetails = newDetails;
+        }//end 4th if
+        
+        //gets actual new start and end date and time for event
+        FunctionContainer.tripleTrySetSSValues(sfds, 1, 1, 1, 3, [[curEventDate, curEventStartTime, lengthNum]]);
+        SpreadsheetApp.flush();
+        curVals = FunctionContainer.tripleTryGetValues(sfds, 1, 1, 1, 6);
+        var startDateAndTime = curVals[0][3];
+        var endDateAndTime = curVals[0][4];
+        var startDateAndTimeNum = curVals[0][5];
+        curVals = undefined;
+        
+        //checks to see if date is in the past
+        if(dllscv[10][15] > startDateAndTimeNum){//start 4th if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Scheduling Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "scheduling form", "tried to put the event date as a date in the past", sfrslri, dllscv[88][10].toString());
+        }//end 4th if
+        
+        
+        var calendar = CalendarApp.getCalendarById(dllscv[85][11].toString());
+        
+        //checks to see if there is already event with these params
+        for(var i=0; i<events.length; i+=1){//start 1st for
+          if(events[i].getTitle() === newTitle  &&  FunctionContainer.dateReplace(events[i].getStartTime()) === newDate  &&  oldId !== events[i].getId()){//start 3rd if
+            FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Scheduling Form Errors", dllscv);
+            FunctionContainer.indFormErrorReport(perpitraitor, "scheduling form", "They tried to create an event with the same name and day as one already in calendar", sfrslri, dllscv[88][10].toString());
+          }//end 3rd if
+        }//end 1st for
+        
+        
+        
+        //sets time and dates
+        events[eventPos].setTime(startDateAndTime, endDateAndTime);
+        
+        //leader change
+        if(newLeader !== "N/A"){//start 4th if
+          events[eventPos].setLocation(newLeader);
+        }//end 4th if
+        
+        //title change
+        if(newTitle !== "N/A"){//start 4th if
+          events[eventPos].setTitle(newTitle);
+        }//end 4th if
+        
+        //details or group change
+        if(newGroups !== "N/A"  ||  newDetails !== "N/A"){//start 4th if
+          events[eventPos].setDescription("Event Group(s): "+curEventGroups+" ~ Extra Details: "+curEventDetails);
+        }//end 4th if
+      }//end 3rd if
+    }//end 2nd if
+    
+    
+    
+    //update discord
+    if(sfrscv[3].toString() === "Yes"){//start 2nd if
+      FunctionContainer.updateDiscordCalendar(dllscv);
+    }//end 2nd if
+    
+    FunctionContainer.updateSchedulingFormEvents(dllscv);
+    
+    //pastes vals into miscellaneous Form Hub Entries Sheet
+    FunctionContainer.miscFormHubEntry("Scheduling Form", FunctionContainer.dateReplace(sfrscv[0].toString()), 
+      FunctionContainer.timeRetrieval12Cycle(sfrscv[0]), entryDetails, perpitraitor, dllscv);
+    
+    
+  }//end 1st if
+  
+  
+  //if code is wrong
+  else{
+    FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Scheduling Form Errors", dllscv);
+    FunctionContainer.indFormErrorReport(perpitraitor, "scheduling form", "inputed an incorrect code", sfrslri, dllscv[88][10].toString());
+  }//end 1st else
+  
+  
+}//end main

@@ -1,0 +1,48 @@
+function groupProfileUpdateSpecialSubSubGroup02(){
+  errorCheck("4:20",132,"groupProfileUpdateSpecialSubSubGroup02","GroupProfileUpdateSpecialSubSubGroup02");
+}//end groupProfileUpdateSpecialSubSubGroup02
+
+
+function errorCheck(time,col,functionName,projectName){
+  try{main();triggerCreator(time,col,functionName);}//end 1st try
+  catch(error){console.log(error);
+    if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+      try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 2nd try
+      catch(error){console.log(error);
+        if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+          try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 3rd try
+          catch(error){console.log(error);
+            FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 3rd catch
+        else{FunctionContainer.discErrorReport(error,functionName,projectName);}}}//end 2nd catch
+    else{FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 1st catch
+}//end errorCheck
+
+
+function triggerCreator(ct,tColNum,scriptName){
+  var datSheetOriginal=FunctionContainer.tripleTryOpenSheet("", "Dates");var cdd=datSheetOriginal.getRange(1,1,15,datSheetOriginal.getLastColumn()).getValues();var triggerChangesMade = [];var vals = [[],[],[],[],[],[],[],[],[],[],[]];
+  triggerChangesMade.push("Old Trigger Id's and Dates:\nTrigger ID: "+cdd[9][tColNum-1].toString()+" For Date: "+cdd[1][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[10][tColNum-1].toString()+" For Date: "+cdd[4][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[11][tColNum-1].toString()+" For Date: "+cdd[5][tColNum-1].toString());
+  if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[1][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())){
+    var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){if(t[i].getUniqueId()===cdd[9][tColNum-1].toString()){ScriptApp.deleteTrigger(t[i]);triggerChangesMade.push("\nTrigger Deleted ~ "+cdd[9][tColNum-1].toString()+" for date: "+cdd[1][tColNum-1].toString());}}
+    var bruhX3 = cdd[3][0].toString();for(var iii = 0;iii<4;iii++){cdd[iii][0]=cdd[iii][0].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    for(var m=0;m<months.length;m++){if(bruhX3.indexOf(months[m].toString())!==-1){m=m+1;triggerTime = bruhX3[11].toString()+bruhX3[12].toString()+bruhX3[13].toString()+bruhX3[14].toString()+"-"+m+"-"+bruhX3[8].toString()+bruhX3[9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[0] = [cdd[4][tColNum-1]];vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[3] = [cdd[5][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];
+    vals[8] = [cdd[10][tColNum-1]];vals[9] = [cdd[11][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}
+  else if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[3][0].toString())){triggerChangesMade.push("\nNo Trigger Changes Made");}
+  else{var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){triggerChangesMade.push("\nTrigger Deleted ~ "+t[i].getUniqueId());ScriptApp.deleteTrigger(t[i]);}var cd=datSheetOriginal.getRange(1,1,4).getValues();
+    for(var iii = 0;iii<4;iii++){cd[iii]=cd[iii].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[0].indexOf(months[m].toString())!==-1){
+    m=m+1;triggerTime = cd[0][11].toString()+cd[0][12].toString()+cd[0][13].toString()+cd[0][14].toString()+"-"+m+"-"+cd[0][8].toString()+cd[0][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(2,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();
+    var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[0] = [tt];vals[8] = [uniqueTriggerID];var triggerTime="";
+    var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[2].indexOf(months[m].toString())!==-1){m=m+1;triggerTime = cd[2][11].toString()+cd[2][12].toString()+cd[2][13].toString()+cd[2][14].toString()+"-"+m+"-"+cd[2][8].toString()+cd[2][9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(5,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[3] = [tt];vals[9] = [uniqueTriggerID];var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[3].indexOf(months[m].toString())!==-1){m=m+1;
+    triggerTime = cd[3][11].toString()+cd[3][12].toString()+cd[3][13].toString()+cd[3][14].toString()+"-"+m+"-"+cd[3][8].toString()+cd[3][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();
+    triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}console.log(triggerChangesMade);
+}//end triggerCreator
+
+
+function main(){
+  var valsForGroupProfileUpdate = [44];
+  
+  GroupProfileUpdate.groupProfileUpdate(valsForGroupProfileUpdate);
+}//end main

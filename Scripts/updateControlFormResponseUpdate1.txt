@@ -1,0 +1,1077 @@
+function updateControlFormResponseUpdate1(){
+  errorCheck("updateControlFormResponseUpdate1","UpdateControlFormResponseUpdate1");
+}//end updateControlFormResponseUpdate1
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  //Update Control Form Response Sheet
+  var ucfrs = FunctionContainer.tripleTryOpenSheet("","UCF Responses");
+  var ucfrslri = FunctionContainer.tripleTryGetLastRow(ucfrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  //vals
+  var ucfrscv = FunctionContainer.tripleTryGetValues(ucfrs, ucfrslri, 1, 1, 15)[0];
+//  FunctionContainer.positionsInsideArray(ucfrscv);
+  /*
+    [Timestamp[0], Email Address[1], Code[2], Operation[3], 
+    Group(s) in Question[4], Form(s) in Question[5], 
+    Available Position Codes[6], Which Test[7], Test[8], 
+    [9], [10], [11], [12], [13], [14]]
+  */
+  
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(ucfrscv[1].toString().trim(),pmdcmscv);
+  
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    FunctionContainer.indFormErrorReport(perpitraitor, "update control form", "inputted an email not in the database", ucfrslri, dllscv[88][8].toString());
+  }//end 2nd if
+
+  
+  //trims the necessary values
+  var formTrimList = [1, 2, 3, 4, 5, 6, 7, 8];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    ucfrscv[formTrimList[i]] = ucfrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(ucfrscv[formTrimList[i]].indexOf("^")!==-1){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "update control form", "included special character ^ (perp will not recieve pm with details because ^ interferes with the bot commands)", ucfrslri, dllscv[88][8].toString());
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  
+  
+  
+  
+  ///*** DATA GATHERING ***///
+  
+  var operation = ucfrscv[3];
+  
+  var errorInfo = "\n\n • Form Operation:** " + operation + "**";
+
+  var dateOfEntry = FunctionContainer.dateReplace(ucfrscv[0].toString());
+  
+  var details = operation;
+  
+  
+  if(operation === "Member Profile Update"  ||  operation === "Group Profile Update"){//start 1st if
+    var groupsInQuestion = ucfrscv[4];
+    var groupsInQuestionArray = FunctionContainer.splitEmUp(groupsInQuestion);
+    details = details + " ~ Group(s) in Question: " + groupsInQuestion;
+    var errorInfo = errorInfo + "\n\n • Group(s) in Question:** " + groupsInQuestion + "**";
+    var groupNumList = [];
+    for(var i=0; i<FunctionContainer.splitNumberInto2(groupsInQuestionArray.length)[0]; i+=1){//start 1st for
+      for(var x=0; x<49; x+=1){//start 2nd for
+        if(dllscv[40][x].toString() === groupsInQuestionArray[i].toString()){//start 2nd if
+          groupNumList.push(x);
+          x = 50;
+        }//end 2nd if
+      }//end 2nd for
+    }//end 1st for
+  }//end 1st if
+  
+  else if(operation === "Turn **Off** Form Responses"  
+          ||  operation === "Turn **On** Form Responses"  
+          ||  operation === "Rerun Form Responses"  
+          ||  operation === "Form Lists Update"){//start 1st if/else
+    var formsInQuestion = ucfrscv[5];
+    var formsInQuestionArray = FunctionContainer.splitEmUp(formsInQuestion);
+    details = details + " ~ Form(s) in Question: " + formsInQuestion;
+    var errorInfo = errorInfo + "\n\n • Form(s) in Question:** " + formsInQuestion + "**";
+  }//end 1st if/else
+  
+  else if(operation === "Testing"){//start 1st if/else
+    var testOperation = ucfrscv[7];
+    var testInput = ucfrscv[8];
+    details = details + " ~ Test Operation: " + testOperation + " ~ Test Input: " + testInput;
+    var errorInfo = errorInfo + "\n\n • Test Operation:** " + testOperation
+      + "\n\n • Test Input:** " + testInput + "**";
+  }//end 1st if/else
+  
+  
+  
+  //** CHECKS AND DATA CHANGING **//
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "ucf", ucfrscv[2].toString())){//start 1st if
+    
+    //Member Profile Update
+    if(operation === "Member Profile Update"){//start 2nd if
+      //runs member updates
+      MemberProfileUpdate.memberProfileUpdate(groupNumList);
+    }//end 2nd if
+    
+    
+    //Group Profile Update
+    else if(operation === "Group Profile Update"){//start 2nd if/else
+      //runs group updates
+      GroupProfileUpdate.groupProfileUpdate(groupNumList);
+    }//end 2nd if/else
+    
+    
+    //Discord Schedule
+    else if(operation === "Discord Schedule"){//start 2nd if/else
+      FunctionContainer.updateDiscordCalendar(dllscv);
+    }//end 2nd if/else
+    
+    
+    //Form Lists Update
+    else if(operation === "Form Lists Update"){//start 2nd if/else
+      for(var i=0; i<formsInQuestionArray.length; i+=1){//start 1st for
+        if(formsInQuestionArray[i].toString() === "All Forms"){//start 3rd if
+          //DebriefFormListUpdate
+          DebriefFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //ForgeFormListUpdate
+          ForgeFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //NewMemberFormListUpdate
+          NewMemberFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //MemberUpdateFormListUpdate
+          MemberUpdateFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //ExpansionFormListUpdate
+          ExpansionFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //FixerFormListUpdate
+          FixerFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //GroupReportFormListUpdate
+          GroupReportFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //EmbeddedMessageFormListUpdate
+          EmbeddedMessageFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //UpdateControlFormListUpdate
+          UpdateControlFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //PermissionFormListUpdate
+          PermissionFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //SchedulingFormListUpdate
+          SchedulingFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          i = 15;
+        }//end 3rd if
+        
+        else if(formsInQuestionArray[i].toString() === "All Minus Expansion Form and Update Control Form"){//start 3rd if/else
+          //DebriefFormListUpdate
+          DebriefFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //ForgeFormListUpdate
+          ForgeFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //NewMemberFormListUpdate
+          NewMemberFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //MemberUpdateFormListUpdate
+          MemberUpdateFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //FixerFormListUpdate
+//          FixerFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //GroupReportFormListUpdate
+//          GroupReportFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //EmbeddedMessageFormListUpdate
+          EmbeddedMessageFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //PermissionFormListUpdate
+//          PermissionFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          //SchedulingFormListUpdate
+          SchedulingFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+          i = 15;
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Debrief Form"){//start 3rd if/else
+          //DebriefFormListUpdate
+          DebriefFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Forge Form"){//start 3rd if/else
+          //ForgeFormListUpdate
+          ForgeFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "New Member Form"){//start 3rd if/else
+          //NewMemberFormListUpdate
+          NewMemberFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Member Update Form"){//start 3rd if/else
+          //MemberUpdateFormListUpdate
+          MemberUpdateFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Expansion Form"){//start 3rd if/else
+          //ExpansionFormListUpdate
+          ExpansionFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Fixer Form"){//start 3rd if/else
+          //FixerFormListUpdate
+//          FixerFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Group Report Form"){//start 3rd if/else
+          //GroupReportFormListUpdate
+//          GroupReportFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Embedded Message Form"){//start 3rd if/else
+          //EmbeddedMessageFormListUpdate
+          EmbeddedMessageFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Update Control Form"){//start 3rd if/else
+          //UpdateControlFormListUpdate
+          UpdateControlFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Permission Form"){//start 3rd if/else
+          //PermissionFormListUpdate
+//          PermissionFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Scheduling Form"){//start 3rd if/else
+          //SchedulingFormListUpdate
+          SchedulingFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+        }//end 3rd if/else
+      }//end 1st for
+    }//end 2nd if/else
+    
+    
+    //Member Hub
+    else if(operation === "Member Hub"){//start 2nd if/else
+      MemberHubUpdate.main();
+    }//end 2nd if/else
+    
+    
+    //Miscellaneous Daily Updates
+    else if(operation === "Miscellaneous Daily Updates"){//start 2nd if/else
+      MiscDailyUpdates.main();
+    }//end 2nd if/else
+    
+    
+    //Miscellaneous Daily Checks
+    else if(operation === "Miscellaneous Daily Checks"){//start 2nd if/else
+      MiscDailyChecks.main();
+    }//end 2nd if/else
+    
+    
+    //Turn **Off** Form Responses
+    else if(operation === "Turn **Off** Form Responses"){//start 2nd if/else
+      for(var i=0; i<formsInQuestionArray.length; i+=1){//start 1st for
+        if(formsInQuestionArray[i].toString() === "All Forms"){//start 3rd if
+          //Debrief Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][0].toString(),false);
+          //Forge Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][1].toString(),false);
+          //New Member Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][2].toString(),false);
+          //Member Update Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][3].toString(),false);
+          //Expansion Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][4].toString(),false);
+          //Fixer Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][5].toString(),false);
+          //Group Report Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][6].toString(),false);
+          //Embedded Message Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][7].toString(),false);
+          //Update Control Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][9].toString(),false);
+          //Permission Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][8].toString(),false);
+          //Scheduling Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][10].toString(),false);
+          i = 15;
+        }//end 3rd if
+        
+        else if(formsInQuestionArray[i].toString() === "All Minus Expansion Form and Update Control Form"){//start 3rd if/else
+          //Debrief Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][0].toString(),false);
+          //Forge Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][1].toString(),false);
+          //New Member Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][2].toString(),false);
+          //Member Update Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][3].toString(),false);
+          //Fixer Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][5].toString(),false);
+          //Group Report Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][6].toString(),false);
+          //Embedded Message Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][7].toString(),false);
+          //Permission Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][8].toString(),false);
+          //Scheduling Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][10].toString(),false);
+          i = 15;
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Debrief Form"){//start 3rd if/else
+          //Debrief Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][0].toString(),false);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Forge Form"){//start 3rd if/else
+          //Forge Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][1].toString(),false);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "New Member Form"){//start 3rd if/else
+          //New Member Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][2].toString(),false);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Member Update Form"){//start 3rd if/else
+          //Member Update Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][3].toString(),false);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Expansion Form"){//start 3rd if/else
+          //Expansion Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][4].toString(),false);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Fixer Form"){//start 3rd if/else
+          //Fixer Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][5].toString(),false);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Group Report Form"){//start 3rd if/else
+          //Group Report Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][6].toString(),false);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Embedded Message Form"){//start 3rd if/else
+          //Embedded Message Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][7].toString(),false);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Update Control Form"){//start 3rd if/else
+          //Update Control Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][9].toString(),false);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Permission Form"){//start 3rd if/else
+          //Permission Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][8].toString(),false);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Scheduling Form"){//start 3rd if/else
+          //Update Control Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][9].toString(),false);
+        }//end 3rd if/else
+      }//end 1st for
+    }//end 2nd if/else
+    
+    
+    //Turn **On** Form Responses
+    else if(operation === "Turn **On** Form Responses"){//start 2nd if/else
+      for(var i=0; i<formsInQuestionArray.length; i+=1){//start 1st for
+        if(formsInQuestionArray[i].toString() === "All Forms"){//start 3rd if
+          //Debrief Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][0].toString(),true);
+          //Forge Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][1].toString(),true);
+          //New Member Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][2].toString(),true);
+          //Member Update Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][3].toString(),true);
+          //Expansion Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][4].toString(),true);
+          //Fixer Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][5].toString(),true);
+          //Group Report Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][6].toString(),true);
+          //Embedded Message Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][7].toString(),true);
+          //Update Control Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][9].toString(),true);
+          //Permission Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][8].toString(),true);
+          //Scheduling Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][10].toString(),true);
+          i = 15;
+        }//end 3rd if
+        
+        else if(formsInQuestionArray[i].toString() === "All Minus Expansion Form and Update Control Form"){//start 3rd if/else
+          //Debrief Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][0].toString(),true);
+          //Forge Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][1].toString(),true);
+          //New Member Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][2].toString(),true);
+          //Member Update Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][3].toString(),true);
+          //Fixer Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][5].toString(),true);
+          //Group Report Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][6].toString(),true);
+          //Embedded Message Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][7].toString(),true);
+          //Permission Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][8].toString(),true);
+          //Scheduling Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][10].toString(),true);
+          i = 15;
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Debrief Form"){//start 3rd if/else
+          //Debrief Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][0].toString(),true);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Forge Form"){//start 3rd if/else
+          //Forge Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][1].toString(),true);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "New Member Form"){//start 3rd if/else
+          //New Member Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][2].toString(),true);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Member Update Form"){//start 3rd if/else
+          //Member Update Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][3].toString(),true);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Expansion Form"){//start 3rd if/else
+          //Expansion Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][4].toString(),true);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Fixer Form"){//start 3rd if/else
+          //Fixer Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][5].toString(),true);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Group Report Form"){//start 3rd if/else
+          //Group Report Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][6].toString(),true);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Embedded Message Form"){//start 3rd if/else
+          //Embedded Message Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][7].toString(),true);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Update Control Form"){//start 3rd if/else
+          //Update Control Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][9].toString(),true);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Permission Form"){//start 3rd if/else
+          //Permission Form
+//          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][8].toString(),true);
+        }//end 3rd if/else
+        
+        else if(formsInQuestionArray[i].toString() === "Scheduling Form"){//start 3rd if/else
+          //Update Control Form
+          FunctionContainer.tripleTryFormResponsesToggle(dllscv[85][9].toString(),true);
+        }//end 3rd if/else
+      }//end 1st for
+    }//end 2nd if/else
+    
+    
+    //Testing
+    else if(operation === "Testing"){//start 2nd if/else
+      if(testInput === ""){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Update Control Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "update control form", "put a blank test entry like an idiot", ucfrslri, dllscv[88][8].toString());
+      }//end 3rd if
+      
+      var testType = testOperation + " Test";
+      
+      var posTestOutput = " • It has **passed** the test and **can be used**.";
+      
+      var negTestOutput = "";
+      
+      //Gamertag Test
+      if(testOperation === "Gamertag"){//start 3rd if
+        
+        //if length is above 17
+        if(testInput.length > 17){//start 4th if
+          negTestOutput = negTestOutput + "\n • The gamertag's **length is too long** (must be 17 characters or less).";
+        }//end 4th if
+        
+        //checks to see if gt is already taken or apart of someone else's and if not sends error
+        for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+          if(pmdcmscv[i][0].toString().indexOf(testInput) !== -1){//start 4th if
+            negTestOutput = negTestOutput + "\n • The gamertag is already **taken** or **apart of someone else's gt**.";
+          }//end 4th if
+        }//end 1st for
+        
+        //if gamertag is the same as any of the group names
+        for(var i=0; i<57; i+=1){//start 1st for
+          //sends error if gamertag = Group name
+          if(testInput === dllscv[40][i].toString()){//start 4th if
+            negTestOutput = negTestOutput + "\n • The gamertag is the **same name** as an **existing group**.";
+          }//end 4th if
+        }//end 1st for
+        
+        //sends error if gamertag is N/A
+        if(testInput.indexOf("N/A") !== -1){//start 4th if
+          negTestOutput = negTestOutput + "\n • The gamertag cannot be **'N/A'**.";
+        }//end 4th if
+        
+        //sends error if gamertag has a special character
+        if(testInput.indexOf(",") !== -1  ||  testInput.indexOf("~") !== -1  ||  testInput.indexOf("]") !== -1
+          ||  testInput.indexOf("|") !== -1  ||  testInput === " "  ||  testInput.indexOf("[") !== -1
+          ||  testInput.indexOf("(") !== -1  ||  testInput.indexOf(")") !== -1  
+          ||  testInput.indexOf("*") !== -1){//start 4th if
+          negTestOutput = negTestOutput + "\n • The gamertag contains a **special character** and is not allowed.";
+        }//end 4th if
+        
+        //sends error if gamertag has leadership in the name
+        if(testInput.indexOf("Leadership") !== -1){//start 4th if
+          negTestOutput = negTestOutput + "\n • The gamertag contains **'Leadership'** which is not allowed.";
+        }//end 4th if
+        
+      }//end 3rd if
+      
+      
+      //Discord Nickname Test
+      if(testOperation === "Discord Nickname"){//start 3rd if
+        
+        //checks to see if nickname is already taken
+        for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+          if(pmdcmscv[i][1].toString() === testInput){//start 4th if
+            negTestOutput = negTestOutput + "\n • The nickname is the **same name** as someone else's **discord nickname**.";
+          }//end 4th if
+        }//end 1st for
+        
+        //if length is above 17
+        if(testInput.length > 17){//start 4th if
+          negTestOutput = negTestOutput + "\n • The nickname's **length is too long** (must be 17 characters or less).";
+        }//end 4th if
+        
+        //sends error if nickname has a special character
+        if(testInput.indexOf(",") !== -1  ||  testInput.indexOf("~") !== -1  ||  testInput.indexOf("]") !== -1
+          ||  testInput.indexOf("|") !== -1  ||  testInput === ""  ||  testInput.indexOf("[") !== -1
+          ||  testInput.indexOf("(") !== -1  ||  testInput.indexOf(")") !== -1  
+          ||  testInput.indexOf("*") !== -1){//start 4th if
+          negTestOutput = negTestOutput + "\n • The nickname contains a **special character** and is not allowed.";
+        }//end 4th if
+        
+        //sends error if nickname has leadership in the name
+        if(testInput.indexOf("Leadership") !== -1){//start 4th if
+          negTestOutput = negTestOutput + "\n • The nickname contains **'Leadership'** which is not allowed.";
+        }//end 4th if
+        
+        //sends error if nickname is N/A
+        if(testInput === "N/A"){//start 4th if
+          negTestOutput = negTestOutput + "\n • The nickname cannot be **'N/A'**.";
+        }//end 4th if
+
+      }//end 3rd if
+      
+      
+      //Group Name Test
+      if(testOperation==="Group Name"){//start 3rd if
+        //needs to compensate for leadership titles as well so max length needs to include that
+        
+        //sends error if group name is N/A
+        if(testInput === "N/A"){//start 4th if
+          negTestOutput = negTestOutput + "\n • The group name cannot be **'N/A'**.";
+        }//end 4th if
+        
+        //if length is above 40
+        if(testInput.length > 40){//start 4th if
+          negTestOutput = negTestOutput + "\n • The group name's **length is too long** (must be 40 characters or less).";
+        }//end 4th if
+        
+        //if gamertag is the same as any of the group names
+        for(var i=0; i<57; i+=1){//start 1st for
+          //sends error if group name matches
+          if(testInput === dllscv[40][i].toString()){//start 4th if
+            negTestOutput = negTestOutput + "\n • The group name is already **taken**.";
+            i = 57;
+          }//end 4th if
+          //sends error if group name contains input
+          else if(dllscv[40][i].toString().indexOf(testInput) !== -1  ||  testInput.indexOf(dllscv[40][i].toString()) !== -1){//start 4th if
+            negTestOutput = negTestOutput + "\n • The group name is already **a part** of an existing group's name.";
+            i = 57;
+          }//end 4th if
+        }//end 1st for
+        
+        //checks to see if group name is already a gamertag
+        for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+          if(pmdcmscv[i][0].toString() === testInput){//start 4th if
+            negTestOutput = negTestOutput + "\n • The group name is the **same name** as someone else's **gamertag**.";
+          }//end 4th if
+          if(pmdcmscv[i][1].toString() === testInput){//start 4th if
+            negTestOutput = negTestOutput + "\n • The group name is the **same name** as someone else's **discord nickname**.";
+          }//end 4th if
+        }//end 1st for
+        
+        //sends error if group name has a special character
+        if(testInput.indexOf(",") !== -1  ||  testInput.indexOf("~") !== -1  ||  testInput.indexOf("]") !== -1
+          ||  testInput.indexOf("|") !== -1  ||  testInput === ""  ||  testInput.indexOf("[") !== -1
+          ||  testInput.indexOf("(") !== -1  ||  testInput.indexOf(")") !== -1  
+          ||  testInput.indexOf("*") !== -1){//start 4th if
+          negTestOutput = negTestOutput + "\n • The group name contains a **special character** and is not allowed.";
+        }//end 4th if
+        
+        //checks to see if it has a group type's name in there
+        var doesntItContainGroupType = true;
+        for(var i=0; i<25; i+=1){//start 1st for
+          if(testInput.indexOf(dllscv[60][i].toString()) !== -1){//start 1st if
+            doesntItContainGroupType = false;
+          }//end 1st if
+        }//end 1st for
+        if(doesntItContainGroupType){//start 4th if
+          negTestOutput = negTestOutput + "\n • The group name **doesn't** contain any **group type name** in it.";
+        }//end 4th if
+        
+      }//end 3rd if
+      
+      
+      //Group Type Name
+      if(testOperation === "Group Type Name"){//start 3rd if
+        
+        //sends error if rank name is N/A
+        if(testInput === "N/A"){//start 4th if
+          negTestOutput = negTestOutput + "\n • The group type name cannot be **'N/A'**.";
+        }//end 4th if
+        
+        //if group type is taken by another group type
+        for(var i=0; i<25; i+=1){//start 1st for
+          if(testInput === dllscv[60][i].toString()){//start 1st if
+            negTestOutput = negTestOutput + "\n • The group type name is the **same name** as another **group type**.";
+          }//end 1st if
+        }//end 1st for
+        
+        //if length is above 20
+        if(testInput.length > 20){//start 4th if
+          negTestOutput = negTestOutput + "\n • The group type name's **length is too long** (must be 20 characters or less).";
+        }//end 4th if
+        
+        //if gamertag is the same as any of the group names
+        for(var i=0; i<57; i+=1){//start 1st for
+          //sends error if group name matches
+          if(testInput === dllscv[40][i].toString()){//start 4th if
+            negTestOutput = negTestOutput + "\n • The group type name is already **taken**.";
+            i = 57;
+          }//end 4th if
+        }//end 1st for
+        
+        //checks to see if group name is already a gamertag
+        for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+          if(pmdcmscv[i][0].toString() === testInput){//start 4th if
+            negTestOutput = negTestOutput + "\n • The group type name is the **same name** as someone else's **gamertag**.";
+          }//end 4th if
+          if(pmdcmscv[i][1].toString() === testInput){//start 4th if
+            negTestOutput = negTestOutput + "\n • The group type name is the **same name** as someone else's **discord nickname**.";
+          }//end 4th if
+        }//end 1st for
+        
+        //sends error if group name has a special character
+        if(testInput.indexOf(",") !== -1  ||  testInput.indexOf("~") !== -1  ||  testInput.indexOf("]") !== -1
+          ||  testInput.indexOf("|") !== -1  ||  testInput === ""  ||  testInput.indexOf("[") !== -1
+          ||  testInput.indexOf("(") !== -1  ||  testInput.indexOf(")") !== -1  
+          ||  testInput.indexOf("*") !== -1){//start 4th if
+          negTestOutput = negTestOutput + "\n • The group type name contains a **special character** and is not allowed.";
+        }//end 4th if
+        
+        
+      }//end 3rd if
+      
+      
+      //Rank Name Test
+      if(testOperation === "Rank Name"){//start 3rd if
+        
+        //sends error if rank name is N/A
+        if(testInput === "N/A"){//start 4th if
+          negTestOutput = negTestOutput + "\n • The rank name cannot be **'N/A'**.";
+        }//end 4th if
+        
+        //if length is above 20
+        if(testInput.length > 20){//start 4th if
+          negTestOutput = negTestOutput + "\n • The rank name's **length is too long** (must be 20 characters or less).";
+        }//end 4th if
+        
+        //checks to see if rank name already exists
+        for(var i=0; i<20; i+=1){//start 1st for
+          if(dllscv[24][i].toString() === testInput){//start 4th if
+            negTestOutput = negTestOutput + "\n • The rank name's is **taken** by another rank.";
+          }//end 4th if
+        }//end 1st for
+        
+        //sends error if nickname has a special character other than ~
+        if(testInput.indexOf(",") !== -1  ||  testInput.indexOf("]") !== -1
+          ||  testInput.indexOf("|") !== -1  ||  testInput === ""  ||  testInput.indexOf("[") !== -1
+          ||  testInput.indexOf("(") !== -1  ||  testInput.indexOf(")") !== -1  
+          ||  testInput.indexOf("*") !== -1){//start 4th if
+          negTestOutput = negTestOutput + "\n • The rank name contains a **special character** and is not allowed (the special character **'~'** is allowed).";
+        }//end 4th if
+        
+      }//end 3rd if
+      
+      
+      //Abbreviated Rank Name Test
+      if(testOperation === "Abbreviated Rank Name"){//start 3rd if
+        
+        //sends error if abb rank name is N/A
+        if(testInput === "N/A"){//start 4th if
+          negTestOutput = negTestOutput + "\n • The abbreviated rank name cannot be **'N/A'**.";
+        }//end 4th if
+        
+        //if length is above 4
+        if(testInput.length > 4){//start 4th if
+          negTestOutput = negTestOutput + "\n • The abbreviated rank name's **length is too long** (must be 4 characters or less).";
+        }//end 4th if
+        
+        //checks to see if rank name already exists
+        for(var i=0; i<20; i+=1){//start 1st for
+          if(dllscv[25][i].toString() === testInput){//start 4th if
+            negTestOutput = negTestOutput + "\n • The abbreviated rank name is **taken** by another rank.";
+          }//end 4th if
+        }//end 1st for
+        
+        //sends error if nickname has a special character
+        if(testInput.indexOf(",") !== -1  ||  testInput.indexOf("~") !== -1  ||  testInput.indexOf("]") !== -1
+          ||  testInput.indexOf("|") !== -1  ||  testInput === ""  ||  testInput.indexOf("[") !== -1
+          ||  testInput.indexOf("(") !== -1  ||  testInput.indexOf(")") !== -1  
+          ||  testInput.indexOf("*") !== -1){//start 4th if
+          negTestOutput = negTestOutput + "\n • The abbreviated rank name contains a **special character** and is not allowed.";
+        }//end 4th if
+        
+      }//end 3rd if
+      
+      
+      //Credential Name Test
+      if(testOperation === "Credential Name"){//start 3rd if
+        
+        //sends error if cred is N/A
+        if(testInput === "N/A"){//start 4th if
+          negTestOutput = negTestOutput + "\n • The credential cannot be **'N/A'**.";
+        }//end 4th if
+        
+        //checks to see if credential already exists
+        var credLocs = [16, 18, 20, 22];
+        for(var i=0; i<credLocs.length; i+=1){//start 1st for
+          for(var x=1; x<100; x+=1){//start 2nd for
+            if(dllscv[credLocs[i]][x].toString() !== ""  &&  dllscv[credLocs[i]][x].toString() === testInput){//start 4th if
+              negTestOutput = negTestOutput + "\n • The credential already **exists**.";
+            }//end 4th if
+          }//end 2nd for
+        }//end 1st for
+        
+        //sends error if cred has a special character
+        if(testInput.indexOf(",") !== -1  ||  testInput.indexOf("~") !== -1  ||  testInput.indexOf("]") !== -1
+          ||  testInput.indexOf("|") !== -1  ||  testInput === ""  ||  testInput.indexOf("[") !== -1
+          ||  testInput.indexOf("(") !== -1  ||  testInput.indexOf(")") !== -1  
+          ||  testInput.indexOf("*") !== -1){//start 4th if
+          negTestOutput = negTestOutput + "\n • The credential contains a **special character** and is not allowed.";
+        }//end 4th if
+        
+        //if length is above 40
+        if(testInput.length > 40){//start 4th if
+          negTestOutput = negTestOutput + "\n • The credential's **length is too long** (must be 40 characters or less).";
+        }//end 4th if
+        
+        
+      }//end 3rd if
+      
+      
+      //Training Type Name Test
+      if(testOperation === "Training Type Name"){//start 3rd if
+        
+        //sends error if training type name is N/A
+        if(testInput === "N/A"){//start 4th if
+          negTestOutput = negTestOutput + "\n • The training type name cannot be **'N/A'**.";
+        }//end 4th if
+        
+        //if length is above 40
+        if(testInput.length > 40){//start 4th if
+          negTestOutput = negTestOutput + "\n • The training type name's **length is too long** (must be 40 characters or less).";
+        }//end 4th if
+        
+        //sends error if training type has a special character
+        if(testInput.indexOf(",") !== -1  ||  testInput.indexOf("~") !== -1  ||  testInput.indexOf("]") !== -1
+          ||  testInput.indexOf("|") !== -1  ||  testInput === ""  ||  testInput.indexOf("[") !== -1
+          ||  testInput.indexOf("(") !== -1  ||  testInput.indexOf(")") !== -1  
+          ||  testInput.indexOf("*") !== -1){//start 4th if
+          negTestOutput = negTestOutput + "\n • The training type name contains a **special character** and is not allowed.";
+        }//end 4th if
+        
+        //checks to see if training type already exists
+        for(var i=1; i<100; i+=1){//start 1st for
+          if(dllscv[14][i].toString() === testInput  &&  dllscv[14][i].toString() !== ""){//start 4th if
+            negTestOutput = negTestOutput + "\n • The training type name already **exists**.";
+            i = dllscv[14].length;
+          }//end 4th if
+          if(dllscv[14][i].toString() === testInput  &&  dllscv[14][i].toString() !== ""){//start 4th if
+            negTestOutput = negTestOutput + "\n • The training type name **a part** of another **training type**.";
+            i = dllscv[14].length;
+          }//end 4th if
+        }//end 1st for
+        
+      }//end 3rd if
+      
+      
+      //Map Name Test
+      if(testOperation === "Map Name"){//start 3rd if
+
+        //sends error if map name is N/A
+        if(testInput === "N/A"){//start 4th if
+          negTestOutput = negTestOutput + "\n • The map name cannot be **'N/A'**.";
+        }//end 4th if
+        
+        //gets fhams and fhims data
+        //Forge Hub Active Maps sheet
+        var curVals = FunctionContainer.getfhamscv("date", dllscv);
+        var fhamscv = curVals[1];
+        curVals = undefined;
+        //Forge Hub Inactive Maps sheet
+        var curVals = FunctionContainer.getfhimscv("date", dllscv);
+        var fhimscv = curVals[1];
+        curVals = undefined;
+        
+        //checks to see if map is taken
+        //fhams first
+        for(var i=0; i<fhamscv.length; i+=1){//start 1st for
+          if(fhamscv[i][0].toString() === testInput){//start 4th if
+            negTestOutput = negTestOutput + "\n • The map name is **taken** by another map.";
+            i = fhamscv.length;
+          }//end 4th if
+        }//end 1st for
+        
+        //fhims next
+        for(var i=0; i<fhimscv.length; i+=1){//start 1st for
+          if(fhimscv[i][0].toString() === testInput){//start 4th if
+            negTestOutput = negTestOutput + "\n • The map name is **taken** by another map.";
+            i = fhimscv.length;
+          }//end 4th if
+        }//end 1st for
+        
+        //group names next
+        for(var i=0; i<57; i+=1){//start 1st for
+          if(dllscv[i][0].toString() === testInput){//start 4th if
+            negTestOutput = negTestOutput + "\n • The map name is **taken** by a group.";
+            i = fhimscv.length;
+          }//end 4th if
+        }//end 1st for
+        
+        //if length is above 24
+        if(testInput.length > 24){//start 4th if
+          negTestOutput = negTestOutput + "\n • The map name's **length is too long** (must be 24 characters or less).";
+        }//end 4th if
+        
+        //sends error if map name has a special character
+        if(testInput.indexOf(",") !== -1  ||  testInput.indexOf("~") !== -1  ||  testInput.indexOf("]") !== -1
+          ||  testInput.indexOf("|") !== -1  ||  testInput === ""  ||  testInput.indexOf("[") !== -1
+          ||  testInput.indexOf("(") !== -1  ||  testInput.indexOf(")") !== -1  
+          ||  testInput.indexOf("*") !== -1){//start 4th if
+          negTestOutput = negTestOutput + "\n • The map name contains a **special character** and is not allowed.";
+        }//end 4th if
+        
+      }//end 3rd if
+      
+      
+      //Position Code Test
+      if(testOperation === "Position Code"){//start 3rd if
+        testInput = FunctionContainer.positionCodeDiscordTransformer(testInput);
+        
+        //checks to see if position code is taken
+        for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+          if(FunctionContainer.positionCodeDiscordTransformer(pmdcmscv[i][7].toString()) === testInput){//start 1st if
+            negTestOutput = negTestOutput + "\n • The position code is already **taken**.";
+            i = pmdcmscv.length;
+          }//end 1st if
+        }//end 1st for
+        
+        //if testInput isn't a number and isnt N/A
+        if("N/A" !== testInput  &&  isNaN(testInput)){//start 4th if
+          negTestOutput = negTestOutput + "\n • The position code is **not a number** (must be a number from 000-999).";
+        }//end 4th if
+        
+        //if length is above 3
+        if(testInput.length > 3){//start 4th if
+          negTestOutput = negTestOutput + "\n • The position code's **length is too long** (must be " + 3 + " characters or less).";
+        }//end 4th if
+        
+        //if input is N/A
+        if("N/A" === testInput){//start 4th if
+          negTestOutput = negTestOutput + "\n • The position code cannot be **'N/A'** (because you only put that in the member update form when you want to get rid of someone's position code).";
+        }//end 4th if
+        
+      }//end 3rd if
+      
+      
+      //Member Info Test
+      if(testOperation === "Member Discord Info"){//start 3rd if
+        
+        //gets all info from pmdcmscv
+        for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+          if(pmdcmscv[i][0].toString() === testInput){//start 1st if
+            var memberRowNum = i+2;
+            i = pmdcmscv.length;
+          }//end 1st if
+        }//end 1st for
+        
+        //member found
+        if(memberRowNum !== undefined){//start 4th if
+          //gets all needed info
+          curVals = FunctionContainer.getMemberDiscordInfo(dllscv,pmdcmscv,testInput);
+          var nickname = curVals[0];
+          var discRoles = curVals[1];
+          var discRolesText = curVals[2];
+          curVals = undefined;
+          
+          //disc nickname
+          negTestOutput = negTestOutput + "\n • Discord nickname: **" + nickname + "**.";
+          
+          //disc roles
+          negTestOutput = negTestOutput + "\n • Discord roles: **" + discRolesText + "**.";
+          
+        }//end 4th if
+        
+        //if member isnt found
+        else if(memberRowNum === undefined){//start 4th if
+          negTestOutput = negTestOutput + "\n • The inputed gamertag doesn't match any current member.";
+        }//end 4th if
+      }//end 3rd if
+      
+      
+      //Rank Info Test
+      if(testOperation === "Rank Info"){//start 3rd if
+        
+        //finds and gets rank info
+        //checks to see if rank name already exists
+        for(var i=0; i<20; i+=1){//start 1st for
+          if(dllscv[24][i].toString() === testInput){//start 4th if
+            negTestOutput = negTestOutput + "\n • The rank's abbreviated name is: **" + dllscv[25][i].toString() + "**.";
+            negTestOutput = negTestOutput + "\n • The minimum time to rankup is: **" + dllscv[26][i].toString() + " weeks**.";
+            i = 21;
+          }//end 4th if
+          else if(dllscv[24][i].toString() !== testInput  &&  i === 19){//start 4th if/else
+            negTestOutput = negTestOutput + "\n • The inputed rank **isn't** in the system.";
+          }//end 4th if/else
+        }//end 1st for
+        
+      }//end 3rd if
+      
+      
+      //if test was positive
+      if(negTestOutput === ""){//start 3rd if
+        FunctionContainer.discordExpansionFormSend("dm$e$^" + FunctionContainer.getDiscordNickname(perpitraitor,dllscv,pmdcmscv) 
+          + "^Expansion Form Test Results^Test Preformed: __**" + testType + "**__\nTest Input: __**" + testInput
+          + "**__\nResults:\n" + posTestOutput + "^^^^Expansion Form");
+        details = "Expansion Form Test Preformed: " + testType + " ~ Test Input: " + testInput + " ~ Results: Passed";
+      }//end 3rd if
+      
+      //if test was negative
+      else if(negTestOutput !== ""){//start 3rd if
+        FunctionContainer.discordExpansionFormSend("dm$e$^" + FunctionContainer.getDiscordNickname(perpitraitor,dllscv,pmdcmscv)
+          + "^Expansion Form Test Results^Test Preformed: __**" + testType + "**__\nTest Input: __**" + testInput
+          + "**__\nResults:" + negTestOutput + "^^^^Expansion Form");
+        //for member info and rank info so it doesnt say didnt pass in details
+        if(testOperation === "Rank Info"  ||  testOperation === "Member Discord Info"){//start 4th if
+          details = "Expansion Form Test Preformed: " + testType + " ~ Test Input: " + testInput + " ~ Results: N/A";
+        }//end 4th if
+        //failure for other options
+        else{//start 4th if/else
+          details = "Expansion Form Test Preformed: " + testType + " ~ Test Input: " + testInput + " ~ Results: Didn't Pass";
+        }//end 4th if
+      }//end 3rd if
+      
+    }//end 2nd if/else
+    
+    
+    //Rerun Form Responses
+    else if(operation === "Rerun Form Responses"){//start 2nd if/else
+      //checks for illegal input
+      if(formsInQuestion.toString() === "All Forms"  
+         ||  formsInQuestion.toString() === "All Minus Expansion Form and Update Control Form"
+         ||  formsInQuestionArray.length>1){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Update Control Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "update control form", "tried to rerun more than one response script at a time", ucfrslri, dllscv[88][8].toString());
+      }//end 3rd if
+      
+      else if(formsInQuestion.toString() === "Debrief Form"){//start 3rd if/else
+        //Debrief Form
+        DebriefFormResponseUpdate.main();
+      }//end 3rd if/else
+      
+      else if(formsInQuestion.toString() === "Forge Form"){//start 3rd if/else
+        //Forge Form
+        ForgeFormResponseUpdate.main();
+      }//end 3rd if/else
+      
+      else if(formsInQuestion.toString() === "New Member Form"){//start 3rd if/else
+        //New Member Form
+        NewMemberFormResponseUpdate.main();
+      }//end 3rd if/else
+      
+      else if(formsInQuestion.toString() === "Member Update Form"){//start 3rd if/else
+        //Member Update Form
+        MemberUpdateFormResponseUpdate.main();
+      }//end 3rd if/else
+      
+      else if(formsInQuestion.toString() === "Expansion Form"){//start 3rd if/else
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Update Control Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "update control form", "tried to rerun expansion form which isn't allowed", ucfrslri, dllscv[88][8].toString());
+      }//end 3rd if/else
+        
+      else if(formsInQuestion.toString() === "Fixer Form"){//start 3rd if/else
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Update Control Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "update control form", "tried to rerun fixer form which isn't allowed", ucfrslri, dllscv[88][8].toString());
+      }//end 3rd if/else
+        
+      else if(formsInQuestion.toString() === "Group Report Form"){//start 3rd if/else
+        GroupReportFormResponseUpdate.main();
+      }//end 3rd if/else
+      
+      else if(formsInQuestion.toString() === "Embedded Message Form"){//start 3rd if/else
+        //Embedded Message Form
+        EmbeddedMessageFormResponseUpdate.main();
+      }//end 3rd if/else
+      
+      else if(formsInQuestion.toString() === "Update Control Form"){//start 3rd if/else
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Update Control Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "update control form", "tried to rerun update control form which isn't allowed", ucfrslri, dllscv[88][8].toString());
+      }//end 3rd if/else
+        
+      else if(formsInQuestion.toString() === "Permission Form"){//start 3rd if/else
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Update Control Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "update control form", "tried to rerun permission form which isn't allowed", ucfrslri, dllscv[88][8].toString());
+      }//end 3rd if/else
+        
+      else if(formsInQuestion.toString() === "Scheduling Form"){//start 3rd if/else
+        //Update Control Form
+        SchedulingFormResponseUpdate.main();
+      }//end 3rd if/else
+      
+    }//end 2nd if/else
+    
+    
+    //pastes vals into miscellaneous Form Hub Entries Sheet
+    FunctionContainer.miscFormHubEntry("Update Control Form", FunctionContainer.dateReplace(ucfrscv[0].toString()), 
+      FunctionContainer.timeRetrieval12Cycle(ucfrscv[0]), details, perpitraitor, dllscv);
+    
+  }//end 1st if
+  
+  
+  //if code is wrong
+  else{
+    FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Update Control Form Errors", dllscv);
+    FunctionContainer.indFormErrorReport(perpitraitor, "update control form", "inputted an incorrect code", ucfrslri, dllscv[88][8].toString());
+  }//end 1st else
+  
+}//end main

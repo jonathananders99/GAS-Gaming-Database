@@ -1,0 +1,1410 @@
+function fixerFormResponseUpdate2(){
+  errorCheck("fixerFormResponseUpdate2","FixerFormResponseUpdate2");
+}//end fixerFormResponseUpdate2
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  //Fixer Form Response Sheet
+  var fxfrs = FunctionContainer.tripleTryOpenSheet("","FX Responses");
+  var fxfrslri = FunctionContainer.tripleTryGetLastRow(fxfrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  //vals
+  var fxfrscv = FunctionContainer.tripleTryGetValues(fxfrs, fxfrslri, 1, 1, 40)[0];
+//  FunctionContainer.positionsInsideArray(fxfrscv);
+  /*
+    [Timestamp[0], Email Address[1], Code[2], Hub Row Number[3], 
+    Form Response Row Number[4], Form in Question[5], Operation[6], 
+    Which Discord Debrief Channel Do You Want to Include the Debriefing in?[7], 
+    Date of Event (ET)[8], Start Time (ET)[9], End Time (ET)[10], 
+    Map(s) Used[11], Win/Loss[12], Event Type(s)[13], Participating Group(s)[14], 
+    Debrief[15], Additional Notes[16], Would you like to edit any of these options?[17], 
+    Member in Question[18], Would you like to edit more?[19], Member(s) in Question[20], 
+    Would you like to edit more?[21], Member(s) in Question Being Removed[22], 
+    Member(s) in Question Being Added[23], Would you like to edit more?[24], 
+    Operation[25], Date of Entry[26], Reasoning[27], Report Title[28], Report Details[29], 
+    Operation[30], Entry Group[31], Generation[32], Bootcamp Date[33], 
+    Additional Notes[34], LDI[35], Recruited By[36], [37], [38], [39]]
+  */
+  
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(fxfrscv[1].toString().trim(),pmdcmscv);
+  
+  var formInQuestion = fxfrscv[5].toString().trim();
+  
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    throw new Error('Form filled out wrong');
+  }//end 2nd if
+
+  
+  //trims the necessary values
+  var formTrimList = [1, 2, 3, 4, 15, 16, 27, 28, 29, 32, 34];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    fxfrscv[formTrimList[i]] = fxfrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(fxfrscv[formTrimList[i]].indexOf("^")!==-1){//end 1st if
+      throw new Error('Form filled out wrong');
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  
+  
+  
+  
+  
+  
+  ///*** DATA GATHERING ***///
+  
+  
+  var formInQuestion = fxfrscv[5];
+  var formRow = parseInt(fxfrscv[4]);
+  var hubRow = parseInt(fxfrscv[3]);
+  var errorInfo = "\n\n • Form in Question: **" + formInQuestion + "**\n\n • Form Response Row Number: **"
+    + formRow + "**\n\n • Hub Row Number: **" + hubRow + "**";
+  var details = "";
+  var formRowError = false;
+  var hubRowError = false;
+  var formDeletedEntryError = false;
+  
+  
+  if(formInQuestion === "Debrief Form"){//start 1st if
+    
+    //Event Debrief Hub All Event Debriefs sheet
+    curVals = FunctionContainer.getedhaedscv("date", dllscv);
+    var edhaeds = curVals[0];
+    var edhaedscv = curVals[1];
+    var edhaedslri = curVals[2];
+    curVals = undefined;
+    
+    //Debrief Form Response Sheet
+    var dfrs = FunctionContainer.tripleTryOpenSheet(dllscv[86][0].toString(),"DF Responses");
+    var dfrslri = FunctionContainer.tripleTryGetLastRow(dfrs);
+    var dfrscv = FunctionContainer.tripleTryGetValues(dfrs,2,1,dfrslri-1,70);
+    
+    //if row number is not a row that is legal in debrief hub
+    if(hubRow < 3  ||  hubRow > edhaedslri){//start 3rd if
+      var oldEntryInfo = edhaedscv[0];
+      hubRowError = true;
+    }//end 3rd if
+    else{var oldEntryInfo = edhaedscv[hubRow-3]}
+    
+    //if row number is not a row that is legal in debrief hub
+    if(formRow < 2  ||  formRow > dfrslri){//start 3rd if
+      var oldDiscChannels = FunctionContainer.splitEmUp(dfrscv[dfrslri-2][3].toString());
+      formRowError = true;
+    }//end 3rd if
+    else{var oldDiscChannels = FunctionContainer.splitEmUp(dfrscv[formRow-2][3].toString())}
+    
+    //if row entry in form response sheet has been deleted already
+    if(dfrscv[formRow-2][66].toString() === "Deleted"){//start 3rd if
+      formDeletedEntryError = true;
+    }//end 3rd if
+    
+    oldEntryInfo[0] = FunctionContainer.dateReplace(oldEntryInfo[0]);
+    oldEntryInfo[1] = FunctionContainer.timeRetrieval12Cycle(oldEntryInfo[1]);
+    oldEntryInfo[2] = FunctionContainer.timeRetrieval12Cycle(oldEntryInfo[2]);
+    
+    var oldDiscordMessages = FunctionContainer.getDebriefDiscordMessages(oldEntryInfo, oldDiscChannels);
+    
+    var operation = fxfrscv[6];
+    
+    errorInfo = errorInfo + "\n\n • Operation: **" + operation + "**";
+    
+    if(operation === "Delete Entry"){//start 2nd if
+      details = details + "Debrief Entry Deletion ~ Original Submitter: " + edhaedscv[hubRow-3][12].toString() + " ~ Form Row: " + formRow + " ~ ";
+    }//end 2nd if
+    
+    else if(operation === "Edit Entry"){//start 2nd if/else
+      details = details + "Debrief Entry Edit ~ Original Submitter: " + edhaedscv[hubRow-3][12].toString() + " ~ Form Row: " + formRow + " ~ ";
+      var newChannels = fxfrscv[7];
+      var newChannelsList = FunctionContainer.splitEmUp(fxfrscv[7]);
+      var newDate = FunctionContainer.dateReplace(fxfrscv[8]);
+      var newStartTime = FunctionContainer.timeRetrieval12Cycle(fxfrscv[9]);
+      var newEndTime = FunctionContainer.timeRetrieval12Cycle(fxfrscv[10]);
+      var newMaps = fxfrscv[11];
+      var newMapsList = FunctionContainer.splitEmUp(fxfrscv[1]);
+      var newWinLoss = fxfrscv[12];
+      var newEventTypes = fxfrscv[13];
+      var newEventTypesList = FunctionContainer.splitEmUp(fxfrscv[13]);
+      var newPartGroups = fxfrscv[14];
+      var newPartGroupsList = FunctionContainer.splitEmUp(fxfrscv[14]);
+      var newDebrief = fxfrscv[15];
+      var newNotes = fxfrscv[16];
+      var newLeader = fxfrscv[18];
+      var new2ndLeaders = fxfrscv[20];
+      var new2ndLeadersList = FunctionContainer.splitEmUp(fxfrscv[20]);
+      var attendeesToRemove = fxfrscv[22];
+      var attendeesToRemoveList = FunctionContainer.splitEmUp(fxfrscv[22]);
+      var attendeesToAdd = fxfrscv[23];
+      var attendeesToAddList = FunctionContainer.splitEmUp(fxfrscv[23]);
+      
+      
+      var newEntryInfo = [];
+      /*
+        [Date[0], Start Time[1], End Time[2], Event Type[3], 
+        Participating Group(s)[4], Win/Loss[5], Leader of Event[6], 
+        Secondary Leader(s)[7], Attendees[8], Debrief[9], 
+        Additional Notes[10], Map(s) Used[11], Submission Personnel[12]]
+      */
+      
+      var allChanges = [];
+      if(newChannels.toString() !== ""){//start 3rd if
+        allChanges.push("Discord Channels");
+        errorInfo = errorInfo + "\n\n • Discord Channels: **" + newChannels + "**";
+        var discChannels = newChannelsList;
+      }//end 3rd if
+      else{var discChannels = [""]}
+      
+      //Date of Event (ET)
+      //if there is a changed in this category
+      if(newDate.toString() !== ""){//start 4th if
+        newEntryInfo.push(newDate);
+        allChanges.push("Date of Event");
+        errorInfo = errorInfo + "\n\n • Date of Event: **" + newDate + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[0]);
+      }//end 4th if/else
+      
+      
+      //Start Time (ET)
+      //if there is a changed in this category
+      if(newStartTime.toString() !== ""){//start 4th if
+        newEntryInfo.push(newStartTime);
+        allChanges.push("Start Time");
+        errorInfo = errorInfo + "\n\n • Start Time of Event: **" + newStartTime + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[1]);
+      }//end 4th if/else
+      
+      
+      //End Time (ET)
+      //if there is a changed in this category
+      if(newEndTime.toString() !== ""){//start 4th if
+        newEntryInfo.push(newEndTime);
+        allChanges.push("End Time");
+        errorInfo = errorInfo + "\n\n • End Time of Event: **" + newEndTime + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[2]);
+      }//end 4th if/else
+        
+      
+      //Event Type(s)
+      //if there is a changed in this category
+      if(newEventTypes.toString() !== ""){//start 4th if
+        newEntryInfo.push(newEventTypes);
+        allChanges.push("Event Type");
+        errorInfo = errorInfo + "\n\n • Event Type(s): **" + newEventTypes + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[3]);
+      }//end 4th if/else
+      
+      
+      //Participating Group(s)
+      //if there is a changed in this category
+      if(newPartGroups.toString() !== ""){//start 4th if
+        newEntryInfo.push(newPartGroups);
+        allChanges.push("Participating Groups");
+        errorInfo = errorInfo + "\n\n • Participating Groups: **" + newPartGroups + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[4]);
+      }//end 4th if/else
+      
+      
+      //Win/Loss
+      //if there is a changed in this category
+      if(newWinLoss.toString() !== ""){//start 4th if
+        newEntryInfo.push(newWinLoss);
+        allChanges.push("Win/Loss");
+        errorInfo = errorInfo + "\n\n • Win/Loss: **" + newWinLoss + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[5]);
+      }//end 4th if/else
+      
+      
+      //Leader of Event
+      //if there is a changed in this category
+      if(newLeader.toString() !== ""){//start 4th if
+        newEntryInfo.push(newLeader);
+        allChanges.push("Leader of Event");
+        errorInfo = errorInfo + "\n\n • Leader of Event: **" + newLeader + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[6]);
+      }//end 4th if/else
+      
+      
+      //Secondary Leader(s)
+      //if there is a changed in this category
+      if(new2ndLeaders.toString() !== ""){//start 4th if
+        newEntryInfo.push(new2ndLeaders);
+        allChanges.push("Secondary Leaders");
+        errorInfo = errorInfo + "\n\n • Secondary Leaders of Event: **" + new2ndLeaders + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[7]);
+      }//end 4th if/else
+      
+      
+      //Attendees removed
+      //if there is a changed in this category
+      if(attendeesToRemove.toString() !== ""  ||  attendeesToAdd.toString() !== ""){//start 3rd if
+        var curMembers = FunctionContainer.splitEmUp(oldEntryInfo[8]);
+        
+        if(attendeesToRemove.toString() !== ""){//start 4th if
+          for(var i=0; i<attendeesToRemoveList.length; i+=1){//start 1st for
+            //cycles thru old members but opposite way
+            for(var x=curMembers.length-1; x>=0; x-=1){//start 2nd for
+              //if names match splice oldMems
+              if(attendeesToRemoveList[i].toString() === curMembers[x].toString()){//start 5th if
+                curMembers.splice(x, 1);
+              }//end 5th if
+            }//end 2nd for
+          }//end 1st for
+          allChanges.push("Removed Attendees");
+          errorInfo = errorInfo + "\n\n • Removed Attendees: **" + attendeesToRemove + "**";
+        }//end 4th if
+        
+        if(attendeesToAdd.toString() !== ""){//start 4th if
+          for(var i=0; i<attendeesToAddList.length; i+=1){//start 1st for
+            curMembers.push([attendeesToAddList[i].toString()]);
+          }//end 1st for
+        
+          //duplicate filter
+          FunctionContainer.arrayDuplicateFilter(curMembers);
+          allChanges.push("Added Attendees");
+          errorInfo = errorInfo + "\n\n • Added Attendees: **" + attendeesToAdd + "**";
+        }//end 4th if
+        
+        newEntryInfo.push(FunctionContainer.array1LevelIntoString(curMembers));
+      }//end 3rd if
+      
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[8]);
+      }//end 4th if/else
+      
+      
+      //Debrief
+      //if there is a changed in this category
+      if(newDebrief.toString() !== ""){//start 4th if
+        newEntryInfo.push(newDebrief);
+        allChanges.push("Debrief");
+        errorInfo = errorInfo + "\n\n • Debrief: **" + newDebrief + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[9]);
+      }//end 4th if/else
+      
+      
+      //Additional Notes
+      //if there is a changed in this category
+      if(newNotes.toString() !== ""){//start 4th if
+        newEntryInfo.push(newNotes);
+        allChanges.push("Additional Notes");
+        errorInfo = errorInfo + "\n\n • Additional Notes: **" + newNotes + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[10]);
+      }//end 4th if/else
+      
+      
+      //Map(s) Used
+      //if there is a changed in this category
+      if(newMaps.toString() !== ""){//start 4th if
+        newEntryInfo.push(newMaps);
+        allChanges.push("Map(s) Used");
+        errorInfo = errorInfo + "\n\n • Map(s) Used: **" + newMaps + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[11]);
+      }//end 4th if/else
+      
+      
+      //adds submission personell
+      newEntryInfo.push(oldEntryInfo[12]);
+      
+      
+      details = details + "Changes Made: " + FunctionContainer.array1LevelIntoString(allChanges);
+      
+      
+      //gets new vals for dfrs
+      var dfrsnv = [[]];
+      //disc channels
+      if(newChannels.toString() !== ""){//start 3rd if
+        dfrsnv[0].push(newChannels);
+      }//end 3rd if
+      else{dfrsnv[0].push(dfrscv[formRow-2][3].toString())}
+      
+      //date of event
+      dfrsnv[0].push(newEntryInfo[0]);
+      
+      //start time
+      dfrsnv[0].push(newEntryInfo[1]);
+      
+      //end time
+      dfrsnv[0].push(newEntryInfo[2]);
+      
+      //maps used
+      dfrsnv[0].push(newEntryInfo[11]);
+      
+      //win/loss
+      dfrsnv[0].push(newEntryInfo[5]);
+      
+      //event type
+      dfrsnv[0].push(newEntryInfo[3]);
+      
+      //participating groups
+      dfrsnv[0].push(newEntryInfo[4]);
+      
+      //debrief
+      dfrsnv[0].push(newEntryInfo[9]);
+      
+      //aditional notes
+      dfrsnv[0].push(newEntryInfo[10]);
+      
+      //space
+      dfrsnv[0].push("");
+      
+      //leader
+      dfrsnv[0].push(newEntryInfo[6]);
+      
+      //2nd leader
+      dfrsnv[0].push(newEntryInfo[7]);
+      
+      //attendees
+      dfrsnv[0].push(newEntryInfo[8]);
+      
+      //adds 50 blank spaces
+      for(var i=0; i<50; i+=1){//start 1st for
+        dfrsnv[0].push("");
+      }//end 1st for
+    }//end 2nd if/else
+  }//end 1st if
+  
+  
+  
+  else if(formInQuestion === "Member Update Form"){//start 1st if/else
+    
+    //Member Update Hub all updates sheet
+    curVals = FunctionContainer.getmuhauscv("date", dllscv);
+    var muhaus = curVals[0];
+    var muhauscv = curVals[1];
+    var muhauslri = curVals[2];
+    curVals = undefined;
+    
+    //Member Update Form Response Sheet
+    var mufrs = FunctionContainer.tripleTryOpenSheet(dllscv[86][3].toString(),"MU Responses");
+    var mufrslri = FunctionContainer.tripleTryGetLastRow(mufrs);
+    var mufrscv = FunctionContainer.tripleTryGetValues(mufrs,2,1,mufrslri-1,80);
+  
+    //Lacedaemon Member Data Discharged Members Sheet
+    curVals = FunctionContainer.getpmddmscv("date");
+    var pmddms = curVals[0];
+    var pmddmscv = curVals[1];
+    curVals = undefined;
+    
+    //if row number is not a row that is legal in member update hub
+    if(hubRow < 3  ||  hubRow > muhauslri){//start 3rd if
+      var oldEntryInfo = muhauscv[0];
+      hubRowError = true;
+    }//end 3rd if
+    else{var oldEntryInfo = muhauscv[hubRow-3]}
+    
+    //if row number is not a row that is legal in member update form response sheet
+    if(formRow < 2  ||  formRow > mufrslri){//start 3rd if
+      formRowError = true;
+    }//end 3rd if
+    
+    //if row entry in form response sheet has been deleted already
+    else if(mufrscv[formRow-2][73].toString() === "Deleted"){//start 3rd if
+      formDeletedEntryError = true;
+    }//end 3rd if
+    
+    oldEntryInfo[3] = FunctionContainer.dateReplace(oldEntryInfo[3]);
+    
+    var typeOfUpdate = oldEntryInfo[0];
+    
+    var operation = fxfrscv[25];
+    
+    errorInfo = errorInfo + "\n\n • Operation: **" + operation + "**";
+    
+    
+    //finds member row in pmdcms
+    var memberRowNum = -1;
+    for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+      if(oldEntryInfo[1].toString() === pmdcmscv[i][0].toString()){//start 3rd if
+        var memberType = "Current";
+        var currentGt = oldEntryInfo[1].toString();
+        memberRowNum = i+2;
+        var currentRank = pmdcmscv[i][2].toString();
+        var currentGroups = FunctionContainer.splitEmUp(pmdcmscv[i][3].toString());
+        var currentCredentials = FunctionContainer.splitEmUp(pmdcmscv[i][4].toString());
+        var currentGeneration = pmdcmscv[i][5].toString();
+        var currentPermissions = FunctionContainer.splitEmUp(pmdcmscv[i][6].toString());
+        var currentPositionCode = pmdcmscv[i][7].toString();
+        var currentStatus = pmdcmscv[i][8].toString();
+        var currentEmail = pmdcmscv[i][9].toString();
+        var currentProfileIds = FunctionContainer.splitEmUp(pmdcmscv[i][10].toString());
+        var currentProfileUrls = FunctionContainer.splitEmUp(pmdcmscv[i][11].toString());
+        var currentProfileFolderIds = FunctionContainer.splitEmUp(pmdcmscv[i][12].toString());
+        var currentFullDiscordNickname = FunctionContainer.getDiscordNicknameWithRow(i, dllscv, pmdcmscv);
+        var currentMemberDiscRoles = FunctionContainer.getMemberDiscordInfo(dllscv, pmdcmscv, pmdcmscv[i][0].toString())[1];
+        var currentPermFileIds = FunctionContainer.splitEmUp(pmdcmscv[i][29].toString());
+      }//end 3rd if
+    }//end 1st for
+    
+    //discharged member
+    if(memberType !== "Current"){//start 1st if
+      //goes thru pmddmscv
+      for(var i=0; i<pmddmscv.length; i+=1){//start 1st for
+        if(oldEntryInfo[1].toString() === pmddmscv[i][0].toString()){//start 3rd if
+          var memberType = "Discharged";
+          var currentGt = oldEntryInfo[1].toString();
+          memberRowNum = i+2;
+          var currentRank = pmddmscv[i][2].toString();
+          var currentGroups = FunctionContainer.splitEmUp(pmddmscv[i][3].toString());
+          var currentCredentials = FunctionContainer.splitEmUp(pmddmscv[i][4].toString());
+          var currentGeneration = pmddmscv[i][5].toString();
+          var currentPermissions = FunctionContainer.splitEmUp(pmddmscv[i][6].toString());
+          var currentPositionCode = pmddmscv[i][7].toString();
+          var currentStatus = pmddmscv[i][8].toString();
+          var currentEmail = pmddmscv[i][9].toString();
+          var currentProfileIds = FunctionContainer.splitEmUp(pmddmscv[i][10].toString());
+          var currentProfileUrls = FunctionContainer.splitEmUp(pmddmscv[i][11].toString());
+          var currentProfileFolderIds = FunctionContainer.splitEmUp(pmddmscv[i][12].toString());
+          var currentFullDiscordNickname = FunctionContainer.getDiscordNicknameWithRow(i, dllscv, pmddmscv);
+          var currentMemberDiscRoles = FunctionContainer.getMemberDiscordInfo(dllscv, pmddmscv, pmddmscv[i][0].toString())[1];
+          var currentPermFileIds = FunctionContainer.splitEmUp(pmddmscv[i][29].toString());
+        }//end 3rd if
+      }//end 1st for
+    }//end 1st if
+    
+    
+    //finds member in question of form response row
+    var memberQNums = [[60], [61], [62], [63], [64], [65], [66], [67], [68], [69], [70], [71], [72]];
+    var curFormEntryMember = "";
+    for(var i=0; i<memberQNums.length; i+=1){//start 1st for
+      if(formRow >= 2  &&  formRow <= mufrslri  &&  mufrscv[formRow-2][memberQNums[i]].toString() !== ""){//start 1st if
+        curFormEntryMember = mufrscv[formRow-2][memberQNums[i]].toString();
+        i = 15;
+      }//end 1st if
+    }//end 1st for
+    
+    
+    
+    if(operation === "Delete Entry"){//start 2nd if
+      details = "Member Update Entry Deletion ~ Original Submitter: " + oldEntryInfo[5].toString() + " ~ Form Row: " + formRow + " ~ Member Update Type: " + oldEntryInfo[0].toString() + " ~ Member in Question: " + currentGt;
+    }//end 2nd if
+    
+    
+    else if(operation === "Edit Entry"){//start 2nd if/else
+      details = "Member Update Entry Edit ~ Original Submitter: " + oldEntryInfo[5].toString() + " ~ Form Row: " + formRow + " ~ Member Update Type: " + oldEntryInfo[0].toString() + " ~ Member in Question: " + currentGt;
+      var newUpdateDate = FunctionContainer.dateReplace(fxfrscv[26]);
+      var newUpdateReasoning = fxfrscv[27];
+      var newReportTitle = fxfrscv[28];
+      var newReportDetails = fxfrscv[29];
+      var changesMade = [];
+      errorInfo = errorInfo + "\n\n • Update Date: **" + newUpdateDate + "**";
+      errorInfo = errorInfo + "\n\n • Update Reasoning: **" + newUpdateReasoning + "**";
+      errorInfo = errorInfo + "\n\n • Report Title: **" + newReportTitle + "**";
+      errorInfo = errorInfo + "\n\n • Report Details: **" + newReportDetails + "**";
+    }//end 2nd if/else
+    
+    
+    if(typeOfUpdate === "Rank Change"){//start 2nd if
+      var curVals = FunctionContainer.splitUpRankChangeDetails(oldEntryInfo[2].toString());
+      var oldRank = curVals[0].toString();
+      var newRank = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Rank: __" + oldRank
+        + "__ ~ New Rank: __" + newRank + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Rank: __" + oldRank
+          + "__ ~ New Rank: __" + newRank + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curCol = 8;
+        var curReasoningCol = 9;
+      }//end 3rd if
+      
+    }//end 2nd if
+    
+    
+    else if(typeOfUpdate === "Credential Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpCredChangeDetails(oldEntryInfo[2].toString());
+      var oldCred = curVals[0].toString();
+      var newCred = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+      + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Credential: __" + oldCred
+      + "__ ~ New Credential: __" + newCred + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Credential: __" + oldCred
+          + "__ ~ New Credential: __" + newCred + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 14;
+        var curReasoningCol = 15;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Group Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpGroupChangeDetails(oldEntryInfo[2].toString());
+      var oldGroup = curVals[0].toString();
+      var newGroup = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+      + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Group: __" + oldGroup
+      + "__ ~ New Group: __" + newGroup + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Group: __" + oldGroup
+        + "__ ~ New Group: __" + newGroup + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 18;
+        var curReasoningCol = 19;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Member Report"){//start 2nd if/else
+      var oldTitle = oldEntryInfo[2].toString().replace("Report Title: ","");
+      var oldDetails = oldEntryInfo[4].toString().replace("Report Details: ","");
+      var ogTitle = "**Member Report**";
+      var ogDescription = "Date of Report: **" + oldEntryInfo[3] 
+        + "**\n\nReport Title: **" + oldTitle + "**\n\nReport Details: **" + oldDetails + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Report Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nReport Title: **";
+        
+        if(newReportTitle.toString() !== ""){//start 4th if
+          newDescription = newDescription + newReportTitle;
+          changesMade.push("New Report Title");
+        }//end 4th if
+        else{newDescription = newDescription + oldTitle}
+        
+        newDescription = newDescription + "**\n\nReport Details: **";
+        
+        if(newReportDetails.toString() !== ""){//start 4th if
+          newDescription = newDescription + newReportDetails;
+          changesMade.push("New Report Details");
+        }//end 4th if
+        else{newDescription = newDescription + oldDetails}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 20;
+        var curTitleCol = 21;
+        var curDetailsCol = 22;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Member Discharge"){//start 2nd if/else
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **" + oldEntryInfo[2].toString()
+        + "**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **" + oldEntryInfo[2].toString() 
+          + "**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 23;
+        var curReasoningCol = 24;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Gamertag Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpGTChangeDetails(oldEntryInfo[2].toString());
+      var oldGt = curVals[0].toString();
+      var newGt = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Gamertag: __" + oldGt
+        + "__ ~ New Gamertag: __" + newGt + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Gamertag: __" + oldGt
+          + "__ ~ New Gamertag: __" + newGt + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 26;
+        var curReasoningCol = 27;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Discord Nickname Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpNicknameChangeDetails(oldEntryInfo[2].toString());
+      var oldNick = curVals[0].toString();
+      var newNick = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Nickname: __" + oldNick
+        + "__ ~ New Nickname: __" + newNick + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Nickname: __" + oldNick
+          + "__ ~ New Nickname: __" + newNick + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 29;
+        var curReasoningCol = 30;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Availability Change"){//start 2nd if/else
+      //cycles thru muhaus
+      for(var i=0; i<muhauscv.length; i+=1){//start 1st for
+        //name matches and is GA change
+        if(muhauscv[i][0].toString() === "Availability Change"  &&  muhauscv[i][1].toString() === currentGt  &&  hubRow-3 !== i){//start 5th if
+          //cycle thru mufrs
+          for(var x=mufrscv.length-1; x>=0; x-=1){//start 2nd for
+            //match found for entry date and type (dont have to check for type because date position is only for GA change)
+            if(mufrscv[x][37].toString() !== ""
+              &&  x !== formRow-2
+              &&  mufrscv[x][73].toString() !== "Deleted"
+              &&  FunctionContainer.dateReplace(muhauscv[i][3].toString()) === FunctionContainer.dateRetrieval(mufrscv[x][37].toString())
+              &&  muhauscv[i][4].toString() === mufrscv[x][38].toString()){//start 6th if
+              var memberInQuestionLocs = [[60], [61], [62], [63], [64], [65], [66], [67], [68], [69], [70], [71], [72]];
+              for(var y=0; y<memberInQuestionLocs.length; y+=1){//start 3rd for
+                //if names match
+                if(mufrscv[x][memberInQuestionLocs[y]].toString() === currentGt){//start 1st if
+                  var oldGA = [[mufrscv[x][30].toString(), mufrscv[x][31].toString(), mufrscv[x][32].toString(), mufrscv[x][33].toString(),
+                                mufrscv[x][34].toString(), mufrscv[x][35].toString(), mufrscv[x][36].toString()]];
+                  x = -1;
+                  y = memberInQuestionLocs.length + 1;
+                  i = muhauscv.length + 1;
+                }//end 1st if
+              }//end 3rd for
+            }//end 6th if
+          }//end 2nd for
+        }//end 5th if
+        
+        //no match found
+        if(oldGA === undefined  &&  muhauscv[i][0].toString() !== "Availability Change"  &&  muhauscv[i][1].toString() !== currentGt  &&  i === muhauscv.length-1){//start 5th if
+          var oldGA = [["", "", "", "", "", "", ""]];
+        }//end 5th if
+        
+      }//end 1st for
+
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **" 
+        + oldEntryInfo[2].toString() + "**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **" + oldEntryInfo[2].toString() 
+          + "**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 38;
+        var curReasoningCol = 39;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "LOA"){//start 2nd if/else
+      
+      //leaving
+      if(oldEntryInfo[2].toString().indexOf("Leaving on LOA Starting on:") !== -1){//start 3rd if
+        var curVals = FunctionContainer.splitUpLOALeaveDetails(oldEntryInfo[2].toString());
+        var leaveDate = curVals[0].toString();
+        var returnDate = curVals[1].toString();
+        curVals = undefined;
+        var ogTitle = "**Member Update Alert**";
+        var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+          + oldEntryInfo[3] + "**\n\nUpdate Details: **Leaving on LOA Starting on: __" 
+          + leaveDate + "__ ~ Expected Return Date: __" + returnDate + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+        if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+          var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+          //new date
+          if(newUpdateDate.toString() !== ""){//start 4th if
+            newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+            changesMade.push("New Update Date");
+          }//end 4th if
+          else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+          
+          newDescription = newDescription + "**\n\nUpdate Details: **Leaving on LOA Starting on: __" + leaveDate
+          + "__ ~ Expected Return Date: __" + returnDate + "__**\n\nReasoning: **";
+          
+          if(newUpdateReasoning.toString() !== ""){//start 4th if
+            newDescription = newDescription + newUpdateReasoning;
+            changesMade.push("New Reasoning");
+          }//end 4th if
+          else{newDescription = newDescription + oldEntryInfo[4]}
+          
+          newDescription = newDescription + "**";
+        
+          var curDateCol = 41;
+          var curReasoningCol = 43;
+        }//end 3rd if
+      }//end 3rd if
+      
+      //returning
+      else if(oldEntryInfo[2].toString().indexOf("Returned from LOA as of:") !== -1){//start 3rd if/else
+        var returnDate = FunctionContainer.splitUpLOAReturnDetails(oldEntryInfo[2].toString());
+        var ogTitle = "**Member Update Alert**";
+        var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+          + oldEntryInfo[3] + "**\n\nUpdate Details: **Returned from LOA as of: __" + returnDate
+          + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+        if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+          var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+          //new date
+          if(newUpdateDate.toString() !== ""){//start 4th if
+            newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+            changesMade.push("New Update Date");
+          }//end 4th if
+          else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+          
+          newDescription = newDescription + "**\n\nUpdate Details: **Returned from LOA as of: __" + returnDate
+          + "__**\n\nReasoning: **";
+          
+          if(newUpdateReasoning.toString() !== ""){//start 4th if
+            newDescription = newDescription + newUpdateReasoning;
+            changesMade.push("New Reasoning");
+          }//end 4th if
+          else{newDescription = newDescription + oldEntryInfo[4]}
+          
+          newDescription = newDescription + "**";
+          
+          var curDateCol = 44;
+          var curReasoningCol = 45;
+        }//end 3rd if
+      }//end 3rd if/else
+      
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Birthday Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpBirthdayChangeDetails(oldEntryInfo[2].toString());
+      var oldBday = curVals[0].toString();
+      var newBday = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Birthday: __" + oldBday
+        + "__ ~ New Birthday: __" + newBday + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Birthday: __" + oldBday
+          + "__ ~ New Birthday: __" + newBday + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 46;
+        var curReasoningCol = 49;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Mentor Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpMentorChangeDetails(oldEntryInfo[2].toString());
+      var oldMentor = curVals[0].toString();
+      var newMentor = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Mentor: __" + oldMentor
+        + "__ ~ New Mentor: __" + newMentor + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      var newMentorNickname = FunctionContainer.getDiscordNickname(newMentor, dllscv, pmdcmscv);
+      var oldMentorNickname = FunctionContainer.getDiscordNickname(oldMentor, dllscv, pmdcmscv);
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Mentor: __" + oldMentor
+          + "__ ~ New Mentor: __" + newMentor + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 50;
+        var curReasoningCol = 53;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Position Code Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpPositionCodeChangeDetails(oldEntryInfo[2].toString());
+      var oldPC = curVals[0].toString();
+      var newPC = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Position Code: __" + oldPC
+        + "__ ~ New Position Code: __" + newPC + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Position Code: __" + oldPC
+          + "__ ~ New Position Code: __" + newPC + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 55;
+        var curReasoningCol = 56;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Reprimand"){//start 2nd if/else
+      var repNum = FunctionContainer.splitUpReprimandDetails(oldEntryInfo[2].toString());
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Severity of Reprimand(1-5): __" + repNum
+        + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Severity of Reprimand(1-5): __" + repNum
+          + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 57;
+        var curReasoningCol = 59;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+  }//end 1st if/else
+  
+  
+  
+  else if(formInQuestion === "New Member Form"){//start 1st if/else
+    
+    //Member Update Hub New Member updates sheet
+    curVals = FunctionContainer.getmuhnmuscv("date", dllscv);
+    var muhnmus = curVals[0];
+    var muhnmuscv = curVals[1];
+    var muhnmuslri = curVals[2];
+    curVals = undefined;
+    
+    //Member Update Form Response Sheet
+    var nmfrs = FunctionContainer.tripleTryOpenSheet(dllscv[86][2].toString(),"NMF Responses");
+    var nmfrslri = FunctionContainer.tripleTryGetLastRow(nmfrs);
+    var nmfrscv = FunctionContainer.tripleTryGetValues(nmfrs,2,1,nmfrslri-1,40);
+  
+    //Lacedaemon Member Data Discharged Members Sheet
+    curVals = FunctionContainer.getpmddmscv("date");
+    var pmddms = curVals[0];
+    var pmddmscv = curVals[1];
+    curVals = undefined;
+    
+    //if row number is not a row that is legal in member update hub
+    if(hubRow < 3  ||  hubRow > muhnmuslri){//start 2nd if
+      var oldEntryInfo = muhnmuscv[0];
+      hubRowError = true;
+    }//end 2nd if
+    else{var oldEntryInfo = muhnmuscv[hubRow-3]}
+    
+    //if row number is not a row that is legal in member update form response sheet
+    if(formRow < 2  ||  formRow > nmfrslri){//start 2nd if
+      formRowError = true;
+    }//end 2nd if
+    
+    //if row entry in form response sheet has been deleted already
+    else if(nmfrscv[formRow-2][37].toString() === "Deleted"){//start 2nd if
+      formDeletedEntryError = true;
+    }//end 2nd if
+    
+    oldEntryInfo[3] = FunctionContainer.dateReplace(oldEntryInfo[3]);
+    
+    var operation = fxfrscv[30];
+    errorInfo = errorInfo + "\n\n • Operation: **" + operation + "**";
+    
+    
+    //finds member row in pmdcms
+    var memberRowNum = -1;
+    for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+      if(oldEntryInfo[0].toString() === pmdcmscv[i][0].toString()){//start 2nd if
+        var memberType = "Current";
+        var currentGt = oldEntryInfo[0].toString();
+        memberRowNum = i+2;
+        var currentRank = pmdcmscv[i][2].toString();
+        var currentGroups = FunctionContainer.splitEmUp(pmdcmscv[i][3].toString());
+        var currentCredentials = FunctionContainer.splitEmUp(pmdcmscv[i][4].toString());
+        var currentGeneration = pmdcmscv[i][5].toString();
+        var currentPermissions = FunctionContainer.splitEmUp(pmdcmscv[i][6].toString());
+        var currentPositionCode = pmdcmscv[i][7].toString();
+        var currentStatus = pmdcmscv[i][8].toString();
+        var currentEmail = pmdcmscv[i][9].toString();
+        var currentProfileIds = FunctionContainer.splitEmUp(pmdcmscv[i][10].toString());
+        var currentProfileUrls = FunctionContainer.splitEmUp(pmdcmscv[i][11].toString());
+        var currentProfileFolderIds = FunctionContainer.splitEmUp(pmdcmscv[i][12].toString());
+        var currentFullDiscordNickname = FunctionContainer.getDiscordNicknameWithRow(i, dllscv, pmdcmscv);
+        var currentMemberDiscRoles = FunctionContainer.getMemberDiscordInfo(dllscv, pmdcmscv, pmdcmscv[i][0].toString())[1];
+        var currentPermFileIds = FunctionContainer.splitEmUp(pmdcmscv[i][29].toString());
+        var currentDiscInfo = FunctionContainer.getMemberDiscordInfo(dllscv,pmdcmscv,currentGt);
+      }//end 2nd if
+    }//end 1st for
+    
+    
+    //finds member in question of form response row
+    var memberQNums = [[4]];
+    var curFormEntryMember = "";
+    for(var i=0; i<memberQNums.length; i+=1){//start 1st for
+      if(formRow >= 2  &&  formRow <= nmfrslri  &&  nmfrscv[formRow-2][memberQNums[i]].toString() !== ""){//start 2nd if
+        curFormEntryMember = nmfrscv[formRow-2][memberQNums[i]].toString();
+        i = 15;
+      }//end 2nd if
+    }//end 1st for
+    
+    
+    if(operation === "Delete Entry"){//start 2nd if
+      details = "New Member Entry Deletion ~ Original Submitter: " + oldEntryInfo[5].toString() + " ~ Form Row: " + formRow + " ~ Member Update Type: " + oldEntryInfo[0].toString() + " ~ Member in Question: " + currentGt;
+    }//end 2nd if
+    
+    
+    else if(operation === "Edit Entry"){//start 2nd if/else
+      details = "New Member Entry Edit ~ Original Submitter: " + oldEntryInfo[5].toString() + " ~ Form Row: " + formRow + " ~ Member Update Type: " + oldEntryInfo[0].toString() + " ~ Member in Question: " + currentGt;
+      var changesMade = [];
+      
+      //Entry Group
+      if(fxfrscv[31].toString() !== ""){//start 3rd if
+        changesMade.push("Entry Group");
+        var newEntryGroup = fxfrscv[31].toString();
+        errorInfo = errorInfo + "\n\n • Entry Group: **" + newEntryGroup + "**";
+      }//end 3rd if
+      else{var newEntryGroup = oldEntryInfo[2].toString();}
+      
+      //Generation
+      if(fxfrscv[32].toString() !== ""){//start 3rd if
+        changesMade.push("Generation");
+        var newGeneration = fxfrscv[32].toString();
+        errorInfo = errorInfo + "\n\n • Generation: **" + newGeneration + "**";
+      }//end 3rd if
+      else{var newGeneration = oldEntryInfo[1].toString();}
+      
+      //Bootcamp Date
+      if(fxfrscv[33].toString() !== ""){//start 3rd if
+        changesMade.push("Bootcamp Date");
+        var newBootcampDate = FunctionContainer.dateReplace(fxfrscv[33].toString());
+        errorInfo = errorInfo + "\n\n • Bootcamp Date: **" + newBootcampDate + "**";
+      }//end 3rd if
+      else{var newBootcampDate = oldEntryInfo[3].toString();}
+      
+      //Additional Notes
+      if(fxfrscv[34].toString() !== ""){//start 3rd if
+        changesMade.push("Additional Notes");
+        var newAdditionalNotes = fxfrscv[34].toString();
+        errorInfo = errorInfo + "\n\n • Additional Notes: **" + newAdditionalNotes + "**";
+      }//end 3rd if
+      else{var newAdditionalNotes = oldEntryInfo[6].toString();}
+      
+      //LDI
+      if(fxfrscv[35].toString() !== ""){//start 3rd if
+        changesMade.push("LDI");
+        var newLDI = fxfrscv[35].toString();
+        errorInfo = errorInfo + "\n\n • LDI: **" + newLDI + "**";
+      }//end 3rd if
+      else{var newLDI = oldEntryInfo[4].toString();}
+      
+      //Recruited By
+      if(fxfrscv[36].toString() !== ""){//start 3rd if
+        changesMade.push("Recruited By");
+        var newRecruitedBy = fxfrscv[36].toString();
+        errorInfo = errorInfo + "\n\n • Recruited By: **" + newRecruitedBy + "**";
+      }//end 3rd if
+      else{var newRecruitedBy = oldEntryInfo[5].toString();}
+      
+      details = details + "Changes Made: " + FunctionContainer.array1LevelIntoString(changesMade);
+      
+    }//end 2nd if/else
+    
+    
+  }//end 1st if/else
+
+
+
+  
+  
+  //** CHECKS AND DATA CHANGING **//
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "fxf", fxfrscv[2].toString())){//start 1st if
+    
+    
+    
+    //if row is out of bounds
+    if(formRowError){//start 2nd if
+      throw new Error('Form filled out wrong');
+    }//end 2nd if
+    if(hubRowError){//start 2nd if
+      throw new Error('Form filled out wrong');
+    }//end 2nd if
+    
+    //if form entry has been deleted already
+    if(formDeletedEntryError){//start 2nd if
+      throw new Error('Form filled out wrong');
+    }//end 2nd if
+    
+    
+    
+    if(formInQuestion === "Debrief Form"){//start 2nd if
+      
+      //form repsonse row doesn't match hub info
+      if(dfrscv[formRow-2][11].toString().trim() !== oldEntryInfo[9].toString().trim()){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //waits 15 seconds for scripts running to complete
+      Utilities.sleep(35000);
+      
+    }//end 2nd if
+    
+    
+    
+    
+    else if(formInQuestion === "Member Update Form"){//start 2nd if/else
+      
+      //form repsonse row doesn't match hub info
+      if(curFormEntryMember.toString() !== currentGt.toString()  ||  mufrscv[formRow-2][4].toString() !== oldEntryInfo[0].toString()){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //member not found
+      if(memberRowNum === -1){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //if member is discharged and the type of update isnt member discharge
+      if(memberType === "Discharged"  &&  typeOfUpdate !== "Member Discharge"){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //if member is current and the type of update is member discharge
+      if(memberType === "Current"  &&  typeOfUpdate === "Member Discharge"){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      if(operation === "Delete Entry"){//start 3rd if
+        
+        //waits 15 seconds for scripts running to complete
+        Utilities.sleep(35000);
+        
+      }//end 3rd if
+      
+      
+      
+      else if(operation === "Edit Entry"){//start 3rd if
+      
+        //no edits actually made
+        if(changesMade.toString() === ""){//start 3rd if
+          throw new Error('Form filled out wrong');
+        }//end 3rd if
+      
+        //date is the same
+        if(oldEntryInfo[3] === newUpdateDate){//start 3rd if
+          throw new Error('Form filled out wrong');
+        }//end 3rd if
+        
+        //waits 15 seconds for scripts running to complete
+        Utilities.sleep(35000);
+        
+      }//end 3rd if
+      
+      
+    }//end 2nd if
+    
+    
+    
+    
+    else if(formInQuestion === "New Member Form"){//start 2nd if/else
+      
+      //form repsonse row doesn't match hub info
+      if(curFormEntryMember.toString() !== currentGt.toString()){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //member not found
+      if(memberRowNum === -1){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      
+      if(operation === "Delete Entry"){//start 3rd if
+        
+        //waits 15 seconds for scripts running to complete
+        Utilities.sleep(35000);
+        
+      }//end 3rd if
+      
+      
+      
+      else if(operation === "Edit Entry"){//start 3rd if/else
+        
+        //waits 15 seconds for scripts running to complete
+        Utilities.sleep(35000);
+      }//end 3rd if/else
+      
+    }//end 2nd if/else
+    
+    
+    //gets current data
+    //Phoenix Member Data Current Members Sheet
+    var curVals = FunctionContainer.getpmdcmscv();
+    var pmdcms = curVals[0];
+    var pmdcmscv = curVals[1];
+    curVals = undefined;
+    
+    // Data Lists Lists Sheet
+    curVals = FunctionContainer.getdllscv();
+    var dlls = curVals[0];
+    var dllscv = curVals[1];
+    curVals = undefined;
+    
+    //updates forms
+    FunctionContainer.updateAllFormLists2(dllscv, pmdcmscv);
+    
+  }//end 1st if
+  
+  
+  //if code is wrong
+  else{
+    throw new Error('Form filled out wrong');
+  }//end 1st else
+  
+  
+}//end main

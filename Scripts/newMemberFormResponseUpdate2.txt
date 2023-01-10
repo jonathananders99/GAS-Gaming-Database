@@ -1,0 +1,201 @@
+function newMemberFormResponseUpdate2(){
+  errorCheck("newMemberFormResponseUpdate2","NewMemberFormResponseUpdate2");
+}//end newMemberFormResponseUpdate2
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  
+  //New Member Form Response Sheet
+  var nmfrs = FunctionContainer.tripleTryOpenSheet("","NMF Responses");
+  var nmfrslri = FunctionContainer.tripleTryGetLastRow(nmfrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  var nmfrscv = FunctionContainer.tripleTryGetValues(nmfrs,nmfrslri,1,1,40)[0];
+//  FunctionContainer.positionsInsideArray(nmfrscv);
+  
+  /*
+  [Timestamp[0], Email Address[1], Code[2], Update form lists? (forms will turn off while they are updating)[3], 
+    Gamertag[4], Current Discord Nickname[5], Entry Group[6], Bootcamp Date[7], Additional Notes[8], 
+    LDI's Group[9], LDI in Question[10], LDI in Question[11], LDI in Question[12], LDI in Question[13], 
+    LDI in Question[14], LDI in Question[15], LDI in Question[16], LDI in Question[17], LDI in Question[18], 
+    LDI in Question[19], LDI in Question[20], LDI in Question[21], LDI in Question[22], Recruiter's Group[23], 
+    Recruiter in Question[24], Recruiter in Question[25], Recruiter in Question[26], Recruiter in Question[27], 
+    Recruiter in Question[28], Recruiter in Question[29], Recruiter in Question[30], Recruiter in Question[31], 
+    Recruiter in Question[32], Recruiter in Question[33], Recruiter in Question[34], Recruiter in Question[35], 
+    Recruiter in Question[36], [37], [38], [39]]
+  */
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(nmfrscv[1].toString().trim(), pmdcmscv);
+  
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    new Error('Form filled out wrong');
+  }//end 2nd if
+  
+  
+  //trims everything and checks for illegal characters
+  var formTrimList = [1,2,4,5,7,8];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    if(nmfrscv[formTrimList[i]] === " "){//end 1st if
+      new Error('Form filled out wrong');
+    }//end 1st if
+    
+    nmfrscv[formTrimList[i]] = nmfrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(nmfrscv[formTrimList[i]].indexOf("~") !== -1  ||  nmfrscv[formTrimList[i]].indexOf("^") !== -1){//end 1st if
+      new Error('Form filled out wrong');
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  
+  
+  //** DATA GATHERING **//
+  
+  var formListUpdates = nmfrscv[3].toString();
+  
+  var generation = dllscv[95][0].toString();
+  
+  var allQPositionsForLDI = [[10],[12],[14],[16],[18],[20],[22],[24],[26],[28],[30],[32],[34],[36],[38]];
+  
+  var allQPositionsForRecruiter = [[10],[12],[14],[16],[18],[20],[22],[24],[26],[28],[30],[32],[34],[36],[38]];
+  
+  var gamertag = nmfrscv[4].toString();
+  
+  var discordID = nmfrscv[5].toString();
+  //gets number on end
+  if(discordID.length===6){//start 1st if
+    var discordIDNum = parseInt(discordID[5]);
+  }//end 1st if
+  else if(discordID.length===7){//start 1st if/else
+    var discordIDNum = parseInt(discordID[5]+discordID[6]);
+  }//end 1st if/else
+  
+  var entryGroup = nmfrscv[6].toString();
+  
+  var bootcampDate = FunctionContainer.dateRetrieval(nmfrscv[7]);
+  
+  var additionalNotes = nmfrscv[8].toString();
+  
+  var bootcampLDI = "";
+  for(var i=0; i<allQPositionsForLDI.length; i+=1){//start 1st for
+    if(nmfrscv[allQPositionsForLDI[i]].toString()!==""&&nmfrscv[allQPositionsForLDI[i]].toString()!=="N/A"){//start 1st if
+      bootcampLDI = nmfrscv[allQPositionsForLDI[i]].toString();
+    }//end 1st if
+  }//end 1st for
+  if(nmfrscv[9].toString() === "Submitter"){//start 1st if
+    bootcampLDI = perpitraitor;
+  }//end 1st if
+  
+  var recruiterInQuestion = [];
+  for(var i=0; i<allQPositionsForRecruiter.length; i+=1){//start 1st for
+    if(nmfrscv[allQPositionsForRecruiter[i]].toString()!==""&&nmfrscv[allQPositionsForLDI[i]].toString()!=="N/A"){//start 1st if
+      recruiterInQuestion = nmfrscv[allQPositionsForRecruiter[i]].toString();
+    }//end 1st if
+  }//end 1st for
+  if(nmfrscv[23].toString() === "Submitter"){//start 1st if
+    recruiterInQuestion = perpitraitor;
+  }//end 1st if
+  
+  var errorInfo = "\n\n • Gamertag:** " + gamertag + "**\n\n • Entry Group:** " + entryGroup 
+    + "**\n\n • Bootcamp Date:** " + bootcampDate + "**\n\n • LDI:** " + bootcampLDI
+    + "**\n\n • Recruited By:** " + recruiterInQuestion + "**\n\n • Additional Notes:** " + additionalNotes 
+    + "**\n\n • Discord ID:** " + discordID + "**";
+  
+  
+  
+  
+  //** CHECKS AND DATA CHANGING **//
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "nmf", nmfrscv[2].toString())){//start 1st if
+    
+    //check for ldi or recruiter as n/a
+    
+    //sends error if gamertag is taken or apart of someone elses
+    for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+      if(pmdcmscv[i][0].toString().indexOf(gamertag) !== -1){//start 2nd if
+        new Error('Form filled out wrong');
+      }//end 2nd if
+    }//end 1st for
+    
+    //sends error if first characters are not Helot for discord tag
+    if(discordID[0]!=="C"||discordID[1]!=="a"||discordID[2]!=="d"||discordID[3]!=="e"||discordID[4]!=="t"||discordIDNum-discordIDNum!==0||discordID.length>7){//start 2nd if
+      new Error('Form filled out wrong');
+    }//end 2nd if
+    
+    //sends error if gamertag is N/A
+    if(gamertag==="N/A"){//start 2nd if
+      new Error('Form filled out wrong');
+    }//end 2nd if
+    
+    //sends error if gamertag is longer than 17 characters
+    if(gamertag.length>17){//start 2nd if
+      new Error('Form filled out wrong');
+    }//end 2nd if
+    
+    //sends error if gamertag has a comma
+    if(gamertag.toString().indexOf(",")!==-1){//start 2nd if
+      new Error('Form filled out wrong');
+    }//end 2nd if
+    
+    //if gamertag is the same as any of the group names
+    for(var i=0; i<57; i+=1){//start 1st for
+      //sends error if gamertag = group name
+      if(gamertag.toString()===dllscv[40][i].toString()){//start 2nd if
+        new Error('Form filled out wrong');
+      }//end 2nd if
+    }//end 1st for
+    
+    
+    
+    
+    //** FORM LIST UPDATES **//
+    //updates form lists if yes is chosen
+    if(formListUpdates === "Yes"){//start 2nd if
+      
+      Utilities.sleep(15000);
+      
+      //updates all forms apart of list 1
+      FunctionContainer.updateAllFormLists2(dllscv, pmdcmscv);
+      
+    }//end 2nd if
+    
+    
+  }//end 1st if
+  
+  
+  //if code is wrong
+  else{
+    new Error('Form filled out wrong');
+  }//end 1st else
+  
+}//end main

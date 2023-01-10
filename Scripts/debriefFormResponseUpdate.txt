@@ -1,0 +1,360 @@
+function debriefFormResponseUpdate(){
+  errorCheck("debriefFormResponseUpdate","DebriefFormResponseUpdate");
+}//end debriefFormResponseUpdate
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  
+  //Debrief Form Response Sheet
+  var dfrs = FunctionContainer.tripleTryOpenSheet("","DF Responses");
+  var dfrslri = FunctionContainer.tripleTryGetLastRow(dfrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  var dfrscv = FunctionContainer.tripleTryGetValues(dfrs,dfrslri,1,1,70)[0];
+//  FunctionContainer.positionsInsideArray(dfrscv);
+//  FunctionContainer.specificCellArrayBuilder(dfrscv, "Attendees");
+//  Logger.log(ree);
+  
+  /*
+  [Timestamp[0], Email Address[1], Code[2], 
+  Which Discord Debrief Channel Do You Want to Include the Debriefing in?[3],
+  Date of Event (ET)[4], Start Time (ET)[5], End Time (ET)[6], Map(s) Used[7], 
+  Win/Loss[8], Event Type(s)[9], Participating Group(s)[10], Debrief[11], 
+  Additional Notes[12], Group Selection I[13], 
+  //mora 1
+  Leader of Event[14], Secondary Leader(s)[15], Attendees[16], Include more members?[17], 
+  //mora 2
+  Leader of Event[18], Secondary Leader(s)[19], Attendees[20], Include more members?[21],
+  //mora 3
+  Leader of Event[22], Secondary Leader(s)[23], Attendees[24], Include more members?[25], 
+  //Phoenix S.W.A.L
+  Leader of Event[26], Secondary Leader(s)[27], Attendees[28], Include more members?[29], 
+  //Upper Echelon
+  Leader of Event[30], Secondary Leader(s)[31], Attendees[32], Include more members?[33], 
+  //Praetorian Guard
+  Leader of Event[34], Secondary Leader(s)[35], Attendees[36], Include more members?[37], 
+  //Seeker Intelligence
+  Leader of Event[38], Secondary Leader(s)[39], Attendees[40], Include more members?[41], 
+  //Vicarius Senate
+  Leader of Event[42], Secondary Leader(s)[43], Attendees[44], Include more members?[45], 
+  //Special Group 04
+  Leader of Event[46], Secondary Leader(s)[47], Attendees[48], Include more members?[49], 
+  //Special Group 05
+  Leader of Event[50], Secondary Leader(s)[51], Attendees[52], Include more members?[53], 
+  //Special Group 06
+  Leader of Event[54], Secondary Leader(s)[55], Attendees[56], Include more members?[57], 
+  //Special Group 07
+  Leader of Event[58], Secondary Leader(s)[59], Attendees[60], Include more members?[61], 
+  //Special Group 08
+  Leader of Event[62], Secondary Leader(s)[63], Attendees[64], Include more members?[65],
+  //Fixer Form
+  Fixer Form Row Deletion[66], [67], [68], [69]]
+  */
+  
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //debrief form dates sheet
+  var dfds = FunctionContainer.tripleTryOpenSheet(dllscv[86][0].toString(),"DF Dates");
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(dfrscv[1].toString().trim(), pmdcmscv);
+  
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    FunctionContainer.indFormErrorReport(perpitraitor, "debrief form", "inputed an email not in the database (perp will not recieve pm with details)",dfrslri,dllscv[88][0].toString());
+  }//end 2nd if
+  
+  
+  //trims everything and checks for illegal characters
+  var formTrimList = [1,2,11,12];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    if(dfrscv[formTrimList[i]] === " "){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "debrief form", "didnt put anything but a space in a required question (perp will not recieve pm with details)",dfrslri,dllscv[88][0].toString());
+    }//end 1st if
+    
+    dfrscv[formTrimList[i]] = dfrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(dfrscv[formTrimList[i]].indexOf("~") !== -1  ||  dfrscv[formTrimList[i]].indexOf("^") !== -1){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "debrief form", "included special characters ~ or ^ (perp will not recieve pm with details because ^ and ~ interfere with the bot commands)",dfrslri,dllscv[88][0].toString());
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  
+  
+  //** DATA GATHERING **//
+  
+  //all member data
+  var allQPositionsForLeaders = [[14], [18], [22], [26], [30], [34], [38], [42], [46], [50], [54], [58], [62]];
+  var allQPositionsForSecondaryLeaders = [[15], [19], [23], [27], [31], [35], [39], [43], [47], [51], [55], [59], [63]];
+  var allQPositionsForAtendees = [[16], [20], [24], [28], [32], [36], [40], [44], [48], [52], [56], [60], [64]];
+  
+  
+  //overall leader
+  var eventLeader = [];
+  var allAttendeesCur = [];
+  for(var i=0; i<allQPositionsForLeaders.length; i+=1){
+    if(dfrscv[allQPositionsForLeaders[i]].toString()!==""&&dfrscv[allQPositionsForLeaders[i]].toString()!=="N/A"){
+      eventLeader.push(dfrscv[allQPositionsForLeaders[i]].toString());
+      allAttendeesCur.push(dfrscv[allQPositionsForLeaders[i]].toString());
+    }//end 2nd if
+  }//end 1st for
+  
+  //gets rid of duplicates
+  eventLeader = FunctionContainer.arrayDuplicateFilter(eventLeader);
+  
+  //secondary leader
+  var eventSecondaryLeaderCur = [];
+  for(var i=0; i<allQPositionsForSecondaryLeaders.length; i+=1){
+    if(dfrscv[allQPositionsForSecondaryLeaders[i]].toString()!==""&&dfrscv[allQPositionsForSecondaryLeaders[i]].toString()!=="N/A"){
+      var curVal = FunctionContainer.splitEmUp(dfrscv[allQPositionsForSecondaryLeaders[i]].toString());
+      for(var x=0; x<curVal.length; x+=1){
+        eventSecondaryLeaderCur.push(curVal[x]);
+        allAttendeesCur.push(curVal[x].toString());
+      }//end 2nd for
+    }//end 2nd if
+  }//end 1st for
+  curVal = undefined;
+  
+  if(eventSecondaryLeaderCur.length!==0){//start 1st if
+    //gets rid of duplicates
+    eventSecondaryLeaderCur = FunctionContainer.arrayDuplicateFilter(eventSecondaryLeaderCur);
+    
+    //gets rid of any N/A
+    eventSecondaryLeaderCur = FunctionContainer.arrayNAFilter(eventSecondaryLeaderCur);
+  }//end 1st if
+  else{//start 1st else
+    eventSecondaryLeaderCur = [["N/A"]];
+  }//end 1st else
+  //turns it from an array to a string
+  var eventSecondaryLeader = FunctionContainer.array1LevelIntoString(eventSecondaryLeaderCur);
+  
+  
+  //checks to see if main leader is included as a secondary leader too
+  var doubleLeaderCheck = "No";
+  for(var i=0; i<eventSecondaryLeaderCur.length; i+=1){//start 1st for
+    if(eventLeader.toString()===eventSecondaryLeaderCur[i].toString()){//start 2nd if
+      doubleLeaderCheck = "Yes";
+    }//end 2nd if
+  }//end 1st for
+  
+  
+  //All attendees
+  for(var i=0; i<allQPositionsForAtendees.length; i+=1){
+    if(dfrscv[allQPositionsForAtendees[i]].toString()!==""&&dfrscv[allQPositionsForAtendees[i]].toString()!=="N/A"){
+      var curVal = FunctionContainer.splitEmUp(dfrscv[allQPositionsForAtendees[i]].toString());
+      for(var x=0; x<curVal.length; x+=1){
+        allAttendeesCur.push(curVal[x].toString());
+      }//end 2nd for
+    }//end 2nd if
+  }//end 1st for
+  curVal = undefined;
+  
+  //gets rid of duplicates
+  allAttendeesCur = FunctionContainer.arrayDuplicateFilter(allAttendeesCur);
+  
+  //gets rid of any N/A
+  allAttendeesCur = FunctionContainer.arrayNAFilter(allAttendeesCur);
+  
+  //turns it from an array to a string
+  var allAttendees = FunctionContainer.array1LevelIntoString(allAttendeesCur);
+  
+  
+  //Which Discord Debrief Channel Do You Want to Include the Debriefing in?
+  var discChannels = FunctionContainer.splitEmUp(dfrscv[3]);
+  if(discChannels.length > 1){//start 1st if
+    discChannels = FunctionContainer.arrayNAFilter(discChannels);
+  }//end 1st if
+  
+  var discChannelsString = FunctionContainer.array1LevelIntoString(discChannels);
+  
+  
+  //Date of Event
+  var debriefDate = FunctionContainer.dateRetrieval(dfrscv[4]);
+  
+  
+  //Start Time
+  var startTime = FunctionContainer.timeRetrieval12Cycle(dfrscv[5]);
+  
+  
+  //End Time
+  var endTime = FunctionContainer.timeRetrieval12Cycle(dfrscv[6]);
+  
+  
+  //Map(s) Used
+  var mapsUsedArray = FunctionContainer.splitEmUp(dfrscv[7]);
+  if(mapsUsedArray.length > 1){//start 1st if
+    mapsUsedArray = FunctionContainer.arrayNAFilter(mapsUsedArray);
+  }//end 1st if
+  
+  var mapsUsedString = FunctionContainer.array1LevelIntoString(mapsUsedArray);
+  
+  
+  //Win/Loss
+  var winLoss = dfrscv[8].toString();
+  
+  
+  //Event Type(s)
+  var EventType = dfrscv[9].toString();
+  
+  
+  //Participating Group(s)
+  var participatingGroups = dfrscv[10].toString();
+  
+  
+  //Debrief
+  var debriefText = dfrscv[11].toString();
+  
+  
+  //Additional Notes
+  var additionalNotes = dfrscv[12].toString();
+  
+  
+  var errorInfo = "\n\n • Discord Channels: **" + discChannelsString + "**\n\n • Date: **" + debriefDate + "**\n\n • Start Time: **" 
+    + startTime + "**\n\n • End Time: **" + endTime + "**\n\n • Event Type: **" + EventType + "**\n\n • Participating Groups: **" 
+    + participatingGroups + "**\n\n • Win/Loss: **" + winLoss + "**\n\n • Leader: **" + eventLeader + "**\n\n • Secondary Leader: **"
+    + eventSecondaryLeader + "**\n\n • Attendees: **" + allAttendees + "**\n\n • Debrief: **" + debriefText + "**\n\n • Additional Notes: **"
+    + additionalNotes + "**\n\n • Map(s) Used: **" + mapsUsedString + "**";
+  
+  
+  //paste date and time to get start num and end num to see if its in the future
+  var vals = [[debriefDate, startTime], [debriefDate, endTime]];
+  //paste data
+  FunctionContainer.tripleTrySetSSValues(dfds, 2, 1, 2, 2, vals);
+  vals = undefined;
+  //set format
+  FunctionContainer.tripleTrySetNumberFormat(dfds, 2, 1, 2, 3, "#,##0.00");
+  //get data
+  curVals = FunctionContainer.tripleTryGetValues(dfds, 2, 3, 2, 1);
+  var startNum = curVals[0];
+  var endNum = curVals[1];
+  curVals = undefined;
+  
+  
+  
+  
+  
+//  Logger.log(ree);
+  //** CHECKS AND DATA CHANGING **//
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "df", dfrscv[2].toString())){//start 1st if
+    
+    //if there are more than one overall leader for an event it sends an error message
+    if(eventLeader.length>1){
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Debrief Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "debrief form", "tried to put more than one main leader", dfrslri, dllscv[88][0].toString());
+    }//end 2nd if
+    
+    
+    //if there is no overall leader for an event it sends an error message
+    if(eventLeader.length===0||eventLeader[0]===undefined){
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Debrief Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "debrief form", "tried to put no main leader", dfrslri, dllscv[88][0].toString());
+    }//end 2nd if
+    
+    
+    //if the overall leader is also secondary leader for an event it sends an error message
+    if(doubleLeaderCheck==="Yes"){
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Debrief Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "debrief form", "tried to put the main leader as both a secondary and main leader of the event", dfrslri, dllscv[88][0].toString());
+    }//end 2nd if
+    
+    
+    //if the start time and end time are the same it sends an error
+    if(startTime===endTime){//start 2nd if
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Debrief Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "debrief form", "tried to put the start time and end time of an event as the same time", dfrslri, dllscv[88][0].toString());
+    }//end 2nd if
+    
+    
+    //if date is in the future
+    if(startNum > dllscv[10][15]  ||  endNum > dllscv[10][15]){//start 2nd if
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Debrief Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "debrief form", "tried to put a date/time in the future", dfrslri, dllscv[88][0].toString());
+    }//end 2nd if
+    
+    
+    
+    
+    //** FINALIZES DATA AND SENDS DICORD MESSAGES **//
+    
+    //adds vals to edhaeds
+    //create new variable for vals
+    var edhaedsnv = [[debriefDate, startTime, endTime, EventType, participatingGroups, 
+    winLoss, eventLeader, eventSecondaryLeader, allAttendees, debriefText, additionalNotes, mapsUsedString, perpitraitor]];
+    
+    //Event Debrief Hub All Event Debriefs sheet
+    curVals = FunctionContainer.getedhaedscv("min", dllscv);
+    var edhaeds = curVals[0];
+    var edhaedslri = curVals[1];
+    curVals = undefined;
+    
+    //adds new row and pastes vals in it and formats it correctly
+    FunctionContainer.tripleTryAddRows(edhaeds, 2, 1);
+    FunctionContainer.tripleTrySetRowsSize(edhaeds, 3, 1, 105);
+    FunctionContainer.tripleTrySetSSValues(edhaeds, 3, 1, 1, 13, edhaedsnv);
+
+    //formats everything to make sure its correctly formatted
+    edhaeds.getRange(3,1,edhaedslri-1,edhaedsnv[0].length).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setFontWeight(null);
+    edhaeds.getRange(1,1,edhaedslri+1,edhaedsnv[0].length).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+    
+    
+    //reorganize hub
+    
+    //Event Debrief Hub All Event Debriefs sheet
+    //[edhaeds,edhaedscvn,edhaedslri]
+    curVals = FunctionContainer.getedhaedscv("num", dllscv);
+    var edhaeds = curVals[0];
+    var edhaedscvn = curVals[1];
+    var edhaedslri = curVals[2];
+    curVals = undefined;
+    
+    //organizes data
+    edhaedscvn = FunctionContainer.specialSortDesc(edhaedscvn);
+    
+    //pastes new data
+    FunctionContainer.tripleTrySetSSValues(edhaeds, 3, 1, edhaedscvn.length, edhaedscvn[0].length, edhaedscvn);
+    
+    
+    //send disc debriefs
+    FunctionContainer.discordDebrief(edhaedsnv,discChannels);
+    
+  }//end 1st if
+  
+  
+  
+  //if code is wrong
+  else{
+    FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Debrief Form Errors", dllscv);
+    FunctionContainer.indFormErrorReport(perpitraitor, "debrief form", "inputed an incorrect code", dfrslri, dllscv[88][0].toString());
+  }//end 1st else
+  
+}//end main

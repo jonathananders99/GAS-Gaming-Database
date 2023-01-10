@@ -1,0 +1,1256 @@
+function groupReportFormResponseUpdate(){
+  errorCheck("groupReportFormResponseUpdate","GroupReportFormResponseUpdate");
+}//end groupReportFormResponseUpdate
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  
+  //Group Report Form Response Sheet
+  var grfrs = FunctionContainer.tripleTryOpenSheet("","GRF Responses");
+  var grfrslri = FunctionContainer.tripleTryGetLastRow(grfrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  //vals
+  var grfrscv = FunctionContainer.tripleTryGetValues(grfrs,grfrslri,1,1,10)[0];
+  // FunctionContainer.positionsInsideArray(grfrscv);
+  //[Timestamp[0], Email Address[1], Code[2], Group in Question[3], 
+  //Time Frame Start[4], End Time Frame[5], Which Discord Channel?[6], 
+  //Form In Question[7], [8], [9]]
+  
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dllscv = curVals[1];
+  var curDate = dllscv[10][0];
+  var curDateString = FunctionContainer.dateReplace(dllscv[10][0]);
+  var curDateNum = dllscv[10][1];
+  var todayMinus29 = curDateNum-29;
+  var todayMinus6 = curDateNum-6;
+  curVals = undefined;
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(grfrscv[1].toString().trim(),pmdcmscv);
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    FunctionContainer.indFormErrorReport(perpitraitor, "group report form", "inputed an email not in the database", grfrslri, dllscv[88][6].toString());
+  }//end 2nd if
+
+
+  var startDate = grfrscv[4];
+  var endDate = grfrscv[5];
+
+  
+  //trims the necessary values
+  var formTrimList = [1,2,3,4,5,6,7];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    grfrscv[formTrimList[i]] = grfrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(grfrscv[formTrimList[i]].indexOf("^")!==-1){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "group report form", "included special character ^ (perp will not recieve pm with details because ^ interferes with the bot commands)", grfrslri, dllscv[88][6].toString());
+    }//end 1st if
+    
+  }//end 1st for
+
+  var groupInQuestion = grfrscv[3];
+  var discChannel = grfrscv[4];
+  var choicesString = grfrscv[5];
+  
+
+  //gets info for errors
+  var errorInfo = "\n\n • Group in Question: **" + groupInQuestion + 
+    "**\n\n • Discord Channel: **" + discChannel + "**\n\n • Choices: **" 
+    + choicesString + "**";
+  
+  //gets info for misc form hub
+  var details = "Group in Question: " + groupInQuestion + " ~ Discord Channel: " 
+  + discChannel + " ~ Choices: " + choicesString;
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "grf", grfrscv[2].toString())){//start 1st if
+    
+
+    var title = "Report From: " + curDateString + " ~ Row: " + grfrslri;
+    var text = "Report For: " + groupInQuestion + " ~ Report Date: " + curDateString;
+
+
+    //gets other needed sheet info
+
+    //PXE Member Data Discharged Members Sheet
+    var curVals = FunctionContainer.getpmddmscv("date");
+    var pmddmscv = curVals[1];
+    curVals = undefined;
+    
+    
+    //Event Debrief Hub all Event debriefs sheet
+    curVals = FunctionContainer.getedhaedscv("both", dllscv);
+    var edhaedscvn = curVals[2];
+    curVals = undefined;
+    
+    
+    //Forge Hub Forge Entries sheet
+    curVals = FunctionContainer.getfhfescv("both", dllscv);
+    var fhfescvn = curVals[2];
+    curVals = undefined;
+    
+    
+    //Member Update Hub all updates sheet
+    curVals = FunctionContainer.getmuhauscv("both", dllscv);
+    var muhauscvn = curVals[2];
+    curVals = undefined;
+    
+    
+    //member update Hub New Member updates sheet
+    curVals = FunctionContainer.getmuhnmuscv("both", dllscv);
+    var muhnmuscvn = curVals[2];
+    curVals = undefined;
+    
+    
+    //misc form hub all entries sheet
+    curVals = FunctionContainer.getmfhaescv("both", dllscv);
+    var mfhaescvn = curVals[2];
+    curVals = undefined;
+    
+    
+    //Forge Hub Active Maps sheet
+    curVals = FunctionContainer.getfhamscv("date", dllscv);
+    var fhamscv = curVals[1];
+    curVals = undefined;
+    
+    
+    //Forge Hub Inactive Maps sheet
+    var curVals = FunctionContainer.getfhimscv("date", dllscv);
+    var fhimscv = curVals[1];
+    curVals = undefined;
+    
+    
+    //Form Fillout Errors Tech Hub Entries Sheet
+    curVals = FunctionContainer.getffethescv("date", dllscv);
+    var ffethescv = curVals[1];
+    curVals = undefined;
+
+
+
+
+    ///*** Info Gathering ***///
+    //gets who is currently in the group
+    //general info and finding members done here
+    //declares necessary vars
+    
+    var cgpgis = "";
+    var cgpgismri = "";
+    var cgpgiscv = [];
+    //[group,,,,,,,,,,,,,],["Position","Gamertag","Status","Rank","Eligibility","Generation",etc]]
+    var curGroupLocation = [];
+    //[name of group, col in dllscv for main group selections, number of rows below to go through, [sheets of inclusion], row in dllscv]
+    
+    
+    //where all the member in the group will be pooled
+    var curGroupcv = [["cgpgiscv",cgpgiscv,[],[],cgpgis,cgpgismri,[],[],[],[],[],[],[],[],[]]]
+    /*["sheetcv",[0]
+      sheetcv,[1]
+      [row to merge,row to merge],[2]
+      [if it needs to formated to main or not],[3]
+      sheet,[4]
+      sheet max rows num,[5]
+      [],[6]
+      [],[7]
+      [],[8]
+      [],[9]
+      [],[10]
+      [],[11]
+      [],[12]
+      [],[13]
+      []][14]
+    */
+    
+    //all groups and their locations in data lists sheet
+    var groupLocations = [
+      //Upper Echelon
+      [dllscv[0][156].toString(),156,1,["cgpgiscv"],0],
+      //Phoenix S.W.A.L
+      [dllscv[0][39].toString(),39,4,["cgpgiscv"],0],
+      //Lochos 13
+      [dllscv[1][39].toString(),39,1,["cgpgiscv"],1],
+      //Lochos 14
+      [dllscv[2][39].toString(),39,1,["cgpgiscv"],2],
+      //Lochos 15
+      [dllscv[3][39].toString(),39,1,["cgpgiscv"],3],
+      //Praetorian Guard
+      [dllscv[0][52].toString(),52,1,["cgpgiscv"],0],
+      //Seeker Intelligence
+      [dllscv[0][65].toString(),65,1,["cgpgiscv"],0],
+      //Vicarius Senate
+      [dllscv[0][78].toString(),78,1,["cgpgiscv"],0],
+      //Special Group 04
+      [dllscv[0][91].toString(),91,1,["cgpgiscv"],0],
+      //Special Group 05
+      [dllscv[0][104].toString(),104,1,["cgpgiscv"],0],
+      //Special Group 06
+      [dllscv[0][117].toString(),117,1,["cgpgiscv"],0],
+      //Special Group 07
+      [dllscv[0][130].toString(),130,1,["cgpgiscv"],0],
+      //Special Group 08
+      [dllscv[0][143].toString(),143,7,["cgpgiscv"],0],
+      //Special Sub-Group 01
+      [dllscv[1][143].toString(),143,3,["cgpgiscv"],1],
+      //Special Sub-Sub-Group 01
+      [dllscv[2][143].toString(),143,1,["cgpgiscv"],2],
+      //Special Sub-Sub-Group 02
+      [dllscv[3][143].toString(),143,1,["cgpgiscv"],3],
+      //Special Sub-Group 02
+      [dllscv[4][143].toString(),143,3,["cgpgiscv"],4],
+      //Special Sub-Sub-Group 03
+      [dllscv[5][143].toString(),143,1,["cgpgiscv"],5],
+      //Special Sub-Sub-Group 04
+      [dllscv[6][143].toString(),143,1,["cgpgiscv"],6],
+      //Mora 1
+      [dllscv[0][0].toString(),0,10,["cgpgiscv"],0],
+      //Camp 01
+      [dllscv[1][0].toString(),0,1,["cgpgiscv"],1],
+      //Camp 02
+      [dllscv[2][0].toString(),0,1,["cgpgiscv"],2],
+      //Camp 03
+      [dllscv[3][0].toString(),0,1,["cgpgiscv"],3],
+      //Lochos 01
+      [dllscv[4][0].toString(),0,1,["cgpgiscv"],4],
+      //Lochos 02
+      [dllscv[5][0].toString(),0,1,["cgpgiscv"],5],
+      //Lochos 03
+      [dllscv[6][0].toString(),0,1,["cgpgiscv"],6],
+      //Lochos 04
+      [dllscv[7][0].toString(),0,1,["cgpgiscv"],7],
+      //Extra Group 01
+      [dllscv[8][0].toString(),0,1,["cgpgiscv"],8],
+      //Extra Other Group 01
+      [dllscv[9][0].toString(),0,1,["cgpgiscv"],9],
+      //Mora 2
+      [dllscv[0][13].toString(),13,10,["cgpgiscv"],0],
+      //Camp 04
+      [dllscv[1][13].toString(),13,1,["cgpgiscv"],1],
+      //Camp 05
+      [dllscv[2][13].toString(),13,1,["cgpgiscv"],2],
+      //Camp 06
+      [dllscv[3][13].toString(),13,1,["cgpgiscv"],3],
+      //Lochos 05
+      [dllscv[4][13].toString(),13,1,["cgpgiscv"],4],
+      //Lochos 06
+      [dllscv[5][13].toString(),13,1,["cgpgiscv"],5],
+      //Lochos 07
+      [dllscv[6][13].toString(),13,1,["cgpgiscv"],6],
+      //Lochos 08
+      [dllscv[7][13].toString(),13,1,["cgpgiscv"],7],
+      //Extra Group 02
+      [dllscv[8][13].toString(),13,1,["cgpgiscv"],8],
+      //Extra Other Group 02
+      [dllscv[9][13].toString(),13,1,["cgpgiscv"],9],
+      //Mora 3
+      [dllscv[0][26].toString(),26,10,["cgpgiscv"],0],
+      //Camp 07
+      [dllscv[1][26].toString(),26,1,["cgpgiscv"],1],
+      //Camp 08
+      [dllscv[2][26].toString(),26,1,["cgpgiscv"],2],
+      //Camp 09
+      [dllscv[3][26].toString(),26,1,["cgpgiscv"],3],
+      //Lochos 09
+      [dllscv[4][26].toString(),26,1,["cgpgiscv"],4],
+      //Lochos 10
+      [dllscv[5][26].toString(),26,1,["cgpgiscv"],5],
+      //Lochos 11
+      [dllscv[6][26].toString(),26,1,["cgpgiscv"],6],
+      //Lochos 12
+      [dllscv[7][26].toString(),26,1,["cgpgiscv"],7],
+      //Extra Group 03
+      [dllscv[8][26].toString(),26,1,["cgpgiscv"],8],
+      //Extra Other Group 03
+      [dllscv[9][26].toString(),26,1,["cgpgiscv"],9]];
+    //[name of group, location in main array, number of rows below to go through, [sheets of inclusion], row in dllscv]
+    
+    for(var i=0; i<57; i+=1){//start 1st for
+      if(groupInQuestion===dllscv[40][i].toString()&&dllscv[48][i].toString()!==""){//start 2nd if
+        valsForGroupProfileUpdate = i;
+        i = 57;
+      }//end
+    }//end 1st for
+
+    
+    //finds correct group
+    for(var i=0; i<groupLocations.length; i+=1){//start 2nd for
+      if(groupLocations[i][0]===dllscv[40][valsForGroupProfileUpdate].toString()){//start 2nd if
+        curGroupLocation.push(groupLocations[i]);
+      }//end 2nd if
+    }//end 2nd for
+
+    //gets all group names including sub groups
+    var bruh = FunctionContainer.splitEmUp(dllscv[67][curGroupLocation[0][1]]);
+    bruh.push([curGroupLocation[0][1]]);
+    var allGroupsAndSubGroups = [];
+    for(var i=0; i<bruh.length; i+=1){//start 1st for
+      allGroupsAndSubGroups.push(dllscv[40][bruh[i]]);
+    }//end 1st for
+    
+
+    //gets all members in the group(s)
+    FunctionContainer.memberFinderForGroupProfiles(curGroupcv,curGroupLocation,dllscv,pmdcmscv);
+    //declares a couple vars for future sheets
+    var curGroupsIncluded = [];
+    var curActiveGroupsIncluded = [];
+    var allCurMembers = [];
+    
+    
+    //adds another element so it does the last group
+    curGroupcv[0][2].push(curGroupcv[0][1].length);
+    
+    
+    var curVals = FunctionContainer.splitEmUp(dllscv[67][curGroupLocation[0][1]]);
+    //adds group to group list
+    curGroupsIncluded.push(dllscv[40][curGroupLocation[0][1]]);
+    for(var i=0; i<curVals.length; i+=1){//start 1st for
+      curGroupsIncluded.push(dllscv[40][curVals[i]]);
+    }//end 1st for
+
+    
+    //gets info for each person for gis
+    for(var w=0; w<curGroupcv[0][2].length; w+=1){//start 2nd for
+      //if the group isnt nothing
+      if(w!==curGroupcv[0][2].length-1){//start 2nd if
+        //adds group to active group list
+        curActiveGroupsIncluded.push(cgpgiscv[curGroupcv[0][2][w]][0].toString());
+        
+        //declares this as the current group
+        var curGroup = cgpgiscv[curGroupcv[0][2][w]][0].toString();
+      }//end 2nd if
+      for(var r=curGroupcv[0][2][w]+2; r<curGroupcv[0][2][w+1]; r+=1){//start 3rd for
+        var membersInGroup = [];
+        for(var i=0; i<curGroupcv.length; i+=1){//start 1st for
+          membersInGroup.push(curGroupcv[i]);
+        }//end 1st for
+        //declares some necessary vars
+        var curGt = cgpgiscv[r][1].toString();
+        allCurMembers.push(curGt);
+      }//end 3rd for
+    }//end 2nd for
+    
+    allCurMembers = FunctionContainer.arrayDuplicateFilter(allCurMembers)    
+    allCurMembers = FunctionContainer.specialSort(allCurMembers);
+    var curMembers = [];
+    for(var x=0; x<pmdcmscv.length; x+=1){//start 1st for
+      for(var i=0; i<allCurMembers.length; i+=1){//start 2nd for
+        if(allCurMembers[i].toString() === pmdcmscv[x][0].toString()){//end 1st if
+          curMembers.push([pmdcmscv[x]]);
+        }//start 1st if
+      }//end 2nd for
+    }//end 1st for
+    
+    
+    
+
+
+    ///*** Report Sections ***///
+
+    // Debrief Form
+    if(choicesString.indexOf("Debrief Form") !== -1){
+      text = text + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nDEBRIEF FORM\n\n\n\nForm Fillout Metrics:";
+
+      //normal
+      // Top 3 for how many failed forms
+      // Top 3 for how many successful forms
+      // Total Number of successful submissions 730t
+      // Total Number of failed submissions 730t
+      // Top 3 reasons why form failed to submit
+      text = FunctionContainer.normalFilloutMetricsGroupReportPortion(allCurMembers, edhaedscvn, 12, 0, ffethescv, curDateNum, todayMinus29, todayMinus6, ["debrief form"], text);
+
+      
+      // other
+      // How many group events held 730t
+      // Wins vs losses 730t
+      // Top 3 Types of events held 30
+      // Top 3 Times of most events 30
+      // How many events with 50% attendance or more from the group in both all events and group events. 30
+      // Average percent of group members participating in overall events. 30
+      // Average percent of group members participating in their group events. 30
+      // Top 3 leaders of events 30
+      // Top 3 2ndary leaders of events 30
+      // Top 3 attendees of events 30
+      
+
+      // console.log(ree);
+      var events30Days = 0;
+      var totGroupEvents = 0;
+      var groupEvents30Days = 0;
+      var groupEvents7Days = 0;
+      var group50PercentAndAboveAll = 0;
+      var group50PercentAndAboveGroupEvents = 0;
+      var groupPercentGroupEvents = [];
+      var groupPercentEvents = [];
+      var topLeaders = [];
+      var top2ndLeaders = [];
+      var topAttendees = [];
+      var topLeaders30 = [];
+      var top2ndLeaders30 = [];
+      var topAttendees30 = [];
+      var topLeaders7 = [];
+      var top2ndLeaders7 = [];
+      var topAttendees7 = [];
+      var winLossAll = [];
+      var winLoss30 = [];
+      var winLoss7 = [];
+      var typesOfEvents = [];
+      var timesOfEvents = [];
+
+      
+
+      for(var i=0; i<edhaedscvn.length; i+=1){//start 1st for
+        var curAttendees = FunctionContainer.splitEmUp(edhaedscvn[i][8]);
+        var cur2ndLeaders = FunctionContainer.splitEmUp(edhaedscvn[i][7]);
+        var curLeader = edhaedscvn[i][6].toString();
+        var eventGroups = FunctionContainer.splitEmUp(edhaedscvn[i][4]);
+        var eventType = FunctionContainer.splitEmUp(edhaedscvn[i][3]);
+        var curWinLoss = edhaedscvn[i][5].toString();
+        var eventDateNum = edhaedscvn[i][0];
+        var eventTime = FunctionContainer.timeRetrieval12Cycle(edhaedscvn[i][1]);
+
+        //if its a group's event
+        var groupCheck = false;
+        for(var x=0; x<eventGroups.length; x+=1){//start 2nd for
+          if(FunctionContainer.existsInArray(allGroupsAndSubGroups, eventGroups[x].toString())){//end 1st if
+            groupCheck = true;
+          }//start 1st if
+        }//end 2nd for
+
+        //if a member is the leader
+        var leaderCheck = false;
+        if(FunctionContainer.existsInArray(allCurMembers, curLeader)){//end 1st if
+          leaderCheck = true;
+        }//start 1st if
+
+        //if a member is a secondary leader
+        var secondaryLeaderCheck = false;
+        for(var x=0; x<cur2ndLeaders.length; x+=1){//start 2nd for
+          if(FunctionContainer.existsInArray(allCurMembers, cur2ndLeaders[x].toString())){//end 1st if
+            secondaryLeaderCheck = true;
+          }//start 1st if
+        }//end 2nd for
+
+        //if a member is an attendee
+        var attendeeCheck = false;
+        for(var x=0; x<curAttendees.length; x+=1){//start 2nd for
+          if(FunctionContainer.existsInArray(allCurMembers, curAttendees[x].toString())){//end 1st if
+            attendeeCheck = true;
+          }//start 1st if
+        }//end 2nd for
+
+        //if attendance is above 50%
+        fiftyAndAboveCheck = false;
+        if(attendeeCheck){//end 1st if
+          var curVal = 0;
+          for(var x=0; x<curAttendees.length; x+=1){//start 2nd for
+            if(FunctionContainer.existsInArray(allCurMembers, curAttendees[x].toString())){//end 2nd if
+              curVal++;
+            }//start 2nd if
+          }//end 2nd for
+          //if over 50%
+          if((curVal/curAttendees.length) >= 0.5){//end 2nd if
+            fiftyAndAboveCheck = true;
+          }//start 2nd if
+        }//start 1st if
+        
+        //if its a group event
+        if(groupCheck){//end 1st if
+          totGroupEvents++;
+          FunctionContainer.addToCountingArray(winLossAll, curWinLoss);
+          FunctionContainer.addToCountingArray(typesOfEvents, eventType);
+        }//start 1st if
+
+        //if leader is member
+        if(leaderCheck){//end 2nd if
+          FunctionContainer.addToCountingArray(topLeaders, curLeader);
+        }//start 2nd if
+
+        //if 2nd leader has a group member
+        if(secondaryLeaderCheck){//end 2nd if
+          for(var x=0; x<cur2ndLeaders.length; x+=1){//start 2nd for
+            if(FunctionContainer.existsInArray(allCurMembers, cur2ndLeaders[x].toString())){//end 1st if
+              FunctionContainer.addToCountingArray(top2ndLeaders, cur2ndLeaders[x].toString());
+            }//start 1st if
+          }//end 2nd for
+        }//start 2nd if
+
+        //if attendees has a group member
+        if(attendeeCheck){//end 2nd if
+          for(var x=0; x<curAttendees.length; x+=1){//start 2nd for
+            if(FunctionContainer.existsInArray(allCurMembers, curAttendees[x].toString())){//end 1st if
+              FunctionContainer.addToCountingArray(topAttendees, curAttendees[x].toString());
+            }//start 1st if
+          }//end 2nd for
+        }//start 2nd if
+
+        //within 30 days
+        if(todayMinus29 <= eventDateNum  &&  curDateNum >= eventDateNum){//end 1st if
+
+          //adds to a 30 events regardless of if its a group training
+          events30Days++;
+
+          //if leader is member
+          if(leaderCheck){//end 2nd if
+            FunctionContainer.addToCountingArray(topLeaders30, curLeader);
+          }//start 2nd if
+
+          //if 2nd leader has a group member
+          if(secondaryLeaderCheck){//end 2nd if
+            for(var x=0; x<cur2ndLeaders.length; x+=1){//start 2nd for
+              if(FunctionContainer.existsInArray(allCurMembers, cur2ndLeaders[x].toString())){//end 1st if
+                FunctionContainer.addToCountingArray(top2ndLeaders30, cur2ndLeaders[x].toString());
+              }//start 1st if
+            }//end 2nd for
+          }//start 2nd if
+
+          //if attendees has a group member
+          if(attendeeCheck){//end 2nd if
+            var curPercNum = 0;
+            for(var x=0; x<curAttendees.length; x+=1){//start 2nd for
+              if(FunctionContainer.existsInArray(allCurMembers, curAttendees[x].toString())){//end 1st if
+                FunctionContainer.addToCountingArray(topAttendees30, curAttendees[x].toString());
+                curPercNum++;
+              }//start 1st if
+            }//end 2nd for
+            groupPercentEvents.push(curPercNum/curAttendees.length);
+          }//start 2nd if
+
+          //if its a group event
+          if(groupCheck){//end 2nd if
+            groupEvents30Days++;
+            FunctionContainer.addToCountingArray(winLoss30, curWinLoss);
+            FunctionContainer.addToCountingArray(timesOfEvents, eventTime);
+            groupPercentGroupEvents.push(curPercNum/curAttendees.length);
+            //if event has more than 50% attendance from their group in the events
+            if(fiftyAndAboveCheck){//end 3rd if
+              group50PercentAndAboveGroupEvents++;
+            }//start 3rd if
+          }//start 2nd if
+
+          //if event has more than 50% attendance from their group in the events
+          if(fiftyAndAboveCheck){//end 2nd if
+            group50PercentAndAboveAll++;
+          }//start 2nd if
+
+          //within 7 days
+          if(todayMinus6 <= eventDateNum  &&  curDateNum >= eventDateNum){//end 2nd if
+            //if its a group event
+            if(groupCheck){//end 3rd if
+              FunctionContainer.addToCountingArray(winLoss7, curWinLoss);
+              groupEvents7Days++;
+            }//start 3rd if
+            //if leader is member
+            if(leaderCheck){//end 3rd if
+              FunctionContainer.addToCountingArray(topLeaders7, curLeader);
+            }//start 3rd if
+
+            //if 2nd leader has a group member
+            if(secondaryLeaderCheck){//end 3rd if
+              for(var x=0; x<cur2ndLeaders.length; x+=1){//start 2nd for
+                if(FunctionContainer.existsInArray(allCurMembers, cur2ndLeaders[x].toString())){//end 4th if
+                  FunctionContainer.addToCountingArray(top2ndLeaders7, cur2ndLeaders[x].toString());
+                }//start 4th if
+              }//end 2nd for
+            }//start 3rd if
+
+            //if attendees has a group member
+            if(attendeeCheck){//end 3rd if
+              var curPercNum = 0;
+              for(var x=0; x<curAttendees.length; x+=1){//start 2nd for
+                if(FunctionContainer.existsInArray(allCurMembers, curAttendees[x].toString())){//end 4th if
+                  FunctionContainer.addToCountingArray(topAttendees7, curAttendees[x].toString());
+                  curPercNum++;
+                }//start 4th if
+              }//end 2nd for
+              groupPercentEvents.push(curPercNum/curAttendees.length);
+            }//start 2nd if
+          }//start 3rd if
+
+        }//start 1st if
+
+      }//end 1st for
+
+
+      //deletes the N/A from winsAndLosses
+      for(var i=winLossAll.length-1; i>=0; i-=1){//start 1st for
+        if(winLossAll[i][0] === "N/A"){//end 1st if
+          winLossAll.splice(i, 1);
+        }//start 1st if
+      }//end 1st for
+      for(var i=winLoss30.length-1; i>=0; i-=1){//start 1st for
+        if(winLoss30[i][0] === "N/A"){//end 1st if
+          winLoss30.splice(i, 1);
+        }//start 1st if
+      }//end 1st for
+      for(var i=winLoss7.length-1; i>=0; i-=1){//start 1st for
+        if(winLoss7[i][0] === "N/A"){//end 1st if
+          winLoss7.splice(i, 1);
+        }//start 1st if
+      }//end 1st for
+
+      FunctionContainer.arraySortDescForGivenIndex(typesOfEvents, 1);
+      FunctionContainer.arraySortDescForGivenIndex(timesOfEvents, 1);
+      FunctionContainer.arraySortDescForGivenIndex(winLossAll, 1);
+      FunctionContainer.arraySortDescForGivenIndex(winLoss30, 1);
+      FunctionContainer.arraySortDescForGivenIndex(winLoss7, 1);
+      FunctionContainer.arraySortDescForGivenIndex(topLeaders, 1);
+      FunctionContainer.arraySortDescForGivenIndex(topLeaders30, 1);
+      FunctionContainer.arraySortDescForGivenIndex(topLeaders7, 1);
+      FunctionContainer.arraySortDescForGivenIndex(top2ndLeaders, 1);
+      FunctionContainer.arraySortDescForGivenIndex(top2ndLeaders30, 1);
+      FunctionContainer.arraySortDescForGivenIndex(top2ndLeaders7, 1);
+      FunctionContainer.arraySortDescForGivenIndex(topAttendees, 1);
+      FunctionContainer.arraySortDescForGivenIndex(topAttendees30, 1);
+      FunctionContainer.arraySortDescForGivenIndex(topAttendees7, 1);
+
+      text = text + "\n\n\n\nGroup Events:\n\n\nTotal Events in the last 30 days(for comparison): " + events30Days + "\n\n\nTotal group events held: " + totGroupEvents + "\n\nGroup events held within the last 30 days: " + groupEvents30Days + "\n\nGroup events held within the last 7 days: " + groupEvents7Days + "\n\n\nTop 3 types of events held in the last 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(typesOfEvents)+ "\n\n\nTop 3 times of events held in the last 30 days(EST):\n" + FunctionContainer.top3CountForCountingArrayString(timesOfEvents)+ "\n\n\nWins, losses, and ties\n\nAll time record:\n" + FunctionContainer.top3CountForCountingArrayString(winLossAll) + "\n\nRecord for the last 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(winLoss30) + "\n\nRecord for the last 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(winLoss7) + "\n\n\nNumber of events for the last 30 days with at least 50% attendance: " + group50PercentAndAboveGroupEvents + "\n\n\nAverage group member attendance percentage for the last 30 days: " + FunctionContainer.percentageString(FunctionContainer.arrayAverage(groupPercentGroupEvents)) + "\n\n\n\nAll Events\n\n\nAverage group member attendance percentage for the last 30 days: " + FunctionContainer.percentageString(FunctionContainer.arrayAverage(groupPercentEvents)) + "\n\n\nNumber of events for the last 30 days with at least 50% attendance: " + group50PercentAndAboveAll + "\n\n\nTop 3 leaders of events\n\nAll Time:\n" + FunctionContainer.top3CountForCountingArrayString(topLeaders) + "\n\nLast 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(topLeaders30) + "\n\nLast 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(topLeaders7) + "\n\n\nTop 3 secondary leaders of events\n\nAll Time:\n" + FunctionContainer.top3CountForCountingArrayString(top2ndLeaders) + "\n\nLast 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(top2ndLeaders30) + "\n\nLast 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(top2ndLeaders7) + "\n\n\nTop 3 attendees of events\n\nAll Time:\n" + FunctionContainer.top3CountForCountingArrayString(topAttendees) + "\n\nLast 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(topAttendees30) + "\n\nLast 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(topAttendees7);
+
+    }
+
+
+
+
+
+    //Forge Form
+    if(choicesString.indexOf("Forge Form") !== -1){
+      text = text + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nFORGE FORM\n\n\n\nForm Fillout Metrics:";
+
+      //normal
+      // Top 3 for how many failed forms
+      // Top 3 for how many successful forms
+      // Total Number of successful submissions 730t
+      // Total Number of failed submissions 730t
+      // Top 3 reasons why form failed to submit
+      text = FunctionContainer.normalFilloutMetricsGroupReportPortion(allCurMembers, fhfescvn, 5, 1, ffethescv, curDateNum, todayMinus29, todayMinus6, ["forge form"], text);
+      
+      
+      // Top 3 of the group’s most used maps 730t
+      // Number of maps forged by members in their group as either creator or assistant creator
+      // All 3 form entry types and their frequency. 730t
+      // Top 3 group maps sent out through callouts 730t
+      var groupMaps = [];
+      var groupMapNames = [];
+      var mapsForgedByGroup = [];
+      //get maps that belong to the groups
+      for(var i=0; i<fhamscv.length; i+=1){//start 1st for
+        var curMapGroup = fhamscv[i][3].toString();
+        //map belongs to group
+        if(FunctionContainer.existsInArray(curGroupsIncluded, curMapGroup)  ||  curMapGroup === 'All Groups'){//end 1st if
+          groupMaps.push(fhamscv[i]);
+          groupMapNames.push(fhamscv[i][0].toString());
+        }//start 1st if
+
+        //maker/comaker is apart of group
+        if(FunctionContainer.existsInArray(allCurMembers, fhamscv[i][6])  ||  FunctionContainer.existsInArrayBulk(allCurMembers, FunctionContainer.splitEmUp(fhamscv[i][7]))){//end 1st if
+          mapsForgedByGroup.push(fhamscv[i][0].toString());
+        }//start 1st if
+      }//end 1st for
+
+      for(var i=0; i<fhimscv.length; i+=1){//start 1st for
+        var curMapGroup = fhimscv[i][3].toString();
+        //map belongs to group
+        if(FunctionContainer.existsInArray(curGroupsIncluded, curMapGroup)  ||  curMapGroup === 'All Groups'){//end 1st if
+          groupMaps.push(fhimscv[i]);
+          groupMapNames.push(fhimscv[i][0].toString());
+        }//start 1st if
+        //maker/comaker is apart of group
+        if(FunctionContainer.existsInArray(allCurMembers, fhimscv[i][6])  ||  FunctionContainer.existsInArrayBulk(allCurMembers, FunctionContainer.splitEmUp(fhimscv[i][7]))){//end 1st if
+          mapsForgedByGroup.push(fhimscv[i][0].toString());
+        }//start 1st if
+      }//end 1st for
+
+      
+      var countOfMapsAll = [];
+      var countOfMaps30 = [];
+      var countOfMaps7 = [];
+      for(var i=0; i<edhaedscvn.length; i+=1){//start 1st for
+        var curEventMaps = FunctionContainer.splitEmUp(edhaedscvn[i][11]);
+        var eventDateNum = edhaedscvn[i][0];
+        for(var x=0; x<curEventMaps.length; x+=1){//start 2nd for
+          if(FunctionContainer.existsInArray(groupMapNames, curEventMaps[x].toString())){//end 1st if
+            FunctionContainer.addToCountingArray(countOfMapsAll, curEventMaps[x].toString());
+            //within 30
+            if(todayMinus29 <= eventDateNum  &&  curDateNum >= eventDateNum){//end 2nd if
+              FunctionContainer.addToCountingArray(countOfMaps30, curEventMaps[x].toString());
+              //within 7
+              if(todayMinus6 <= eventDateNum  &&  curDateNum >= eventDateNum){//end 3rd if
+                FunctionContainer.addToCountingArray(countOfMaps7, curEventMaps[x].toString());
+              }//start 3rd if
+            }//start 2nd if
+          }//start 1st if
+        }//end 2nd for
+      }//end 1st for
+      
+      // All 3 form entry types and their frequency. 730t
+      // Top 3 group maps sent out through callouts 730t
+      var entryTypesAll = [];
+      var entryTypes30 = [];
+      var entryTypes7 = [];
+      var calloutMapNameAll = [];
+      var calloutMapName30 = [];
+      var calloutMapName7 = [];
+      for(var i=0; i<fhfescvn.length; i+=1){//start 1st for
+        var entryDateNum = fhfescvn[i][1];
+        //sub personel is member of group
+        if(FunctionContainer.existsInArray(allCurMembers, fhfescvn[i][5].toString())){//end 1st if
+          FunctionContainer.addToCountingArray(entryTypesAll, fhfescvn[i][0].toString());
+            //within 30
+            if(todayMinus29 <= entryDateNum  &&  curDateNum >= entryDateNum){//end 2nd if
+              FunctionContainer.addToCountingArray(entryTypes30, fhfescvn[i][0].toString());
+              //within 7
+              if(todayMinus6 <= entryDateNum  &&  curDateNum >= entryDateNum){//end 3rd if
+                FunctionContainer.addToCountingArray(entryTypes7, fhfescvn[i][0].toString());
+              }//start 3rd if
+            }//start 2nd if
+        }//start 1st if
+        //if its a callout and one of the group maps
+        if(FunctionContainer.existsInArray(groupMapNames, fhfescvn[i][2].toString())  &&  fhfescvn[i][0].toString() === "Map Callouts"  &&  fhfescvn[i][4].toString().slice(0, 22) === "Post or Delete: Post ~"){//end 1st if
+          FunctionContainer.addToCountingArray(calloutMapNameAll, fhfescvn[i][2].toString());
+            //within 30
+            if(todayMinus29 <= entryDateNum  &&  curDateNum >= entryDateNum){//end 2nd if
+              FunctionContainer.addToCountingArray(calloutMapName30, fhfescvn[i][2].toString());
+              //within 7
+              if(todayMinus6 <= entryDateNum  &&  curDateNum >= entryDateNum){//end 3rd if
+                FunctionContainer.addToCountingArray(calloutMapName7, fhfescvn[i][2].toString());
+              }//start 3rd if
+            }//start 2nd if
+        }//start 1st if
+      }//end 1st for
+
+
+      FunctionContainer.arraySortDescForGivenIndex(countOfMapsAll, 1);
+      FunctionContainer.arraySortDescForGivenIndex(countOfMaps30, 1);
+      FunctionContainer.arraySortDescForGivenIndex(countOfMaps7, 1);
+      FunctionContainer.arraySortDescForGivenIndex(entryTypesAll, 1);
+      FunctionContainer.arraySortDescForGivenIndex(entryTypes30, 1);
+      FunctionContainer.arraySortDescForGivenIndex(entryTypes7, 1);
+      FunctionContainer.arraySortDescForGivenIndex(calloutMapNameAll, 1);
+      FunctionContainer.arraySortDescForGivenIndex(calloutMapName30, 1);
+      FunctionContainer.arraySortDescForGivenIndex(calloutMapName7, 1);
+
+
+      var text = text + "\n\n\n\nGroup Maps:\n\n\nNumber of maps forged by members in the group as either creator or assistant creator total: " + mapsForgedByGroup.length + "\n\n\nTop 3 Group Maps Used\n\nAll Time:\n" + FunctionContainer.top3CountForCountingArrayString(countOfMapsAll) + "\n\nLast 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(countOfMaps30) + "\n\nLast 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(countOfMaps7) + "\n\n\nTop 3 Entry Types Submitted By Group Personnel\n\nAll Time:\n" + FunctionContainer.top3CountForCountingArrayString(entryTypesAll) + "\n\nLast 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(entryTypes30) + "\n\nLast 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(entryTypes7) + "\n\n\nTop 3 Group Maps Used In Callouts\n\nAll Time:\n" + FunctionContainer.top3CountForCountingArrayString(calloutMapNameAll) + "\n\nLast 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(calloutMapName30) + "\n\nLast 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(calloutMapName7)
+    }
+
+
+
+
+
+    //Member Update Form
+    if(choicesString.indexOf("Member Update Form") !== -1){
+      text = text + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nMEMBER UPDATE FORM\n\n\n\nForm Fillout Metrics:";
+
+      //normal
+      // Top 3 for how many failed forms
+      // Top 3 for how many successful forms
+      // Total Number of successful submissions 730t
+      // Total Number of failed submissions 730t
+      // Top 3 reasons why form failed to submit
+      text = FunctionContainer.normalFilloutMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, ffethescv, curDateNum, todayMinus29, todayMinus6, ["member update form"], text);
+      
+      
+      //Rank Change
+      curVals = FunctionContainer.memberUpdateMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, curDateNum, todayMinus29, todayMinus6, "Rank Change");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText(text, curVals[0], curVals[1], curVals[2], curVals[3], curVals[4], curVals[5], "Rank Change");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText2(text, curVals[6], curVals[7], curVals[8]);
+
+
+      //Credential Change
+      curVals = FunctionContainer.memberUpdateMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, curDateNum, todayMinus29, todayMinus6, "Credential Change");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText(text, curVals[0], curVals[1], curVals[2], curVals[3], curVals[4], curVals[5], "Credential Change");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText2(text, curVals[6], curVals[7], curVals[8]);
+
+
+      //Group Change
+      curVals = FunctionContainer.memberUpdateMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, curDateNum, todayMinus29, todayMinus6, "Group Change");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText(text, curVals[0], curVals[1], curVals[2], curVals[3], curVals[4], curVals[5], "Group Change");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText2(text, curVals[6], curVals[7], curVals[8]);
+
+      //Compare how many people were group change into the group vs how many were changed out of it
+      //cycle thru each group type
+      //curVals[9]curVals[10]curVals[11]
+      var groupsChangeCountAllLeft = [];
+      var groupsChangeCountAllJoined = [];
+      for(var i=0; i<curVals[9].length; i+=1){//start 1st for
+        var curVals2 = FunctionContainer.splitUpGroupChangeDetails(curVals[9][i].replace(" Leadership", ""));
+        FunctionContainer.addToCountingArray(groupsChangeCountAllLeft, curVals2[0].replace(" Leadership", ""));
+        FunctionContainer.addToCountingArray(groupsChangeCountAllJoined, curVals2[1]);
+      }//end 1st for
+
+
+      var groupsChangeCount30Left = [];
+      var groupsChangeCount30Joined = [];
+      for(var i=0; i<curVals[10].length; i+=1){//start 1st for
+        var curVals2 = FunctionContainer.splitUpGroupChangeDetails(curVals[10][i].replace(" Leadership", ""));
+        FunctionContainer.addToCountingArray(groupsChangeCount30Left, curVals2[0].replace(" Leadership", ""));
+        FunctionContainer.addToCountingArray(groupsChangeCount30Joined, curVals2[1]);
+      }//end 1st for
+
+
+      var groupsChangeCount7Left = [];
+      var groupsChangeCount7Joined = [];
+      for(var i=0; i<curVals[11].length; i+=1){//start 1st for
+        var curVals2 = FunctionContainer.splitUpGroupChangeDetails(curVals[11][i].replace(" Leadership", ""));
+        FunctionContainer.addToCountingArray(groupsChangeCount7Left, curVals2[0].replace(" Leadership", ""));
+        FunctionContainer.addToCountingArray(groupsChangeCount7Joined, curVals2[1]);
+      }//end 1st for
+
+      //new members
+      var newMemberCountPerGroupAll = [];
+      var newMemberCountPerGroup30 = [];
+      var newMemberCountPerGroup7 = [];
+      for(var i=0; i<muhnmuscvn.length; i+=1){//start 1st for
+        if(FunctionContainer.existsInArray(curGroupsIncluded, muhnmuscvn[i][2])){//end 1st if
+          FunctionContainer.addToCountingArray(groupsChangeCountAllJoined, muhnmuscvn[i][2]);
+          FunctionContainer.addToCountingArray(newMemberCountPerGroupAll, muhnmuscvn[i][2]);
+          //within 30 days
+          if(todayMinus29 <= muhnmuscvn[i][3]  &&  curDateNum >= muhnmuscvn[i][3]){//end 2nd if
+            FunctionContainer.addToCountingArray(groupsChangeCount30Joined, muhnmuscvn[i][2]);
+            FunctionContainer.addToCountingArray(newMemberCountPerGroup30, muhnmuscvn[i][2]);
+            //within 7 days and includes member
+            if(todayMinus6 <= muhnmuscvn[i][3]  &&  curDateNum >= muhnmuscvn[i][3]){//end 3rd if
+              FunctionContainer.addToCountingArray(groupsChangeCount7Joined, muhnmuscvn[i][2]);
+              FunctionContainer.addToCountingArray(newMemberCountPerGroup7, muhnmuscvn[i][2]);
+            }//start 3rd if
+          }//start 2nd if
+        }//start 1st if
+      }//end 1st for
+
+      var groupsDischargeCountAll = [];
+      var groupsDischargeCount30 = [];
+      var groupsDischargeCount7 = [];
+      
+      //get discharge by group
+      for(var i=0; i<muhauscvn.length; i+=1){//start 1st for
+        if(muhauscvn[i][0] === "Member Discharge"){//end 1st if
+          var newDischargeGroups = FunctionContainer.splitEmUp(muhauscvn[i][2].toString().replace("Discharging Member From: ", ""));
+          for(var x=0; x<newDischargeGroups.length; x+=1){//start 2nd for
+            newDischargeGroups[x] = newDischargeGroups[x].toString().replace(" Leadership", "");
+            if(FunctionContainer.existsInArray(curGroupsIncluded, newDischargeGroups[x])){//end 1st if
+              FunctionContainer.addToCountingArray(groupsChangeCountAllLeft, newDischargeGroups[x]);
+              FunctionContainer.addToCountingArray(groupsDischargeCountAll, newDischargeGroups[x]);
+              //within 30 days
+              if(todayMinus29 <= muhauscvn[i][3]  &&  curDateNum >= muhauscvn[i][3]){//end 2nd if
+                FunctionContainer.addToCountingArray(groupsChangeCount30Left, newDischargeGroups[x]);
+                FunctionContainer.addToCountingArray(groupsDischargeCount30, newDischargeGroups[x]);
+                //within 7 days and includes member
+                if(todayMinus6 <= muhauscvn[i][3]  &&  curDateNum >= muhauscvn[i][3]){//end 3rd if
+                  FunctionContainer.addToCountingArray(groupsChangeCount7Left, newDischargeGroups[x]);
+                  FunctionContainer.addToCountingArray(groupsDischargeCount7, newDischargeGroups[x]);
+                }//start 3rd if
+              }//start 2nd if
+            }//start 1st if
+          }//end 2nd for
+        }//start 1st if
+      }//end 1st for
+
+      //filters each one for groups not in the list
+      for(var i=groupsChangeCountAllLeft.length-1; i>=0; i-=1){//start 1st for
+        if(!FunctionContainer.existsInArray(curGroupsIncluded, groupsChangeCountAllLeft[i][0])){//end 1st if
+          groupsChangeCountAllLeft.splice(i, 1);
+        }//start 1st if
+      }//end 1st for
+
+      for(var i=groupsChangeCountAllJoined.length-1; i>=0; i-=1){//start 1st for
+        if(!FunctionContainer.existsInArray(curGroupsIncluded, groupsChangeCountAllJoined[i][0])){//end 1st if
+          groupsChangeCountAllJoined.splice(i, 1);
+        }//start 1st if
+      }//end 1st for
+
+      for(var i=groupsChangeCount30Left.length-1; i>=0; i-=1){//start 1st for
+        if(!FunctionContainer.existsInArray(curGroupsIncluded, groupsChangeCount30Left[i][0])){//end 1st if
+          groupsChangeCount30Left.splice(i, 1);
+        }//start 1st if
+      }//end 1st for
+
+      for(var i=groupsChangeCount30Joined.length-1; i>=0; i-=1){//start 1st for
+        if(!FunctionContainer.existsInArray(curGroupsIncluded, groupsChangeCount30Joined[i][0])){//end 1st if
+          groupsChangeCount30Joined.splice(i, 1);
+        }//start 1st if
+      }//end 1st for
+
+      for(var i=groupsChangeCount7Left.length-1; i>=0; i-=1){//start 1st for
+        if(!FunctionContainer.existsInArray(curGroupsIncluded, groupsChangeCount7Left[i][0])){//end 1st if
+          groupsChangeCount7Left.splice(i, 1);
+        }//start 1st if
+      }//end 1st for
+
+      for(var i=groupsChangeCount7Joined.length-1; i>=0; i-=1){//start 1st for
+        if(!FunctionContainer.existsInArray(curGroupsIncluded, groupsChangeCount7Joined[i][0])){//end 1st if
+          groupsChangeCount7Joined.splice(i, 1);
+        }//start 1st if
+      }//end 1st for
+
+      text = text + "\n\n\nTop 3 groups changed into (includes bootcamps)\n\nAll Time:\n" + FunctionContainer.top3CountForCountingArrayString(groupsChangeCountAllJoined) + "\n\nLast 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(groupsChangeCount30Joined) + "\n\nLast 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(groupsChangeCount7Joined) + "\n\n\nTop 3 groups changed out of (including discharge)\n\nAll Time:\n" + FunctionContainer.top3CountForCountingArrayString(groupsChangeCountAllLeft) + "\n\nLast 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(groupsChangeCount30Left) + "\n\nLast 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(groupsChangeCount7Left);
+
+
+      //Member Report
+      curVals = FunctionContainer.memberUpdateMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, curDateNum, todayMinus29, todayMinus6, "Member Report");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText(text, curVals[0], curVals[1], curVals[2], curVals[3], curVals[4], curVals[5], "Member Report");
+
+
+      //Member Discharge
+      curVals = FunctionContainer.memberUpdateMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, curDateNum, todayMinus29, todayMinus6, "Member Discharge");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText(text, curVals[0], curVals[1], curVals[2], curVals[3], curVals[4], curVals[5], "Member Discharge");
+
+      //all member who have been discharged
+      if(curVals[3].length >= 1){//end 1st if
+        text = text + "\n\n\nAll members discharged previously\n\n";
+        for(var i=0; i<curVals[3].length; i+=1){//start 1st for
+          text = text + "\n" + curVals[3][i].toString();
+        }//end 1st for
+      }//start 1st if
+
+      text = text + "\n\n\nTop 3 groups with discharges\n\nAll Time:\n" + FunctionContainer.top3CountForCountingArrayString(groupsChangeCountAllJoined) + "\n\nLast 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(groupsChangeCount30Joined) + "\n\nLast 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(groupsChangeCount7Joined);
+
+
+      //Gamertag Change
+      curVals = FunctionContainer.memberUpdateMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, curDateNum, todayMinus29, todayMinus6, "Gamertag Change");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText(text, curVals[0], curVals[1], curVals[2], curVals[3], curVals[4], curVals[5], "Gamertag Change");
+
+
+      //Discord Nickname Change
+      curVals = FunctionContainer.memberUpdateMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, curDateNum, todayMinus29, todayMinus6, "Discord Nickname Change");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText(text, curVals[0], curVals[1], curVals[2], curVals[3], curVals[4], curVals[5], "Discord Nickname Change");
+
+
+      //Availability Change
+      curVals = FunctionContainer.memberUpdateMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, curDateNum, todayMinus29, todayMinus6, "Availability Change");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText(text, curVals[0], curVals[1], curVals[2], curVals[3], curVals[4], curVals[5], "Availability Change");
+
+      var stillNoGA = [];
+      for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+        //if in group
+        if(FunctionContainer.existsInArray(allCurMembers, pmdcmscv[i][0])){//end 1st if
+          //if no ga
+          if(pmdcmscv[i][13] === ""  &&  pmdcmscv[i][14] === ""  &&  pmdcmscv[i][15] === ""  &&  pmdcmscv[i][16] === ""  &&  pmdcmscv[i][17] === ""  &&  pmdcmscv[i][18] === ""  &&  pmdcmscv[i][19] === ""){//end 1st if
+            stillNoGA.push(pmdcmscv[i][0]);
+          }//start 1st if
+        }//start 1st if
+      }//end 1st for
+
+      if(stillNoGA.length !== 0){//end 1st if
+        text = text + "\n\n\nMembers With No General Availability:";
+        for(var i=0; i<stillNoGA.length; i+=1){//start 1st for
+          text = text + "\n" + stillNoGA[i];
+        }//end 1st for
+      }//start 1st if
+
+
+      //LOA
+      curVals = FunctionContainer.memberUpdateMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, curDateNum, todayMinus29, todayMinus6, "LOA");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText(text, curVals[0], curVals[1], curVals[2], curVals[3], curVals[4], curVals[5], "LOA");
+
+      var loaLeavingAll = [];
+      var loaLeaving30 = [];
+      var loaLeaving7 = [];
+      var loaReturningAll = [];
+      var loaReturning30 = [];
+      var loaReturning7 = [];
+
+      for(var i=0; i<muhauscvn.length; i+=1){//start 1st for
+        if(muhauscvn[i][0] === "LOA"  &&  FunctionContainer.existsInArray(allCurMembers, muhauscvn[i][1])){//end 1st if
+          //leaving
+          if(muhauscvn[i][2].indexOf("Leaving on LOA Starting on: ") !== -1){//end 1st if
+            FunctionContainer.addToCountingArray(loaLeavingAll, muhauscvn[i][1]);
+            //within 30 days
+            if(todayMinus29 <= muhauscvn[i][3]  &&  curDateNum >= muhauscvn[i][3]){//end 2nd if
+              FunctionContainer.addToCountingArray(loaLeaving30, muhauscvn[i][1]);
+              //within 7 days and includes member
+              if(todayMinus6 <= muhauscvn[i][3]  &&  curDateNum >= muhauscvn[i][3]){//end 3rd if
+                FunctionContainer.addToCountingArray(loaLeaving7, muhauscvn[i][1]);
+              }//start 3rd if
+            }//start 2nd if
+          }//start 1st if
+
+          //returning
+          else if(muhauscvn[i][2].indexOf("Returned from LOA as of: ") !== -1){//end 1st if
+            FunctionContainer.addToCountingArray(loaReturningAll, muhauscvn[i][1]);
+            //within 30 days
+            if(todayMinus29 <= muhauscvn[i][3]  &&  curDateNum >= muhauscvn[i][3]){//end 2nd if
+              FunctionContainer.addToCountingArray(loaReturning30, muhauscvn[i][1]);
+              //within 7 days and includes member
+              if(todayMinus6 <= muhauscvn[i][3]  &&  curDateNum >= muhauscvn[i][3]){//end 3rd if
+                FunctionContainer.addToCountingArray(loaReturning7, muhauscvn[i][1]);
+              }//start 3rd if
+            }//start 2nd if
+          }//start 1st if
+
+        }//start 1st if
+      }//end 1st for
+
+      text = text + "\n\n\nLeaving on LOA\n\nAll Time:\n" + FunctionContainer.totalCountForCountingArray(loaLeavingAll) + "\n\nLast 30 days:\n" + FunctionContainer.totalCountForCountingArray(loaLeaving30) + "\n\nLast 7 days:\n" + FunctionContainer.totalCountForCountingArray(loaLeaving7)+ "\n\n\nReturning From LOA\n\nAll Time:\n" + FunctionContainer.totalCountForCountingArray(loaReturningAll) + "\n\nLast 30 days:\n" + FunctionContainer.totalCountForCountingArray(loaReturning30) + "\n\nLast 7 days:\n" + FunctionContainer.totalCountForCountingArray(loaReturning7);
+
+
+      //Mentor Change
+      curVals = FunctionContainer.memberUpdateMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, curDateNum, todayMinus29, todayMinus6, "Mentor Change");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText(text, curVals[0], curVals[1], curVals[2], curVals[3], curVals[4], curVals[5], "Mentor Change");
+
+      var curMenteeCount = [];
+      var noMentor = [];
+      for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+        //if memeber is in group
+        if(FunctionContainer.existsInArray(allCurMembers, pmdcmscv[i][0])){//end 1st if
+          if(pmdcmscv[i][25] === ""){//end 1st if
+            noMentor.push(pmdcmscv[i][0])
+          }//start 1st if
+        }//start 1st if
+        if(pmdcmscv[i][25] !== ""  &&  FunctionContainer.existsInArray(allCurMembers, pmdcmscv[i][25])){//end 1st if
+          FunctionContainer.addToCountingArray(curMenteeCount, pmdcmscv[i][25]);
+        }//start 1st if
+      }//end 1st for
+
+      if(noMentor.length !== 0){//end 1st if
+        text = text + "\n\n\nMembers With No Mentor:";
+        for(var i=0; i<noMentor.length; i+=1){//start 1st for
+          text = text + "\n" + noMentor[i];
+        }//end 1st for
+      }//start 1st if
+      text = text + "\n\n\nTop 10 Mentors With Mentee Counts\n\n\n" + FunctionContainer.top10CountForCountingArrayString(curMenteeCount);
+
+
+      //Position Code Change
+      curVals = FunctionContainer.memberUpdateMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, curDateNum, todayMinus29, todayMinus6, "Position Code Change");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText(text, curVals[0], curVals[1], curVals[2], curVals[3], curVals[4], curVals[5], "Position Code Change");
+
+
+      //Reprimand
+      curVals = FunctionContainer.memberUpdateMetricsGroupReportPortion(allCurMembers, muhauscvn, 5, 3, curDateNum, todayMinus29, todayMinus6, "Reprimand");
+      
+      text = FunctionContainer.memberUpdateMetricsGroupReportText3(text, curVals[0], curVals[1], curVals[2], curVals[3], curVals[4], curVals[5], "Reprimand");
+
+    }
+
+
+
+
+
+    //New Member Form
+    if(choicesString.indexOf("New Member Form") !== -1){
+      text = text + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nNEW MEMBER FORM\n\n\n\nForm Fillout Metrics:";
+
+      //normal
+      // Top 3 for how many failed forms
+      // Top 3 for how many successful forms
+      // Total Number of successful submissions 730t
+      // Total Number of failed submissions 730t
+      // Top 3 reasons why form failed to submit
+      text = FunctionContainer.normalFilloutMetricsGroupReportPortion(allCurMembers, muhnmuscvn, 7, 3, ffethescv, curDateNum, todayMinus29, todayMinus6, ["new member form"], text);
+
+
+      //top 3 recruiters
+      //top 3 ldi's
+      var recruiterAll = [];
+      var recruiter30 = [];
+      var recruiter7 = [];
+      var ldiAll = [];
+      var ldi30 = [];
+      var ldi7 = [];
+      for(var i=0; i<muhnmuscvn.length; i+=1){//start 1st for
+        //recruiter
+        if(FunctionContainer.existsInArray(allCurMembers, muhnmuscvn[i][5])){//end 1st if
+          FunctionContainer.addToCountingArray(recruiterAll, muhnmuscvn[i][5]);
+          //within 30 days
+          if(todayMinus29 <= muhnmuscvn[i][3]  &&  curDateNum >= muhnmuscvn[i][3]){//end 2nd if
+            FunctionContainer.addToCountingArray(recruiter30, muhnmuscvn[i][5]);
+            //within 7 days and includes member
+            if(todayMinus6 <= muhnmuscvn[i][3]  &&  curDateNum >= muhnmuscvn[i][3]){//end 3rd if
+              FunctionContainer.addToCountingArray(recruiter7, muhnmuscvn[i][5]);
+            }//start 3rd if
+          }//start 2nd if
+        }//start 1st if
+        
+        //ldi
+        if(FunctionContainer.existsInArray(allCurMembers, muhnmuscvn[i][4])){//end 1st if
+          FunctionContainer.addToCountingArray(ldiAll, muhnmuscvn[i][4]);
+          //within 30 days
+          if(todayMinus29 <= muhnmuscvn[i][3]  &&  curDateNum >= muhnmuscvn[i][3]){//end 2nd if
+            FunctionContainer.addToCountingArray(ldi30, muhnmuscvn[i][4]);
+            //within 7 days and includes member
+            if(todayMinus6 <= muhnmuscvn[i][3]  &&  curDateNum >= muhnmuscvn[i][3]){//end 3rd if
+              FunctionContainer.addToCountingArray(ldi7, muhnmuscvn[i][4]);
+            }//start 3rd if
+          }//start 2nd if
+        }//start 1st if
+      }//end 1st for
+       
+      text = text + "\n\n\n\nMetrics By Individual\n\n\nTop 3 Recruiters\n\nAll Time:\n" + FunctionContainer.top3CountForCountingArrayString(recruiterAll) + "\n\nLast 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(recruiter30) + "\n\nLast 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(recruiter7) + "\n\n\nTop 3 LDI's\n\nAll Time:\n" + FunctionContainer.top3CountForCountingArrayString(ldiAll) + "\n\nLast 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(ldi30) + "\n\nLast 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(ldi7);
+
+      if(newMemberCountPerGroupAll.length !== 0){//end 1st if
+        text = text + "\n\n\n\nMetrics By Group\n\n\nTotal Numbers Of Members Joined Through Bootcamps\n\nAll Time:\n" + FunctionContainer.totalCountForCountingArray(newMemberCountPerGroupAll) + "\n\nLast 30 days:\n" + FunctionContainer.totalCountForCountingArray(newMemberCountPerGroup30) + "\n\nLast 7 days:\n" + FunctionContainer.totalCountForCountingArray(newMemberCountPerGroup7);
+      }//start 1st if
+
+      if(curGroupsIncluded.length > 1){//end 1st if
+        text = text + "\n\n\n\nTop 3 Groups Joined\n\nAll Time:\n" + FunctionContainer.top3CountForCountingArrayString(newMemberCountPerGroupAll) + "\n\nLast 30 days:\n" + FunctionContainer.top3CountForCountingArrayString(newMemberCountPerGroup30) + "\n\nLast 7 days:\n" + FunctionContainer.top3CountForCountingArrayString(newMemberCountPerGroup7);
+      }//start 1st if
+    }
+
+
+
+
+
+    //Miscellaneous Forms
+    if(choicesString.indexOf("Miscellaneous Forms") !== -1){
+      text = text + "\n\n\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nALL MISCELLANEOUS FORMS\n\n\n\nForm Fillout Metrics:";
+
+      //normal
+      // Top 3 for how many failed forms
+      // Top 3 for how many successful forms
+      // Total Number of successful submissions 730t
+      // Total Number of failed submissions 730t
+      // Top 3 reasons why form failed to submit
+      text = FunctionContainer.normalFilloutMetricsGroupReportPortion(allCurMembers, mfhaescvn, 4, 1, ffethescv, curDateNum, todayMinus29, todayMinus6, ["expansion form", "fixer form", "group report form", "embedded message form", "update control form", "permission form", "scheduling form"], text);
+      
+
+      //Embedded Message Form
+      text = text + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nEMBEDDED MESSAGE FORMS\n\n\n\nForm Fillout Metrics:";
+
+      //normal
+      // Top 3 for how many failed forms
+      // Top 3 for how many successful forms
+      // Total Number of successful submissions 730t
+      // Total Number of failed submissions 730t
+      // Top 3 reasons why form failed to submit
+      text = FunctionContainer.miscFormsFilloutMetricsGroupReportPortion(allCurMembers, mfhaescvn, 4, 1, ffethescv, curDateNum, todayMinus29, todayMinus6, "embedded message form", text, "Embedded Message Form");
+
+
+      //Expansion Form
+      text = text + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nEXPANSION FORMS\n\n\n\nForm Fillout Metrics:";
+
+      //normal
+      // Top 3 for how many failed forms
+      // Top 3 for how many successful forms
+      // Total Number of successful submissions 730t
+      // Total Number of failed submissions 730t
+      // Top 3 reasons why form failed to submit
+      text = FunctionContainer.miscFormsFilloutMetricsGroupReportPortion(allCurMembers, mfhaescvn, 4, 1, ffethescv, curDateNum, todayMinus29, todayMinus6, "expansion form", text, "Expansion Form");
+
+
+      //Fixer Form
+      text = text + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nFIXER FORMS\n\n\n\nForm Fillout Metrics:";
+
+      //normal
+      // Top 3 for how many failed forms
+      // Top 3 for how many successful forms
+      // Total Number of successful submissions 730t
+      // Total Number of failed submissions 730t
+      // Top 3 reasons why form failed to submit
+      text = FunctionContainer.miscFormsFilloutMetricsGroupReportPortion(allCurMembers, mfhaescvn, 4, 1, ffethescv, curDateNum, todayMinus29, todayMinus6, "fixer form", text, "Fixer Form");
+
+
+      //Group Report Form
+      text = text + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nGROUP REPORT FORMS\n\n\n\nForm Fillout Metrics:";
+
+      //normal
+      // Top 3 for how many failed forms
+      // Top 3 for how many successful forms
+      // Total Number of successful submissions 730t
+      // Total Number of failed submissions 730t
+      // Top 3 reasons why form failed to submit
+      text = FunctionContainer.miscFormsFilloutMetricsGroupReportPortion(allCurMembers, mfhaescvn, 4, 1, ffethescv, curDateNum, todayMinus29, todayMinus6, "group report form", text, "Group Report Form");
+
+
+      //Permission Form
+      text = text + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nPERMISSION FORMS\n\n\n\nForm Fillout Metrics:";
+
+      //normal
+      // Top 3 for how many failed forms
+      // Top 3 for how many successful forms
+      // Total Number of successful submissions 730t
+      // Total Number of failed submissions 730t
+      // Top 3 reasons why form failed to submit
+      text = FunctionContainer.miscFormsFilloutMetricsGroupReportPortion(allCurMembers, mfhaescvn, 4, 1, ffethescv, curDateNum, todayMinus29, todayMinus6, "permission form", text, "Permission Form");
+
+
+      //Scheduling Form
+      text = text + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nSCHEDULING FORMS\n\n\n\nForm Fillout Metrics:";
+
+      //normal
+      // Top 3 for how many failed forms
+      // Top 3 for how many successful forms
+      // Total Number of successful submissions 730t
+      // Total Number of failed submissions 730t
+      // Top 3 reasons why form failed to submit
+      text = FunctionContainer.miscFormsFilloutMetricsGroupReportPortion(allCurMembers, mfhaescvn, 4, 1, ffethescv, curDateNum, todayMinus29, todayMinus6, "scheduling form", text, "Scheduling Form");
+
+      
+      //Update Control Form
+      text = text + "\n\n\n\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nUPDATE CONTROL FORMS\n\n\n\nForm Fillout Metrics:";
+
+      //normal
+      // Top 3 for how many failed forms
+      // Top 3 for how many successful forms
+      // Total Number of successful submissions 730t
+      // Total Number of failed submissions 730t
+      // Top 3 reasons why form failed to submit
+      text = FunctionContainer.miscFormsFilloutMetricsGroupReportPortion(allCurMembers, mfhaescvn, 4, 1, ffethescv, curDateNum, todayMinus29, todayMinus6, "update control form", text, "Update Control Form");
+
+    }
+    
+    
+    // console.log(text);
+    // console.log(ree);
+
+    var docUrl = DriveApp.getFolderById(dllscv[44][valsForGroupProfileUpdate].toString()).createFile(title, text, MimeType.PLAIN_TEXT).getUrl();
+
+    details = details + " ~ Report URL: " + docUrl;
+    console.log(docUrl);
+    //posts data to misc form hub
+    FunctionContainer.miscFormHubEntry("Group Report Form", FunctionContainer.dateReplace(grfrscv[0].toString()), 
+      FunctionContainer.timeRetrieval12Cycle(grfrscv[0]), details, perpitraitor, dllscv);
+      
+      "Group in Question: " + groupInQuestion + " ~ Discord Channel: " 
+  + discChannel + " ~ Choices: " + choicesString
+    //posts to discord
+    if(discChannel !== "N/A"){
+      //s$e$^Title^Description^Author^Author Avatar^Image^Footer^Channel Name
+      FunctionContainer.discordGroupReportFormSend("s$e$^Group Report For __" + groupInQuestion 
+        + "__^\nChoices: " + choicesString + "\nReport can be found [**here**](" + docUrl 
+        + ")^^^^Group Reports^" + discChannel);
+    }
+    
+  }//end 1st if
+  
+  
+  //if code is wrong
+  else{
+    FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Group Report Form Errors", dllscv);
+    FunctionContainer.indFormErrorReport(perpitraitor, "group report form", "inputed an incorrect code", grfrslri, dllscv[88][6].toString());
+  }//end 1st else
+  
+  
+}//end main

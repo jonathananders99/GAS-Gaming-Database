@@ -1,0 +1,325 @@
+function newMemberFormResponseUpdate(){
+  errorCheck("newMemberFormResponseUpdate","NewMemberFormResponseUpdate");
+}//end newMemberFormResponseUpdate
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  
+  //New Member Form Response Sheet
+  var nmfrs = FunctionContainer.tripleTryOpenSheet("","NMF Responses");
+  var nmfrslri = FunctionContainer.tripleTryGetLastRow(nmfrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  var nmfrscv = FunctionContainer.tripleTryGetValues(nmfrs,nmfrslri,1,1,40)[0];
+//  FunctionContainer.positionsInsideArray(nmfrscv);
+  
+  /*
+  [Timestamp[0], Email Address[1], Code[2], Update form lists? (forms will turn off while they are updating)[3], 
+    Gamertag[4], Current Discord Nickname[5], Entry Group[6], Bootcamp Date[7], Additional Notes[8], 
+    LDI's Group[9], LDI in Question[10], LDI in Question[11], LDI in Question[12], LDI in Question[13], 
+    LDI in Question[14], LDI in Question[15], LDI in Question[16], LDI in Question[17], LDI in Question[18], 
+    LDI in Question[19], LDI in Question[20], LDI in Question[21], LDI in Question[22], Recruiter's Group[23], 
+    Recruiter in Question[24], Recruiter in Question[25], Recruiter in Question[26], Recruiter in Question[27], 
+    Recruiter in Question[28], Recruiter in Question[29], Recruiter in Question[30], Recruiter in Question[31], 
+    Recruiter in Question[32], Recruiter in Question[33], Recruiter in Question[34], Recruiter in Question[35], 
+    Recruiter in Question[36], Fixer Form Row Deletion[37], [38], [39]]
+  */
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(nmfrscv[1].toString().trim(), pmdcmscv);
+  
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    FunctionContainer.indFormErrorReport(perpitraitor, "new member form", "inputed an email not in the database (perp will not receive pm with details) in an entry for __" + nmfrscv[4].toString() + "__", nmfrslri, dllscv[88][2].toString());
+  }//end 2nd if
+  
+  
+  //trims everything and checks for illegal characters
+  var formTrimList = [1,2,4,5,7,8];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    if(nmfrscv[formTrimList[i]] === " "){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "new member form", "didnt put anything but a space in a required question (perp will not receive pm with details) in an entry for __" + nmfrscv[4].toString() + "__", nmfrslri, dllscv[88][2].toString());
+    }//end 1st if
+    
+    nmfrscv[formTrimList[i]] = nmfrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(nmfrscv[formTrimList[i]].indexOf("~") !== -1  ||  nmfrscv[formTrimList[i]].indexOf("^") !== -1){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "new member form", "included special characters ~ or ^ (perp will not receive pm with details because ^ and ~ interfere with the bot commands) in an entry for __" + nmfrscv[4].toString() + "__", nmfrslri, dllscv[88][2].toString());
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  
+  
+  //** DATA GATHERING **//
+  
+  var formListUpdates = nmfrscv[3].toString();
+  
+  var generation = dllscv[95][0].toString();
+  
+  var allQPositionsForLDI = [[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22]];
+  
+  var allQPositionsForRecruiter = [[24],[25],[26],[27],[28],[29],[30],[31],[32],[33],[34],[35],[36]];
+  
+  var gamertag = nmfrscv[4].toString();
+  
+  var discordID = nmfrscv[5].toString();
+  //gets number on end
+  if(discordID.length===6){//start 1st if
+    var discordIDNum = parseInt(discordID[5]);
+  }//end 1st if
+  else if(discordID.length===7){//start 1st if/else
+    var discordIDNum = parseInt(discordID[5]+discordID[6]);
+  }//end 1st if/else
+  
+  var entryGroup = nmfrscv[6].toString();
+  
+  var bootcampDate = FunctionContainer.dateRetrieval(nmfrscv[7]);
+  
+  var additionalNotes = nmfrscv[8].toString();
+  
+  var bootcampLDI = "";
+  for(var i=0; i<allQPositionsForLDI.length; i+=1){//start 1st for
+    if(nmfrscv[allQPositionsForLDI[i]].toString()!==""&&nmfrscv[allQPositionsForLDI[i]].toString()!=="N/A"){//start 1st if
+      bootcampLDI = nmfrscv[allQPositionsForLDI[i]].toString();
+    }//end 1st if
+  }//end 1st for
+  if(nmfrscv[9].toString() === "Submitter"){//start 1st if
+    bootcampLDI = perpitraitor;
+  }//end 1st if
+  
+  var recruiterInQuestion = [];
+  for(var i=0; i<allQPositionsForRecruiter.length; i+=1){//start 1st for
+    if(nmfrscv[allQPositionsForRecruiter[i]].toString()!==""&&nmfrscv[allQPositionsForRecruiter[i]].toString()!=="N/A"){//start 1st if
+      recruiterInQuestion = nmfrscv[allQPositionsForRecruiter[i]].toString();
+    }//end 1st if
+  }//end 1st for
+  if(nmfrscv[23].toString() === "Submitter"){//start 1st if
+    recruiterInQuestion = perpitraitor;
+  }//end 1st if
+  
+  var errorInfo = "\n\n • Gamertag:** " + gamertag + "**\n\n • Entry Group:** " + entryGroup 
+    + "**\n\n • Bootcamp Date:** " + bootcampDate + "**\n\n • LDI:** " + bootcampLDI
+    + "**\n\n • Recruited By:** " + recruiterInQuestion + "**\n\n • Additional Notes:** " + additionalNotes 
+    + "**\n\n • Discord ID:** " + discordID + "**";
+  
+  
+  
+  
+  //** CHECKS AND DATA CHANGING **//
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "nmf", nmfrscv[2].toString())){//start 1st if
+    
+    //check for ldi or recruiter as n/a
+    
+    //sends error if gamertag is taken or apart of someone elses
+    for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+      if(pmdcmscv[i][0].toString().indexOf(gamertag) !== -1){//start 2nd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "New Member Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "new member form", "inputed a gamertag that is already taken or apart of someone else's gt (which would cause problems within the database) in an entry for __" + gamertag + "__", nmfrslri, dllscv[88][2].toString());
+      }//end 2nd if
+    }//end 1st for
+    
+    //sends error if first characters are not Helot for discord tag
+    if(discordID[0]!=="C"||discordID[1]!=="a"||discordID[2]!=="d"||discordID[3]!=="e"||discordID[4]!=="t"||discordIDNum-discordIDNum!==0||discordID.length>7){//start 2nd if
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "New Member Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "new member form", "filled out the discord id wrong in an entry for __" + gamertag + "__", nmfrslri, dllscv[88][2].toString());
+    }//end 2nd if
+    
+    //sends error if gamertag is N/A
+    if(gamertag==="N/A"){//start 2nd if
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "New Member Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "new member form", "tried to put N/A as a gamertag in an entry for __" + gamertag + "__", nmfrslri, dllscv[88][2].toString());
+    }//end 2nd if
+      
+    //sends error if gamertag has a comma
+    if(gamertag.toString().indexOf("Leadership")!==-1){//start 2nd if
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "New Member Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "new member form", "tried to put __'Leadership'__ in the gamertag (which is not allowed) in an entry for __" + gamertag + "__", nmfrslri, dllscv[88][2].toString());
+    }//end 2nd if
+    
+    //sends error if gamertag is longer than 17 characters
+    if(gamertag.length>17){//start 2nd if
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "New Member Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "new member form", "tried to put a gamertag longer than 17 characters in an entry for __" + gamertag + "__", nmfrslri, dllscv[88][2].toString());
+    }//end 2nd if
+        
+    //sends error if gamertag has a special character
+    if(gamertag.toString().indexOf(",") !== -1  ||  gamertag.toString().indexOf("~") !== -1  ||  gamertag.toString().indexOf("]") !== -1
+      ||  gamertag.toString().indexOf("|") !== -1  ||  gamertag === " "  ||  gamertag.toString().indexOf("[") !== -1
+      ||  gamertag.toString().indexOf("(") !== -1  ||  gamertag.toString().indexOf(")") !== -1  
+      ||  gamertag.toString().indexOf("*") !== -1){//start 4th if
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "New Member Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "new member form", "tried to put a __special character__ in the gamertag in an entry for __" + discordID + "__", nmfrslri, dllscv[88][2].toString());
+    }//end 4th if
+    
+    //sends error if gamertag has a comma
+    if(gamertag.toString().indexOf(",")!==-1){//start 2nd if
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "New Member Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "new member form", "tried to put a comma in a gamertag in an entry for __" + gamertag + "__", nmfrslri, dllscv[88][2].toString());
+    }//end 2nd if
+    
+    //if gamertag is the same as any of the group names
+    for(var i=0; i<57; i+=1){//start 1st for
+      //sends error if gamertag = group name
+      if(gamertag.toString()===dllscv[40][i].toString()){//start 2nd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "New Member Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "new member form", "tried to put a gamertag that is the same name as an existing group in an entry for __" + gamertag + "__", nmfrslri, dllscv[88][2].toString());
+      }//end 2nd if
+    }//end 1st for
+    
+    
+    
+    
+    //** FINALIZES DATA AND SENDS UPDATES **//
+    
+    
+    //create new variable for vals
+    var muhnmusnv = [[gamertag,generation,entryGroup,bootcampDate,bootcampLDI.toString(),recruiterInQuestion.toString(),additionalNotes,perpitraitor]];
+    
+    //adds vals to muhnmus
+    //Member Update Hub all updates sheet
+    curVals = FunctionContainer.getmuhnmuscv("min", dllscv);
+    var muhnmus = curVals[0];
+    var muhnmuslri = curVals[1];
+    curVals = undefined;
+    
+    //adds new row and pastes vals in it and formats it correctly
+    FunctionContainer.tripleTryAddRows(muhnmus, 2, 1);
+    FunctionContainer.tripleTrySetRowsSize(muhnmus, 3, 1, 105);
+    FunctionContainer.tripleTrySetSSValues(muhnmus, 3, 1, 1, 8, muhnmusnv);
+
+    //formats everything to make sure its correctly formatted
+    muhnmus.getRange(3,1,muhnmuslri-1,muhnmusnv[0].length).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setFontWeight(null);
+    muhnmus.getRange(1,1,muhnmuslri+1,muhnmusnv[0].length).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+    
+    
+    //Reorganizes muhnmus
+    //Member Update Hub new member updates sheet
+    curVals = FunctionContainer.getmuhnmuscv("both", dllscv);
+    var muhnmus = curVals[0];
+    var muhnmuscv = curVals[1];
+    var muhnmuscvn = curVals[2];
+    curVals = undefined;
+    
+    var muhnmustvn = [];
+    for(var i=0; i<muhnmuscvn.length; i+=1){//start 1st for
+      muhnmustvn.push([muhnmuscvn[i][3], muhnmuscvn[i][1], muhnmuscvn[i][2], muhnmuscvn[i][0], muhnmuscvn[i][4], muhnmuscvn[i][5], muhnmuscvn[i][6], muhnmuscvn[i][7]]);
+    }//end 1st for
+    
+    muhnmustvn = FunctionContainer.specialSortDesc(muhnmustvn);
+    
+    for(var i=0; i<muhnmustvn.length; i+=1){//start 1st for
+      muhnmuscvn[i] = [muhnmustvn[i][3], muhnmustvn[i][1], muhnmustvn[i][2], muhnmustvn[i][0], muhnmustvn[i][4], muhnmustvn[i][5], muhnmustvn[i][6], muhnmustvn[i][7]];
+    }//end 1st for
+    
+    //pastes new data
+    FunctionContainer.tripleTrySetSSValues(muhnmus, 3, 1, muhnmuscv.length, muhnmuscv[0].length, muhnmuscvn);
+    
+    
+    //adds new profile folder to entry mora
+    for(var i=0; i<57; i+=1){
+      if(dllscv[40][i].toString()===entryGroup){
+        var memberProfileFolderID = DriveApp.getFolderById(dllscv[42][i].toString()).createFolder(gamertag).getId();
+        var newMemberProfileFileId = DriveApp.getFileById("1kLEvbo7sqdVk91lRhK233-Yq1SL81dt7jDxpG1BqkWY").makeCopy(gamertag, DriveApp.getFolderById(memberProfileFolderID)).getId();
+        SpreadsheetApp.openById(newMemberProfileFileId).createTextFinder("<GT>").replaceAllWith(gamertag);
+        var entryMora = dllscv[40][i-1].toString();
+      }//end 2nd if
+    }//end 1st for
+    
+    
+    //new member data for phoenix member data sheet
+    var pmdcmsnv = [gamertag, gamertag, dllscv[24][2].toString(), entryGroup, "", generation, "N/A || N/A || N/A || N/A",
+    "N/A", "Active", "", entryGroup + " ~ " + newMemberProfileFileId, entryGroup + " ~ " + DriveApp.getFileById(newMemberProfileFileId).getUrl(), 
+    entryGroup+" ~ "+memberProfileFolderID,"","","","","","","",bootcampDate,"",FunctionContainer.dateReplace(dllscv[77][0]),dllscv[77][1],"","","",bootcampDate,"","","","","","","","","","","","","","","","","","","","","",""];
+    
+    //add new data
+    pmdcmscv.push(pmdcmsnv);
+    
+    //sorts data regardless of capitalizations
+    pmdcmscv = FunctionContainer.specialSort(pmdcmscv);
+    
+    //Pastes pmdcmscv
+    FunctionContainer.tripleTrySetSSValues(pmdcms,2,1,pmdcmscv.length,pmdcmscv[0].length,pmdcmscv);
+    
+    //fixes enlistment date number
+    FunctionContainer.tripleTrySetNumberFormat(pmdcms,2,28,pmdcmscv.length,2,"#,##0.00");
+    
+    
+    //gets disc info
+    //[currentFullDiscordNickname,discRoles,discRolesText]
+    curVals = FunctionContainer.getMemberDiscordInfo(dllscv, pmdcmscv, gamertag);
+    var newNickname = curVals[0];
+    var allRoles = curVals[1];
+    curVals = undefined;
+    
+    //change discord nickname
+    //c^n,Nickname,New Nickname
+    FunctionContainer.discordNewMemberFormSend("c^n," + discordID + "," + newNickname);
+
+    //gives correct roles in discord
+    for(var i=0; i<allRoles.length; i+=1){//start 1st for
+      //a^r,Nickname,Role
+      FunctionContainer.discordNewMemberFormSend("a^r," + newNickname + "," + allRoles[i].toString());
+    }//end 1st for
+    
+    //sends out welcome message
+    FunctionContainer.discordNewMemberFormSend("dm$e$^" + newNickname + "^**Welcome!**^" + "I am here to give you any updates from our database that include you like changing your rank. If you notice anything out of the ordinary or think something is wrong with any update I send you, please let the correct leader(s) know so they can fix any possible mistakes or clear up a misunderstanding. Side note: I do not receive any PM's so don't send me anything. Also git gud.^^^^Phoenix Era New Member Updates");
+    
+    
+    
+    
+    //** FORM LIST UPDATES **//
+    //updates form lists if yes is chosen
+    if(formListUpdates === "Yes"){//start 2nd if
+      
+      //shuts down all forms
+      FunctionContainer.formTurnOff(["all"], dllscv);
+      
+      //updates all forms apart of list 1
+      FunctionContainer.updateAllFormLists1(dllscv, pmdcmscv);
+      
+      //turns on all forms
+      FunctionContainer.formTurnOn(["all"], dllscv);
+      
+    }//end 2nd if
+    
+    
+  }//end 1st if
+  
+  
+  //if code is wrong
+  else{
+    FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "New Member Form Errors", dllscv);
+    FunctionContainer.indFormErrorReport(perpitraitor, "new member form", "inputed an incorrect code in an entry for __" + gamertag + "__", nmfrslri, dllscv[88][2].toString());
+  }//end 1st else
+  
+}//end main

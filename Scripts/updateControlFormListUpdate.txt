@@ -1,0 +1,101 @@
+function updateControlFormListUpdate(){
+  errorCheck("4:06",26,"updateControlFormListUpdate","UpdateControlFormListUpdate");
+}//end updateControlFormListUpdate
+
+
+function errorCheck(time,col,functionName,projectName){
+  try{main();triggerCreator(time,col,functionName);}//end 1st try
+  catch(error){console.log(error);
+    if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+      try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 2nd try
+      catch(error){console.log(error);
+        if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+          try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 3rd try
+          catch(error){console.log(error);
+            FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 3rd catch
+        else{FunctionContainer.discErrorReport(error,functionName,projectName);}}}//end 2nd catch
+    else{FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 1st catch
+}//end errorCheck
+
+
+function triggerCreator(ct,tColNum,scriptName){
+  var datSheetOriginal=FunctionContainer.tripleTryOpenSheet("", "Dates");var cdd=datSheetOriginal.getRange(1,1,15,datSheetOriginal.getLastColumn()).getValues();var triggerChangesMade = [];var vals = [[],[],[],[],[],[],[],[],[],[],[]];
+  triggerChangesMade.push("Old Trigger Id's and Dates:\nTrigger ID: "+cdd[9][tColNum-1].toString()+" For Date: "+cdd[1][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[10][tColNum-1].toString()+" For Date: "+cdd[4][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[11][tColNum-1].toString()+" For Date: "+cdd[5][tColNum-1].toString());
+  if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[1][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())){
+    var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){if(t[i].getUniqueId()===cdd[9][tColNum-1].toString()){ScriptApp.deleteTrigger(t[i]);triggerChangesMade.push("\nTrigger Deleted ~ "+cdd[9][tColNum-1].toString()+" for date: "+cdd[1][tColNum-1].toString());}}
+    var bruhX3 = cdd[3][0].toString();for(var iii = 0;iii<4;iii++){cdd[iii][0]=cdd[iii][0].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    for(var m=0;m<months.length;m++){if(bruhX3.indexOf(months[m].toString())!==-1){m=m+1;triggerTime = bruhX3[11].toString()+bruhX3[12].toString()+bruhX3[13].toString()+bruhX3[14].toString()+"-"+m+"-"+bruhX3[8].toString()+bruhX3[9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[0] = [cdd[4][tColNum-1]];vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[3] = [cdd[5][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];
+    vals[8] = [cdd[10][tColNum-1]];vals[9] = [cdd[11][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}
+  else if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[3][0].toString())){triggerChangesMade.push("\nNo Trigger Changes Made");}
+  else{var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){triggerChangesMade.push("\nTrigger Deleted ~ "+t[i].getUniqueId());ScriptApp.deleteTrigger(t[i]);}var cd=datSheetOriginal.getRange(1,1,4).getValues();
+    for(var iii = 0;iii<4;iii++){cd[iii]=cd[iii].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[0].indexOf(months[m].toString())!==-1){
+    m=m+1;triggerTime = cd[0][11].toString()+cd[0][12].toString()+cd[0][13].toString()+cd[0][14].toString()+"-"+m+"-"+cd[0][8].toString()+cd[0][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(2,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();
+    var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[0] = [tt];vals[8] = [uniqueTriggerID];var triggerTime="";
+    var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[2].indexOf(months[m].toString())!==-1){m=m+1;triggerTime = cd[2][11].toString()+cd[2][12].toString()+cd[2][13].toString()+cd[2][14].toString()+"-"+m+"-"+cd[2][8].toString()+cd[2][9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(5,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[3] = [tt];vals[9] = [uniqueTriggerID];var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[3].indexOf(months[m].toString())!==-1){m=m+1;
+    triggerTime = cd[3][11].toString()+cd[3][12].toString()+cd[3][13].toString()+cd[3][14].toString()+"-"+m+"-"+cd[3][8].toString()+cd[3][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();
+    triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}console.log(triggerChangesMade);
+}//end triggerCreator
+
+
+function main(){
+  try{var lock = LockService.getScriptLock();lock.waitLock(150000);}catch(lockError){console.log(lockError)};
+  
+  
+  //PXE Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  formListUpdate(dllscv, pmdcmscv);
+  
+}//end main
+
+function formListUpdate(dllscv, pmdcmscv){
+  
+  
+  //Update Control Form
+  var ucf = FormApp.openById(dllscv[85][8].toString());
+//  FunctionContainer.getDaFormIds(dllscv[85][8].toString());
+  
+  //Group(s) in Question
+  //gets all group names including councils
+  var curGroups = [];
+  for(var i=0; i<49; i+=1){//start 1st for
+    if(dllscv[dllscv[51][i]][dllscv[52][i]+1].toString() === "Active"){//start 1st if
+      curGroups.push([dllscv[40][i].toString()]);
+    }//end 1st if
+  }//end 1st for
+  
+  //sets the choices
+  ucf.getItemById("1504233682").asCheckboxItem().setChoiceValues(curGroups);
+  
+  
+  //Position Code Availability
+  //sets the choices
+  ucf.getItemById("1655728018").asListItem().setChoiceValues(FunctionContainer.getAllPossiblePCs(dllscv, pmdcmscv));
+  
+  
+  /* Update Control Form
+  [22-05-07 12:46:24:896 EDT] [Code, TEXT, 798021888]
+  [22-05-07 12:46:25:163 EDT] [Group Selection, PAGE_BREAK, 839896990]
+  [22-05-07 12:46:25:243 EDT] [Group(s) in Question, CHECKBOX, 1504233682]
+  [22-05-07 12:46:25:313 EDT] [Form Selection, PAGE_BREAK, 1240188831]
+  [22-05-07 12:46:25:387 EDT] [Form(s) in Question, CHECKBOX, 74106312]
+  [22-05-07 12:46:25:460 EDT] [Position Code Availability, PAGE_BREAK, 1949645688]
+  [22-05-07 12:46:25:533 EDT] [Available Position Codes, LIST, 1655728018]
+  [22-05-07 12:46:25:721 EDT] [Testing, PAGE_BREAK, 1161038701]
+  */
+  
+  
+}//end formListUpdate

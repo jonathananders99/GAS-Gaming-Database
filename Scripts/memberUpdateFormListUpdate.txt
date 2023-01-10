@@ -1,0 +1,336 @@
+function memberUpdateFormListUpdate(){
+  errorCheck("4:05",4,"memberUpdateFormListUpdate","MemberUpdateFormListUpdate");
+}//end memberUpdateFormListUpdate
+
+
+function errorCheck(time,col,functionName,projectName){
+  try{main();triggerCreator(time,col,functionName);}//end 1st try
+  catch(error){console.log(error);
+    if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+      try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 2nd try
+      catch(error){console.log(error);
+        if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+          try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 3rd try
+          catch(error){console.log(error);
+            FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 3rd catch
+        else{FunctionContainer.discErrorReport(error,functionName,projectName);}}}//end 2nd catch
+    else{FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 1st catch
+}//end errorCheck
+
+
+function triggerCreator(ct,tColNum,scriptName){
+  var datSheetOriginal=FunctionContainer.tripleTryOpenSheet("", "Dates");var cdd=datSheetOriginal.getRange(1,1,15,datSheetOriginal.getLastColumn()).getValues();var triggerChangesMade = [];var vals = [[],[],[],[],[],[],[],[],[],[],[]];
+  triggerChangesMade.push("Old Trigger Id's and Dates:\nTrigger ID: "+cdd[9][tColNum-1].toString()+" For Date: "+cdd[1][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[10][tColNum-1].toString()+" For Date: "+cdd[4][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[11][tColNum-1].toString()+" For Date: "+cdd[5][tColNum-1].toString());
+  if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[1][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())){
+    var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){if(t[i].getUniqueId()===cdd[9][tColNum-1].toString()){ScriptApp.deleteTrigger(t[i]);triggerChangesMade.push("\nTrigger Deleted ~ "+cdd[9][tColNum-1].toString()+" for date: "+cdd[1][tColNum-1].toString());}}
+    var bruhX3 = cdd[3][0].toString();for(var iii = 0;iii<4;iii++){cdd[iii][0]=cdd[iii][0].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    for(var m=0;m<months.length;m++){if(bruhX3.indexOf(months[m].toString())!==-1){m=m+1;triggerTime = bruhX3[11].toString()+bruhX3[12].toString()+bruhX3[13].toString()+bruhX3[14].toString()+"-"+m+"-"+bruhX3[8].toString()+bruhX3[9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[0] = [cdd[4][tColNum-1]];vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[3] = [cdd[5][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];
+    vals[8] = [cdd[10][tColNum-1]];vals[9] = [cdd[11][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}
+  else if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[3][0].toString())){triggerChangesMade.push("\nNo Trigger Changes Made");}
+  else{var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){triggerChangesMade.push("\nTrigger Deleted ~ "+t[i].getUniqueId());ScriptApp.deleteTrigger(t[i]);}var cd=datSheetOriginal.getRange(1,1,4).getValues();
+    for(var iii = 0;iii<4;iii++){cd[iii]=cd[iii].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[0].indexOf(months[m].toString())!==-1){
+    m=m+1;triggerTime = cd[0][11].toString()+cd[0][12].toString()+cd[0][13].toString()+cd[0][14].toString()+"-"+m+"-"+cd[0][8].toString()+cd[0][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(2,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();
+    var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[0] = [tt];vals[8] = [uniqueTriggerID];var triggerTime="";
+    var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[2].indexOf(months[m].toString())!==-1){m=m+1;triggerTime = cd[2][11].toString()+cd[2][12].toString()+cd[2][13].toString()+cd[2][14].toString()+"-"+m+"-"+cd[2][8].toString()+cd[2][9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(5,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[3] = [tt];vals[9] = [uniqueTriggerID];var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[3].indexOf(months[m].toString())!==-1){m=m+1;
+    triggerTime = cd[3][11].toString()+cd[3][12].toString()+cd[3][13].toString()+cd[3][14].toString()+"-"+m+"-"+cd[3][8].toString()+cd[3][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();
+    triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}console.log(triggerChangesMade);
+}//end triggerCreator
+
+
+function main(){
+  try{var lock = LockService.getScriptLock();lock.waitLock(150000);}catch(lockError){console.log(lockError)};
+  
+  
+  //PXE Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  formListUpdate(dllscv, pmdcmscv);
+  
+}//end main
+
+function formListUpdate(dllscv, pmdcmscv){
+  
+  
+  //Member Update Form
+  var muf = FormApp.openById(dllscv[85][3].toString());
+  //FunctionContainer.getDaFormIds(dllscv[85][3].toString());
+  
+  
+  //All Date Questions
+  var datesMinus7 = [[FunctionContainer.dateReplace(dllscv[10][0])+" (Today)"],
+    [FunctionContainer.dateReplace(dllscv[10][21])+" (Yesterday)"],
+    [FunctionContainer.dateReplace(dllscv[10][20])+" (2 Days ago)"],
+    [FunctionContainer.dateReplace(dllscv[10][19])+" (3 Days ago)"],
+    [FunctionContainer.dateReplace(dllscv[10][18])+" (4 Days ago)"],
+    [FunctionContainer.dateReplace(dllscv[10][17])+" (5 Days ago)"],
+    [FunctionContainer.dateReplace(dllscv[10][16])+" (6 Days ago)"]];
+  
+  var allDateQsIDs = [["2140495847"],["1120334800"],["1406898270"],["216481318"],["1808189645"],["460514691"],
+    ["1270935164"],["892884233"],["952206238"],["75573243"],["1208966000"],["121755448"],["47317037"],["533480801"]];
+  
+  for(var i=0; i<allDateQsIDs.length; i+=1){
+    muf.getItemById(allDateQsIDs[i].toString()).asListItem().setChoiceValues(datesMinus7);
+  }//end 1st for
+  
+  
+  //All Enlisted Spartiate Ranks Questions
+  var ranks = [];
+  for(var i=0; i<20; i+=1){
+    if(dllscv[24][i].toString()!==""){
+      ranks.push(dllscv[24][i].toString());
+    }//end 1st if
+  }//end 1st for
+  
+  var rankQsIds = [["828525024"]];
+  
+  for(var i=0; i<rankQsIds.length; i+=1){
+    muf.getItemById(rankQsIds[i].toString()).asListItem().setChoiceValues(ranks);
+  }//end 1st for
+  
+
+  //All Group Selection Q's
+  var groupSelectionIChoices = [];
+  var groupSelectionIQuestion = muf.getItemById("1529288581").asMultipleChoiceItem();
+    
+  for(var i=1; i<165; i+=13){
+    if(dllscv[0][i]==="Active"){
+      groupSelectionIChoices.push(groupSelectionIQuestion.createChoice(dllscv[0][i-1].toString(), muf.getItemById(dllscv[0][i+4].toString()).asPageBreakItem()));
+    }//end 1st if
+  }//end 2nd for
+  
+  groupSelectionIQuestion.setChoices(groupSelectionIChoices);
+  
+  
+  //Credential Change Credentials List
+  var credentialsList = [];
+  for(var i=16; i<24; i+=2){
+    for(var x=1; x<dllscv[i].length; x+=1){
+      if(dllscv[i][x].toString()!==""){
+        credentialsList.push([dllscv[i][x].toString()]);
+      }//end 1st if
+    }//end 2nd for
+  }//end 1st for
+  credentialsList = FunctionContainer.specialSort(credentialsList);
+  credentialsList.unshift(["N/A"]);
+  
+  var credentialsQsIds = [["1794219522"],["694626638"]];
+  
+  for(var i = 0; i<credentialsQsIds.length; i+=1){
+    muf.getItemById(credentialsQsIds[i].toString()).asListItem().setChoiceValues(credentialsList);
+  }//end 1st for
+  
+  
+  //Group Change
+  var groupChangeGroupChoices = [["N/A"]];
+  for(var i=1; i<165; i+=13){
+    for(var x=0; x<10; x+=1){
+      //if group is active
+      if(dllscv[x][i].toString() === "Active"){//start 1st if
+        //checks to see if it has leadership included
+        if(dllscv[62][dllscv[x][i+11]].toString() === "Yes"){//start 2nd if
+          groupChangeGroupChoices.push([dllscv[x][i-1].toString()+" Leadership"]);
+        }//end 2nd if
+        
+        //checks to see if it has members included
+        if(dllscv[63][dllscv[x][i+11]].toString() === "Yes"){//start 2nd if
+          groupChangeGroupChoices.push([dllscv[x][i-1].toString()]);
+        }//end 2nd if
+        
+      }//end 1st if
+    }//end 2nd for
+  }//end 1st for
+  
+  var groupChangeGroupQsIDs = [["345211544"],["1586695459"]];
+  
+  for(var i = 0; i<groupChangeGroupQsIDs.length; i+=1){
+    muf.getItemById(groupChangeGroupQsIDs[i].toString()).asListItem().setChoiceValues(groupChangeGroupChoices);
+  }//end 1st for
+  
+  
+  //Mentor in Question
+  var allMembers = [];
+  for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+    allMembers.push([pmdcmscv[i][0].toString()]);
+  }//end 1st for
+  muf.getItemById("1629784300").asListItem().setChoiceValues(allMembers);
+  
+  
+  //Member In Question Q's
+  for(var i=1; i<165; i+=13){
+    var allGroups = [];
+    for(var x=0; x<10; x+=1){//start 2nd for
+      if(dllscv[x][i].toString() === "Active"){//start 2nd if
+        allGroups.push(dllscv[x][i-1].toString());
+      }//end 2nd if
+    }//end 2nd for
+    var individualGroupChoices = [];
+    //if group is active
+    if(dllscv[0][i].toString() === "Active"){//start 1st if
+      //cycles thru each member
+      for(var x=0; x<pmdcmscv.length; x+=1){//start 2nd for
+        var curMemberGroups = FunctionContainer.splitEmUp(pmdcmscv[x][3]);
+        //cycles thru current member groups
+        for(var y=0; y<curMemberGroups.length; y+=1){//start 3rd for
+          //cycles thru all groups
+          for(var w=0; w<allGroups.length; w+=1){//start 4th for
+            //if cur member group contains all group
+            if(curMemberGroups[y].toString().indexOf(allGroups[w].toString()) !== -1){//start 2nd if
+              individualGroupChoices.push([pmdcmscv[x][0].toString()]);
+            }//end 2nd if
+          }//end 4th for
+        }//end 3rd for
+      }//end 2nd for
+      individualGroupChoices = FunctionContainer.arrayDuplicateFilter(individualGroupChoices);
+      //no members in group
+      if(individualGroupChoices.length === 0){//start 2nd if
+        muf.getItemById(dllscv[0][i+5].toString()).asListItem().setChoiceValues([["N/A"]]);
+      }//end 2nd if
+      //members in group
+      else{muf.getItemById(dllscv[0][i+5].toString()).asListItem().setChoiceValues(individualGroupChoices);}
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  /*Member Update Form
+  [22-02-22 21:45:05:145 EST] [Code, TEXT, 1623481466]
+  [22-02-22 21:45:05:318 EST] [Update form lists? (forms will turn off while they are updating), LIST, 946489386]
+  [22-02-22 21:45:05:392 EST] [Type of Update, LIST, 759539071]
+  
+  [22-02-22 21:45:05:466 EST] [Rank Change, PAGE_BREAK, 1876935393]
+  [22-02-22 21:45:05:541 EST] [Previous Rank, LIST, 1660530356]
+  [22-02-22 21:45:05:616 EST] [New Rank, LIST, 828525024]
+  [22-02-22 21:45:05:695 EST] [Date of Rank Change, LIST, 2140495847]
+  [22-02-22 21:45:05:762 EST] [Reasoning For Rank Change, PARAGRAPH_TEXT, 1984323125]
+  
+  [22-02-22 21:45:05:934 EST] [Credential Change, PAGE_BREAK, 513219481]
+  [22-02-22 21:45:06:008 EST] [Is the Previous Credential a Full Credential or Learning Credential?, MULTIPLE_CHOICE, 390687192]
+  [22-02-22 21:45:06:188 EST] [Previous Credential, LIST, 694626638]
+  [22-02-22 21:45:06:264 EST] [Is the New Credential a Full Credential or Learning Credential?, MULTIPLE_CHOICE, 94723875]
+  [22-02-22 21:45:06:350 EST] [New Credential, LIST, 1794219522]
+  [22-02-22 21:45:06:421 EST] [Date of Credential Change, LIST, 1120334800]
+  [22-02-22 21:45:06:498 EST] [Reasoning For Credential Change, PARAGRAPH_TEXT, 723891777]
+  
+  [22-02-22 21:45:06:572 EST] [Group Change, PAGE_BREAK, 584967444]
+  [22-02-22 21:45:06:770 EST] [Previous Group, LIST, 345211544]
+  [22-02-22 21:45:06:844 EST] [New Group, LIST, 1586695459]
+  [22-02-22 21:45:06:918 EST] [Date of Group Change, LIST, 1406898270]
+  [22-02-22 21:45:06:987 EST] [Reasoning For Group Change, PARAGRAPH_TEXT, 893616976]
+  
+  [22-02-22 21:45:07:062 EST] [Member Report, PAGE_BREAK, 1255965561]
+  [22-02-22 21:45:07:140 EST] [Date of Report, LIST, 216481318]
+  [22-02-22 21:45:07:216 EST] [Report Title, TEXT, 1719336150]
+  [22-02-22 21:45:07:392 EST] [Report Details, PARAGRAPH_TEXT, 684742433]
+  
+  [22-02-22 21:45:07:465 EST] [Member Discharge, PAGE_BREAK, 14184548]
+  [22-02-22 21:45:07:535 EST] [Date of Discharge, LIST, 1808189645]
+  [22-02-22 21:45:07:607 EST] [Reasoning For Discharge, PARAGRAPH_TEXT, 316888307]
+  
+  [22-02-22 21:45:07:677 EST] [Gamertag Change, PAGE_BREAK, 613393989]
+  [22-02-22 21:45:07:749 EST] [New GT, TEXT, 1351581238]
+  [22-02-22 21:45:07:824 EST] [Date of GT Change, LIST, 460514691]
+  [22-02-22 21:45:07:895 EST] [Reasoning For GT Change, PARAGRAPH_TEXT, 271783251]
+  
+  [22-02-22 21:45:07:967 EST] [Discord Nickname Change, PAGE_BREAK, 1807137239]
+  [22-02-22 21:45:08:044 EST] [New Discord Nickname (EX: Old discord nickname: "[CSPT] Dunce" ~ Desired discord nickname: "[CSPT] Deez" ~ you will put only "Deez" in this question), TEXT, 1625363828]
+  [22-02-22 21:45:08:113 EST] [Date of Discord Nickname Change, LIST, 1270935164]
+  [22-02-22 21:45:08:185 EST] [Reasoning For Discord Nickname Change, PARAGRAPH_TEXT, 525212875]
+  
+  [22-02-22 21:45:08:257 EST] [Availability Change, PAGE_BREAK, 1951292514]
+  [22-02-22 21:45:08:325 EST] [General Availability (ET) (Choose all squares that the member is available normally), CHECKBOX_GRID, 1398510810]
+  [22-02-22 21:45:08:399 EST] [Date of Availability Change, LIST, 892884233]
+  [22-02-22 21:45:08:476 EST] [Reasoning For Availability Change, PARAGRAPH_TEXT, 2062100720]
+  
+  [22-02-22 21:45:08:550 EST] [LOA, PAGE_BREAK, 592474827]
+  [22-02-22 21:45:08:627 EST] [Leaving or Returning?, MULTIPLE_CHOICE, 137474241]
+  
+  [22-02-22 21:45:08:700 EST] [Leaving on LOA, PAGE_BREAK, 1743483917]
+  [22-02-22 21:45:08:773 EST] [Start Date of LOA, LIST, 952206238]
+  [22-02-22 21:45:08:855 EST] [Expected Return Date (if there is none leave blank), DATE, 92377386]
+  [22-02-22 21:45:08:932 EST] [Reasoning, PARAGRAPH_TEXT, 876335225]
+  
+  [22-02-22 21:45:09:005 EST] [Returning From LOA, PAGE_BREAK, 1279959151]
+  [22-02-22 21:45:09:075 EST] [End Date of LOA (day they returned), LIST, 75573243]
+  [22-02-22 21:45:09:149 EST] [Reasoning, PARAGRAPH_TEXT, 671403340]
+  
+  [22-02-22 21:45:09:216 EST] [Birthday Change, PAGE_BREAK, 311351804]
+  [22-02-22 21:45:09:292 EST] [Date of Birthday Change, LIST, 1208966000]
+  [22-02-22 21:45:09:365 EST] [Month, LIST, 204053847]
+  [22-02-22 21:45:09:438 EST] [Day, TEXT, 1830975208]
+  [22-02-22 21:45:09:513 EST] [Reasoning, PARAGRAPH_TEXT, 1323462689]
+  
+  [22-02-22 21:45:09:586 EST] [Mentor Change, PAGE_BREAK, 28685246]
+  [22-02-22 21:45:09:669 EST] [Date of Mentor Change, LIST, 121755448]
+  [22-02-22 21:45:09:739 EST] [Operation, MULTIPLE_CHOICE, 1793646647]
+  [22-02-22 21:45:09:814 EST] [Mentor in Question, LIST, 1629784300]
+  [22-02-22 21:45:09:881 EST] [Reasoning, PARAGRAPH_TEXT, 1296672980]
+  
+  [22-02-22 21:45:09:954 EST] [Position Code Change, PAGE_BREAK, 1590384073]
+  [22-02-22 21:45:10:025 EST] [New Position Code, TEXT, 462206813]
+  [22-02-22 21:45:10:091 EST] [Date of Position Code Change, LIST, 47317037]
+  [22-02-22 21:45:10:163 EST] [Reasoning, PARAGRAPH_TEXT, 613419810]
+  
+  [22-02-22 21:45:10:239 EST] [Reprimand, PAGE_BREAK, 719032930]
+  [22-02-22 21:45:10:308 EST] [Date of Reprimand, LIST, 533480801]
+  [22-02-22 21:45:10:376 EST] [Severity of Reprimand, SCALE, 1565075260]
+  [22-02-22 21:45:10:446 EST] [Reasoning, PARAGRAPH_TEXT, 434953880]
+  
+  [22-02-22 21:45:10:517 EST] [Member In Question Group Selection, PAGE_BREAK, 405269924]
+  [22-02-22 21:45:10:586 EST] [Group Selection, MULTIPLE_CHOICE, 1529288581]
+  
+  [22-02-22 21:45:10:665 EST] [Mora 1, PAGE_BREAK, 184120198]
+  [22-02-22 21:45:10:738 EST] [Member in Question, LIST, 687075362]
+  
+  [22-02-22 21:45:10:808 EST] [Mora 2, PAGE_BREAK, 241586055]
+  [22-02-22 21:45:10:880 EST] [Member in Question, LIST, 1650066888]
+  
+  [22-02-22 21:45:10:953 EST] [Mora 3, PAGE_BREAK, 1114964942]
+  [22-02-22 21:45:11:039 EST] [Member in Question, LIST, 1610944270]
+  
+  [22-02-22 21:45:11:114 EST] [Phoenix S.W.A.L, PAGE_BREAK, 2109423488]
+  [22-02-22 21:45:11:185 EST] [Member in Question, LIST, 1024883925]
+  
+  [22-02-22 21:45:11:254 EST] [Upper Echelon, PAGE_BREAK, 1095845047]
+  [22-02-22 21:45:11:325 EST] [Member in Question, LIST, 1812920927]
+  
+  [22-02-22 21:45:11:391 EST] [Praetorian Guard, PAGE_BREAK, 1806474486]
+  [22-02-22 21:45:11:462 EST] [Member in Question, LIST, 697220359]
+  
+  [22-02-22 21:45:11:535 EST] [Seeker Intelligence, PAGE_BREAK, 90372129]
+  [22-02-22 21:45:11:615 EST] [Member in Question, LIST, 1297973950]
+  
+  [22-02-22 21:45:11:687 EST] [Vicarius Senate, PAGE_BREAK, 1792683189]
+  [22-02-22 21:45:11:756 EST] [Member in Question, LIST, 1412033902]
+  
+  [22-02-22 21:45:11:827 EST] [Special Group 4, PAGE_BREAK, 620044502]
+  [22-02-22 21:45:11:900 EST] [Member in Question, LIST, 1590467366]
+  
+  [22-02-22 21:45:11:970 EST] [Special Group 5, PAGE_BREAK, 572380035]
+  [22-02-22 21:45:12:043 EST] [Member in Question, LIST, 1582628750]
+  
+  [22-02-22 21:45:12:116 EST] [Special Group 6, PAGE_BREAK, 2035939207]
+  [22-02-22 21:45:12:191 EST] [Member in Question, LIST, 1394034530]
+  
+  [22-02-22 21:45:12:263 EST] [Special Group 7, PAGE_BREAK, 83280553]
+  [22-02-22 21:45:12:335 EST] [Member in Question, LIST, 223909144]
+  
+  [22-02-22 21:45:12:406 EST] [Special Group 8, PAGE_BREAK, 247708875]
+  [22-02-22 21:45:12:477 EST] [Member in Question, LIST, 1464240218]
+  */
+  
+  
+  
+}//end formListUpdate

@@ -1,0 +1,249 @@
+function expansionFormListUpdate(){
+  errorCheck("4:06",16,"expansionFormListUpdate","ExpansionFormListUpdate");
+}//end expansionFormListUpdate
+
+
+function errorCheck(time,col,functionName,projectName){
+  try{main();triggerCreator(time,col,functionName);}//end 1st try
+  catch(error){console.log(error);
+    if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+      try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 2nd try
+      catch(error){console.log(error);
+        if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+          try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 3rd try
+          catch(error){console.log(error);
+            FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 3rd catch
+        else{FunctionContainer.discErrorReport(error,functionName,projectName);}}}//end 2nd catch
+    else{FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 1st catch
+}//end errorCheck
+
+
+function triggerCreator(ct,tColNum,scriptName){
+  var datSheetOriginal=FunctionContainer.tripleTryOpenSheet("", "Dates");var cdd=datSheetOriginal.getRange(1,1,15,datSheetOriginal.getLastColumn()).getValues();var triggerChangesMade = [];var vals = [[],[],[],[],[],[],[],[],[],[],[]];
+  triggerChangesMade.push("Old Trigger Id's and Dates:\nTrigger ID: "+cdd[9][tColNum-1].toString()+" For Date: "+cdd[1][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[10][tColNum-1].toString()+" For Date: "+cdd[4][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[11][tColNum-1].toString()+" For Date: "+cdd[5][tColNum-1].toString());
+  if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[1][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())){
+    var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){if(t[i].getUniqueId()===cdd[9][tColNum-1].toString()){ScriptApp.deleteTrigger(t[i]);triggerChangesMade.push("\nTrigger Deleted ~ "+cdd[9][tColNum-1].toString()+" for date: "+cdd[1][tColNum-1].toString());}}
+    var bruhX3 = cdd[3][0].toString();for(var iii = 0;iii<4;iii++){cdd[iii][0]=cdd[iii][0].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    for(var m=0;m<months.length;m++){if(bruhX3.indexOf(months[m].toString())!==-1){m=m+1;triggerTime = bruhX3[11].toString()+bruhX3[12].toString()+bruhX3[13].toString()+bruhX3[14].toString()+"-"+m+"-"+bruhX3[8].toString()+bruhX3[9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[0] = [cdd[4][tColNum-1]];vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[3] = [cdd[5][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];
+    vals[8] = [cdd[10][tColNum-1]];vals[9] = [cdd[11][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}
+  else if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[3][0].toString())){triggerChangesMade.push("\nNo Trigger Changes Made");}
+  else{var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){triggerChangesMade.push("\nTrigger Deleted ~ "+t[i].getUniqueId());ScriptApp.deleteTrigger(t[i]);}var cd=datSheetOriginal.getRange(1,1,4).getValues();
+    for(var iii = 0;iii<4;iii++){cd[iii]=cd[iii].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[0].indexOf(months[m].toString())!==-1){
+    m=m+1;triggerTime = cd[0][11].toString()+cd[0][12].toString()+cd[0][13].toString()+cd[0][14].toString()+"-"+m+"-"+cd[0][8].toString()+cd[0][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(2,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();
+    var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[0] = [tt];vals[8] = [uniqueTriggerID];var triggerTime="";
+    var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[2].indexOf(months[m].toString())!==-1){m=m+1;triggerTime = cd[2][11].toString()+cd[2][12].toString()+cd[2][13].toString()+cd[2][14].toString()+"-"+m+"-"+cd[2][8].toString()+cd[2][9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(5,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[3] = [tt];vals[9] = [uniqueTriggerID];var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[3].indexOf(months[m].toString())!==-1){m=m+1;
+    triggerTime = cd[3][11].toString()+cd[3][12].toString()+cd[3][13].toString()+cd[3][14].toString()+"-"+m+"-"+cd[3][8].toString()+cd[3][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();
+    triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}console.log(triggerChangesMade);
+}//end triggerCreator
+
+
+function main(){
+  try{var lock = LockService.getScriptLock();lock.waitLock(150000);}catch(lockError){console.log(lockError)};
+  
+  
+  //PXE Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  formListUpdate(dllscv, pmdcmscv);
+  
+}//end main
+
+function formListUpdate(dllscv, pmdcmscv){
+  
+  
+  //Expansion Form
+  var ef = FormApp.openById(dllscv[85][4].toString());
+//  FunctionContainer.getDaFormIds(dllscv[85][4].toString());
+  
+  
+  //Member(s) in Question
+  var curMembers = [["Everyone"]];
+  for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+    if(pmdcmscv[i][0].toString()!==""){//start 1st if
+      curMembers.push([pmdcmscv[i][0].toString()]);
+    }//end 1st if
+  }//end 1st for
+  
+  //sets the choices
+  ef.getItemById("948299307").asCheckboxItem().setChoiceValues(curMembers);
+  
+  
+  //Group Type Leadership Inclusion
+  //gets all ranks and credentials
+  var groupTypeLeadershipInclusionChoices = [];
+  
+  //ranks first
+  var rankLocs = [24];
+  var curRanks = [];
+  for(var i=0; i<rankLocs.length; i+=1){//start 1st for
+    for(var x=0; x<dllscv[rankLocs[i]].length; x+=1){//start 2nd for
+      if(dllscv[rankLocs[i]][x].toString()!==""){//start 1st if
+        groupTypeLeadershipInclusionChoices.push([dllscv[rankLocs[i]][x].toString()]);
+        curRanks.push([dllscv[rankLocs[i]][x].toString()]);
+      }//end 1st if
+    }//end 2nd for
+  }//end 1st for
+  
+  //creds next
+  var credLocs = [16,18,20,22];
+  var curCreds = [["N/A"]];
+  for(var i=0; i<credLocs.length; i+=1){//start 1st for
+    for(var x=1; x<dllscv[credLocs[i]].length; x+=1){//start 2nd for
+      if(dllscv[credLocs[i]][x].toString()!==""){//start 1st if
+        groupTypeLeadershipInclusionChoices.push([dllscv[credLocs[i]][x].toString()]);
+        curCreds.push([dllscv[credLocs[i]][x].toString()]);
+      }//end 1st if
+    }//end 2nd for
+  }//end 1st for
+  
+  //Things To be Included
+  //sets the choices
+  groupTypeLeadershipInclusionChoices.unshift(["N/A"]);
+  ef.getItemById("2084380520").asCheckboxItem().setChoiceValues(groupTypeLeadershipInclusionChoices);
+  
+  
+  //Credential Change
+  //already got all credentials in previous section
+  //Old Credential Name
+  //sets the choices
+  ef.getItemById("1167937072").asListItem().setChoiceValues(curCreds);
+  
+  
+  //Old Training Type Name
+  //gets all training types
+  var curTrainingTypes = [["N/A"]];
+  for(var i=1; i<dllscv[14].length; i+=1){//start 1st for
+    if(dllscv[14][i].toString()!==""){//start 1st if
+      curTrainingTypes.push([dllscv[14][i].toString()]);
+    }//end 1st if
+  }//end 1st for
+  
+  //sets the choices
+  ef.getItemById("739854778").asListItem().setChoiceValues(curTrainingTypes);
+  
+  
+  //Old Channel Name
+  var channels = [["N/A"]];
+  for(var i=0; i<100; i+=1){//start 1st for
+    if(dllscv[32][i].toString() !== ""){//start 1st if
+      channels.push([dllscv[32][i].toString()]);
+    }//end 1st if
+  }//end 1st for
+  ef.getItemById("248413099").asListItem().setChoiceValues(channels);
+  
+  
+  //Member in Question
+  curMembers.shift();
+  ef.getItemById("1476084723").asListItem().setChoiceValues(curMembers);
+  
+  
+  //Rank in Question
+  //sets the choices
+  ef.getItemById("548927380").asListItem().setChoiceValues(curRanks);
+  
+  
+  //Group in Question
+  //gets all group names including councils
+  var curGroups = [];
+  for(var i=0; i<57; i+=1){//start 1st for
+    curGroups.push([dllscv[40][i].toString()]);
+  }//end 1st for
+  
+  //sets the choices
+  ef.getItemById("422994819").asListItem().setChoiceValues(curGroups);
+  
+  
+  //Group Type in Question
+  //finds group type selection including councils
+  var curGroupTypeSelection = [];
+  for(var i=0; i<25; i+=1){//start 1st for
+    curGroupTypeSelection.push([dllscv[60][i].toString()]);
+  }//end 1st for
+  
+  //sets the choices
+  ef.getItemById("227756993").asListItem().setChoiceValues(curGroupTypeSelection);
+  
+  
+  /* Expansion Form
+  [22-04-30 21:56:42:260 EDT] [Code, TEXT, 1739880899]
+  [22-04-30 21:56:42:305 EDT] [Operation, MULTIPLE_CHOICE, 1724237590]
+  
+  [22-04-30 21:56:42:354 EDT] [Group Change, PAGE_BREAK, 1215388059]
+  [22-04-30 21:56:42:418 EDT] [New Group Name (Including Group Type EX: Old name = "Camp 12" ~ desired name = "Camp Nirvana "~ Put "Camp Nirvana" without the "". Also group names need to have their group types in their name if they are in the mora system), TEXT, 1096272406]
+  [22-04-30 21:56:42:466 EDT] [Activate or Deactivate?, MULTIPLE_CHOICE, 475425388]
+  
+  [22-04-30 21:56:42:513 EDT] [Preference Change, PAGE_BREAK, 67291831]
+  [22-04-30 21:56:42:560 EDT] [Operation, LIST, 1270864793]
+  
+  [22-04-30 21:56:42:603 EDT] [Min Time for Rankup, PAGE_BREAK, 1267211186]
+  [22-04-30 21:56:42:646 EDT] [New Time (in weeks), TEXT, 996912440]
+  
+  [22-04-30 21:56:42:687 EDT] [Cushion Date, PAGE_BREAK, 1175499114]
+  [22-04-30 21:56:42:728 EDT] [Member(s) in Question, CHECKBOX, 948299307]
+  [22-04-30 21:56:42:774 EDT] [New Cushion Date, DATE, 821712641]
+  
+  [22-04-30 21:56:42:818 EDT] [Group Profile Type Inclusion, PAGE_BREAK, 787617461]
+  [22-04-30 21:56:42:861 EDT] [Desired Profile Pages, CHECKBOX, 2044769606]
+  
+  [22-04-30 21:56:42:904 EDT] [Group Type Leadership Inclusion, PAGE_BREAK, 1084696695]
+  [22-04-30 21:56:42:947 EDT] [Things To be Included, CHECKBOX, 2084380520]
+  
+  [22-04-30 21:56:42:998 EDT] [Alert Preferences, PAGE_BREAK, 234499423]
+  [22-04-30 21:56:43:042 EDT] [Which Alert Preference, LIST, 982253374]
+  [22-04-30 21:56:43:094 EDT] [New Value, TEXT, 2085248392]
+  
+  [22-04-30 21:56:43:136 EDT] [Days Till Marked as Inactive, PAGE_BREAK, 1052084873]
+  [22-04-30 21:56:43:181 EDT] [Days, TEXT, 62455122]
+  
+  [22-04-30 21:56:43:222 EDT] [Credential Change, PAGE_BREAK, 369429687]
+  [22-04-30 21:56:43:266 EDT] [Credential Change Type, MULTIPLE_CHOICE, 396549584]
+  [22-04-30 21:56:43:307 EDT] [Old Credential Name, LIST, 1167937072]
+  [22-04-30 21:56:43:349 EDT] [New Credential Type, MULTIPLE_CHOICE, 1632141167]
+  [22-04-30 21:56:43:391 EDT] [New Credential Name, TEXT, 853884601]
+  
+  [22-04-30 21:56:43:432 EDT] [Training Type Change, PAGE_BREAK, 782806244]
+  [22-04-30 21:56:43:479 EDT] [Old Training Type Name, LIST, 739854778]
+  [22-04-30 21:56:43:521 EDT] [New Training Type Name, TEXT, 2127370812]
+  
+  [22-04-30 21:56:43:560 EDT] [Rank/Abbreviated Rank Name Change, PAGE_BREAK, 61260637]
+  [22-04-30 21:56:43:612 EDT] [New Rank Name, TEXT, 181586657]
+  [22-04-30 21:56:43:655 EDT] [New Abbreviated Rank Name, TEXT, 1717108389]
+  
+  [22-04-30 21:56:43:696 EDT] [Member Discord Reset, PAGE_BREAK, 697487955]
+  [22-04-30 21:56:43:738 EDT] [Current Discord Nickname, TEXT, 1953438149]
+  
+  [22-04-30 21:56:43:781 EDT] [Member Record Retrieval, PAGE_BREAK, 132102820]
+  [22-04-30 21:56:43:821 EDT] [Old Gamertag, TEXT, 1998390398]
+  
+  [22-04-30 21:56:43:865 EDT] [Channel Option Change, PAGE_BREAK, 211614400]
+  [22-04-30 21:56:43:907 EDT] [Old Channel Name, LIST, 248413099]
+  [22-04-30 21:56:43:948 EDT] [New Channel Name, TEXT, 67737937]
+  
+  [22-04-30 21:56:43:989 EDT] [Member Selection, PAGE_BREAK, 69659595]
+  [22-04-30 21:56:44:029 EDT] [Member in Question, LIST, 1476084723]
+  
+  [22-04-30 21:56:44:072 EDT] [Rank Selection, PAGE_BREAK, 636699509]
+  [22-04-30 21:56:44:114 EDT] [Rank in Question, LIST, 548927380]
+  
+  [22-04-30 21:56:44:151 EDT] [Group Selection, PAGE_BREAK, 1762060162]
+  [22-04-30 21:56:44:195 EDT] [Group in Question, LIST, 422994819]
+  
+  [22-04-30 21:56:44:236 EDT] [Group Type Selection, PAGE_BREAK, 1687303302]
+  [22-04-30 21:56:44:286 EDT] [Group Type in Question, LIST, 227756993]
+  */
+  
+  
+}//end formListUpdate

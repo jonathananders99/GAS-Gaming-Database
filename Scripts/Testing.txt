@@ -1,0 +1,1838 @@
+function pmdsDataGathering(){
+  var OGpmdcms = SpreadsheetApp.openById("1V7CmIkYXQsKCP5NtR4VuVW3z06MccKVKy_gLugzufqQ").getSheetByName("Members");
+  var OGpmddms = SpreadsheetApp.openById("1V7CmIkYXQsKCP5NtR4VuVW3z06MccKVKy_gLugzufqQ").getSheetByName("Discharged Members");
+  var pmdcms = SpreadsheetApp.openById("12fRT5jnOwLEIIu4zKflIJ6-0ye34PJFTXRO5UEaFOIw").getSheetByName("Current Members");
+  var pmddms = SpreadsheetApp.openById("12fRT5jnOwLEIIu4zKflIJ6-0ye34PJFTXRO5UEaFOIw").getSheetByName("Discharged Members");
+  
+  
+  var OGpmdcmscv = OGpmdcms.getRange(2,1,OGpmdcms.getLastRow()-1,54).getValues();
+  
+  var pmdcmscv = [];
+  for(var i=0; i<OGpmdcmscv.length; i+=1){//start 1st for
+    var curVals = [];
+    
+    //Gamertag
+    curVals.push(OGpmdcmscv[i][0].toString());
+    
+    //Nickname
+    curVals.push(OGpmdcmscv[i][0].toString());
+    
+    //Rank
+    curVals.push(OGpmdcmscv[i][2].toString());
+    
+    //Group(s)
+    curVals.push("Camp 01");
+    
+    //Credentials
+    var titles = FunctionContainer.splitEmUp(OGpmdcmscv[i][3].toString());
+    var signifiers = FunctionContainer.splitEmUp(OGpmdcmscv[i][50].toString());
+    var chessPieces = FunctionContainer.splitEmUp(OGpmdcmscv[i][42].toString());
+    var creds = [];
+    for(var x=0; x<titles.length; x+=1){//start 2nd for
+      creds.push(titles[x].toString());
+    }//end 2nd for
+    for(var x=0; x<signifiers.length; x+=1){//start 2nd for
+      creds.push(signifiers[x].toString());
+    }//end 2nd for
+    for(var x=0; x<chessPieces.length; x+=1){//start 2nd for
+      creds.push(chessPieces[x].toString());
+    }//end 2nd for
+    creds = FunctionContainer.array1LevelIntoString(creds);
+    curVals.push(creds);
+    
+    //Generation
+    curVals.push(0);
+    
+    //Permissions
+    curVals.push("N/A || N/A || N/A || N/A");
+    
+    //Position Code
+    curVals.push(OGpmdcmscv[i][1].toString());
+    
+    //Status
+    curVals.push("Active");
+    
+    //Email
+    curVals.push(OGpmdcmscv[i][51].toString());
+    
+    //ProfileIDs
+    curVals.push("");
+    
+    //ProfileURLs
+    curVals.push("");
+    
+    //ProfileFolderIDs
+    curVals.push("");
+    
+    //Sunday
+    curVals.push(OGpmdcmscv[i][33].toString());
+    
+    //Monday
+    curVals.push(OGpmdcmscv[i][34].toString());
+    
+    //Tuesday
+    curVals.push(OGpmdcmscv[i][35].toString());
+    
+    //Wednesday
+    curVals.push(OGpmdcmscv[i][36].toString());
+    
+    //Thursday
+    curVals.push(OGpmdcmscv[i][37].toString());
+    
+    //Friday
+    curVals.push(OGpmdcmscv[i][38].toString());
+    
+    //Saturday
+    curVals.push(OGpmdcmscv[i][39].toString());
+    
+    //Enlistment Date
+    curVals.push(FunctionContainer.dateReplace(OGpmdcmscv[i][28].toString()));
+    
+    //Discharge Date
+    curVals.push("");
+    
+    //Cushion Date
+    curVals.push("Dec 02 2021");
+    
+    //Cushion Date Num
+    curVals.push("44,532.00");
+    
+    //Previous Emails
+    curVals.push("");
+    
+    //Mentor
+    curVals.push(OGpmdcmscv[i][53].toString());
+    
+    //Birthday
+    curVals.push(OGpmdcmscv[i][52].toString());
+    
+    //Enlistment Date Num
+    curVals.push(FunctionContainer.dateReplace(OGpmdcmscv[i][28].toString()));
+    
+    
+    pmdcmscv.push(curVals);
+    
+  }//end 1st for
+  
+  pmdcms.getRange(2,1,500,35).clear();
+  
+  pmdcmscv = FunctionContainer.specialSort(pmdcmscv);
+  
+  //paste data
+  pmdcms.getRange(2, 1, pmdcmscv.length, pmdcmscv[0].length).setValues(pmdcmscv);
+  
+  
+  
+  var OGpmddmscv = OGpmddms.getRange(2,1,OGpmddms.getLastRow()-1,54).getValues();
+  
+  var pmddmscv = [];
+  for(var i=0; i<OGpmddmscv.length; i+=1){//start 1st for
+    var curVals = [];
+    
+    //Gamertag
+    curVals.push(OGpmddmscv[i][0].toString());
+    
+    //Nickname
+    curVals.push(OGpmddmscv[i][0].toString());
+    
+    //Rank
+    curVals.push(OGpmddmscv[i][2].toString());
+    
+    //Group(s)
+    curVals.push(OGpmddmscv[i][4].toString());
+    
+    //Credentials
+    var titles = FunctionContainer.splitEmUp(OGpmddmscv[i][3].toString());
+    var signifiers = FunctionContainer.splitEmUp(OGpmddmscv[i][50].toString());
+    var chessPieces = FunctionContainer.splitEmUp(OGpmddmscv[i][42].toString());
+    var creds = [];
+    for(var x=0; x<titles.length; x+=1){//start 2nd for
+      creds.push(titles[x].toString());
+    }//end 2nd for
+    for(var x=0; x<signifiers.length; x+=1){//start 2nd for
+      creds.push(signifiers[x].toString());
+    }//end 2nd for
+    for(var x=0; x<chessPieces.length; x+=1){//start 2nd for
+      creds.push(chessPieces[x].toString());
+    }//end 2nd for
+    creds = FunctionContainer.array1LevelIntoString(creds);
+    curVals.push(creds);
+    
+    //Generation
+    curVals.push(0);
+    
+    //Permissions
+    curVals.push("N/A || N/A || N/A || N/A");
+    
+    //Position Code
+    curVals.push(OGpmddmscv[i][1].toString());
+    
+    //Status
+    curVals.push("Active");
+    
+    //Email
+    curVals.push(OGpmddmscv[i][51].toString());
+    
+    //ProfileIDs
+    curVals.push("");
+    
+    //ProfileURLs
+    curVals.push("");
+    
+    //ProfileFolderIDs
+    curVals.push("");
+    
+    //Sunday
+    curVals.push(OGpmddmscv[i][33].toString());
+    
+    //Monday
+    curVals.push(OGpmddmscv[i][34].toString());
+    
+    //Tuesday
+    curVals.push(OGpmddmscv[i][35].toString());
+    
+    //Wednesday
+    curVals.push(OGpmddmscv[i][36].toString());
+    
+    //Thursday
+    curVals.push(OGpmddmscv[i][37].toString());
+    
+    //Friday
+    curVals.push(OGpmddmscv[i][38].toString());
+    
+    //Saturday
+    curVals.push(OGpmddmscv[i][39].toString());
+    
+    //Enlistment Date
+    curVals.push(FunctionContainer.dateReplace(OGpmddmscv[i][28].toString()));
+    
+    //Discharge Date
+    curVals.push("");
+    
+    //Cushion Date
+    curVals.push("Dec 02 2021");
+    
+    //Cushion Date Num
+    curVals.push("44,532.00");
+    
+    //Previous Emails
+    curVals.push("");
+    
+    //Mentor
+    curVals.push(OGpmddmscv[i][53].toString());
+    
+    //Birthday
+    curVals.push(OGpmddmscv[i][52].toString());
+    
+    //Enlistment Date Num
+    curVals.push(FunctionContainer.dateReplace(OGpmddmscv[i][28].toString()));
+    
+    
+    pmddmscv.push(curVals);
+    
+  }//end 1st for
+  
+  pmddms.getRange(2,1,900,35).clear();
+  
+  //paste data
+  pmddms.getRange(2, 1, pmddmscv.length, pmddmscv[0].length).setValues(pmddmscv);
+  
+}
+
+
+function memberUpdateDataGathering(){
+  var OGmuhaus = SpreadsheetApp.openById("1ag0JTAtXjxQGt2QIsrFl0TCYKO5i15TiInZ0dCEOhxY").getSheetByName("All Updates")
+  var OGmrhamrs = SpreadsheetApp.openById("1IbuNBWXbyeRum7kNJuS5EfTi_19Zjqhlo2CS_vhAbL8").getSheetByName("All Member Reports");
+  
+  var muhaus = SpreadsheetApp.openById("1aNC_MSlklgzmY51GZLEdgM6FrZ-MzRZN30hcd2uI3fE").getSheetByName("All Updates");
+  
+  var OGmuhauscv = OGmuhaus.getRange(3,1,OGmuhaus.getLastRow()-2,5).getValues();
+  
+  var OGmrhamrscv = OGmrhamrs.getRange(3,1,OGmrhamrs.getLastRow()-2,4).getValues();
+  
+  var muhauscv = [];
+  for(var i=0; i<OGmuhauscv.length; i+=1){//start 1st for
+    //will not be able to get submission personell automatically
+    var curVals = [];
+    
+    //Type of Update
+    if(OGmuhauscv[i][0].toString() !== "Failed Cadet"  &&  OGmuhauscv[i][0].toString() !== "New Member"){//start 1st if
+      
+      //cred change
+      if(OGmuhauscv[i][0].toString() === "Title Change"){//start 1st if
+        curVals.push("Credential Change");
+        //member in question
+        curVals.push(OGmuhauscv[i][1].toString());
+        //Update Details
+        OGmuhauscv[i][2] = OGmuhauscv[i][2].toString().replace("Title", "Credential")
+        curVals.push(OGmuhauscv[i][2].toString().replace("Title", "Credential"));
+        //Date of Update
+        curVals.push(FunctionContainer.dateReplace(OGmuhauscv[i][3].toString()));
+        //reasoning
+        curVals.push(OGmuhauscv[i][4].toString());
+        //sub personnell
+        curVals.push("N/A");
+      }//end 1st if
+      else if(OGmuhauscv[i][0].toString() === "Signifier Change"){//start 1st if
+        curVals.push("Credential Change");
+        //member in question
+        curVals.push(OGmuhauscv[i][1].toString());
+        //Update Details
+        OGmuhauscv[i][2] = OGmuhauscv[i][2].toString().replace("Signifier", "Credential")
+        curVals.push(OGmuhauscv[i][2].toString().replace("Signifier", "Credential"));
+        //Date of Update
+        curVals.push(FunctionContainer.dateReplace(OGmuhauscv[i][3].toString()));
+        //reasoning
+        curVals.push(OGmuhauscv[i][4].toString());
+        //sub personnell
+        curVals.push("N/A");
+      }//end 1st if
+      else if(OGmuhauscv[i][0].toString() === "Chess Piece Change"){//start 1st if
+        curVals.push("Credential Change");
+        //member in question
+        curVals.push(OGmuhauscv[i][1].toString());
+        //Update Details
+        OGmuhauscv[i][2] = OGmuhauscv[i][2].toString().replace("Chess Piece", "Credential")
+        curVals.push(OGmuhauscv[i][2].toString().replace("Chess Piece", "Credential"));
+        //Date of Update
+        curVals.push(FunctionContainer.dateReplace(OGmuhauscv[i][3].toString()));
+        //reasoning
+        curVals.push(OGmuhauscv[i][4].toString());
+        //sub personnell
+        curVals.push("N/A");
+      }//end 1st if
+      
+      //group change
+      else if(OGmuhauscv[i][0].toString() === "Position Change"){//start 1st if
+        curVals.push("Group Change");
+        //member in question
+        curVals.push(OGmuhauscv[i][1].toString());
+        //Update Details
+        curVals.push(OGmuhauscv[i][2].toString().replace("Position", "Group"));
+        //Date of Update
+        curVals.push(FunctionContainer.dateReplace(OGmuhauscv[i][3].toString()));
+        //reasoning
+        curVals.push(OGmuhauscv[i][4].toString());
+        //sub personnell
+        curVals.push("N/A");
+      }//end 1st if
+      
+      //LOA
+      else if(OGmuhauscv[i][0].toString() === "Leave of Absence"){//start 1st if
+        curVals.push("LOA");
+        //member in question
+        curVals.push(OGmuhauscv[i][1].toString());
+        //Update Details
+        OGmuhauscv[i][2] = OGmuhauscv[i][2].toString().replace("Start Date: ", "").replace(" Expected End Date: ", "");
+        var curVal1 = OGmuhauscv[i][2].slice(0, OGmuhauscv[i][2].indexOf("~")-1);
+        var curVal2 = OGmuhauscv[i][2].slice(OGmuhauscv[i][2].indexOf("~")+1, OGmuhauscv[i][2].length);
+        curVals.push("Leaving on LOA Starting on: "+curVal1+" ~ Expected Return Date: "+curVal2);
+        //Date of Update
+        curVals.push(FunctionContainer.dateReplace(OGmuhauscv[i][3].toString()));
+        //reasoning
+        curVals.push(OGmuhauscv[i][4].toString());
+        //sub personnell
+        curVals.push("N/A");
+      }//end 1st if
+      
+      //LOA
+      else if(OGmuhauscv[i][0].toString() === "LOA End Date"){//start 1st if
+        curVals.push("LOA");
+        //member in question
+        curVals.push(OGmuhauscv[i][1].toString());
+        //Update Details
+        Logger.log(OGmuhauscv[i][2]);
+        OGmuhauscv[i][2] = OGmuhauscv[i][2].toString().replace(" Return Date: ", "");
+        var curVal1 = OGmuhauscv[i][2].slice(OGmuhauscv[i][2].indexOf("~")+1, OGmuhauscv[i][2].length);
+        curVals.push("Returned from LOA as of: " + curVal1);
+        //Date of Update
+        curVals.push(FunctionContainer.dateReplace(OGmuhauscv[i][3].toString()));
+        //reasoning
+        curVals.push(OGmuhauscv[i][4].toString());
+        //sub personnell
+        curVals.push("N/A");
+      }//end 1st if
+      
+      //Birthday Change
+      else if(OGmuhauscv[i][0].toString() === "Birthdays"){//start 1st if
+        curVals.push("Birthday Change");
+        //member in question
+        curVals.push(OGmuhauscv[i][1].toString());
+        //Update Details
+        curVals.push(OGmuhauscv[i][2].toString());
+        //Date of Update
+        curVals.push(FunctionContainer.dateReplace(OGmuhauscv[i][3].toString()));
+        //reasoning
+        curVals.push(OGmuhauscv[i][4].toString());
+        //sub personnell
+        curVals.push("N/A");
+      }//end 1st if
+      
+      //Member Discharge
+      else if(OGmuhauscv[i][0].toString() === "Member Discharge"){//start 1st if
+        curVals.push("Member Discharge");
+        //member in question
+        curVals.push(OGmuhauscv[i][1].toString());
+        //Update Details
+        curVals.push("Discharging Member From Phoenix Era");
+        //Date of Update
+        curVals.push(FunctionContainer.dateReplace(OGmuhauscv[i][3].toString()));
+        //reasoning
+        curVals.push(OGmuhauscv[i][4].toString());
+        //sub personnell
+        curVals.push("N/A");
+      }//end 1st if
+      
+      //Member Discharge
+      else if(OGmuhauscv[i][0].toString() === "Reprimand"){//start 1st if
+        curVals.push("Reprimand");
+        //member in question
+        curVals.push(OGmuhauscv[i][1].toString());
+        //Update Details
+        curVals.push(OGmuhauscv[i][2].toString().slice(0,OGmuhauscv[i][2].toString().indexOf(" ~ Start Date")));
+        //Date of Update
+        curVals.push(FunctionContainer.dateReplace(OGmuhauscv[i][3].toString()));
+        //reasoning
+        curVals.push(OGmuhauscv[i][4].toString());
+        //sub personnell
+        curVals.push("N/A");
+      }//end 1st if
+      
+      //everything else
+      else{//start 1st if
+        curVals.push(OGmuhauscv[i][0].toString());
+        //member in question
+        curVals.push(OGmuhauscv[i][1].toString());
+        //Update Details
+        curVals.push(OGmuhauscv[i][2].toString());
+        //Date of Update
+        curVals.push(FunctionContainer.dateReplace(OGmuhauscv[i][3].toString()));
+        //reasoning
+        curVals.push(OGmuhauscv[i][4].toString());
+        //sub personnell
+        curVals.push("N/A");
+      }//end 1st if
+      
+      
+      
+      
+      
+      muhauscv.push(curVals);
+      
+    }//end 1st if
+    
+    
+  }//end 1st for
+  
+  
+  for(var i=0; i<OGmrhamrscv.length; i+=1){//start 1st for
+    var curVals = [];
+    
+    //update type
+    curVals.push("Member Report");
+    
+    
+    //Member in Question
+    curVals.push(OGmrhamrscv[i][2].toString());
+    
+    //Update Details
+    curVals.push("Report Title: " + OGmrhamrscv[i][1].toString());
+    
+    //Date of Update
+    curVals.push(FunctionContainer.dateReplace(OGmrhamrscv[i][0].toString()));
+    
+    //Reasoning
+    curVals.push("Report Details: " + OGmrhamrscv[i][3].toString());
+    
+    //sub personnel
+    curVals.push("N/A");
+    
+    muhauscv.push(curVals);
+    
+  }//end 1st for
+  
+  muhaus.deleteRows(3,muhaus.getLastRow()-2);
+  
+  muhaus.insertRowsAfter(2, muhauscv.length);
+  
+  muhaus.getRange(3,1,muhauscv.length,6).setValues(muhauscv);
+  
+  muhaus.setRowHeights(3, muhauscv.length, 105);
+  
+  
+  //formats everything to make sure its correctly formatted
+  muhaus.getRange(3,1,muhauscv.length,6).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setFontWeight(null);
+  muhaus.getRange(1,1,muhauscv.length+2,6).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+  
+  
+
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Reorganizes muhaus
+  //Member Update Hub all updates sheet
+  curVals = FunctionContainer.getmuhauscv("both", dllscv);
+  var muhaus = curVals[0];
+  var muhauscv = curVals[1];
+  var muhauscvn = curVals[2];
+  curVals = undefined;
+  
+  
+  var muhaustvn = [];
+  for(var i=0; i<muhauscvn.length; i+=1){//start 1st for
+    muhaustvn.push([muhauscvn[i][3], muhauscvn[i][1], muhauscvn[i][2], muhauscvn[i][0], muhauscvn[i][4], muhauscvn[i][5]]);
+  }//end 1st for
+  
+  muhaustvn = FunctionContainer.specialSortDesc(muhaustvn);
+  
+  for(var i=0; i<muhaustvn.length; i+=1){//start 1st for
+    muhauscvn[i] = [muhaustvn[i][3], muhaustvn[i][1], muhaustvn[i][2], muhaustvn[i][0], muhaustvn[i][4], muhaustvn[i][5]];
+  }//end 1st for
+  
+  
+  //pastes new data
+  FunctionContainer.tripleTrySetSSValues(muhaus, 3, 1, muhauscv.length, muhauscv[0].length, muhauscvn);
+}
+
+
+
+function newMemberUpdateDataGathering(){
+  var OGmuhaus = SpreadsheetApp.openById("1ag0JTAtXjxQGt2QIsrFl0TCYKO5i15TiInZ0dCEOhxY").getSheetByName("All Updates")
+  
+  var muhnmus = SpreadsheetApp.openById("1aNC_MSlklgzmY51GZLEdgM6FrZ-MzRZN30hcd2uI3fE").getSheetByName("New Member Updates");
+  
+  var OGmuhauscv = OGmuhaus.getRange(3,1,OGmuhaus.getLastRow()-2,5).getValues();
+  
+  
+  var muhnmuscv = [];
+  
+  for(var i=0; i<OGmuhauscv.length; i+=1){//start 1st for
+    //if its a new member update
+    if(OGmuhauscv[i][0].toString() === "New Member"){//start 1st if
+      var curVals = [];
+      Logger.log(OGmuhauscv[i]);
+      //Gamertag
+      curVals.push(OGmuhauscv[i][1].toString());
+      
+      //Generation
+      curVals.push("00");
+      
+      //Group
+      curVals.push("Legion 4");
+      
+      //Bootcamp Date
+      curVals.push(FunctionContainer.dateReplace(OGmuhauscv[i][3].toString()));
+      
+      //LDI
+      curVals.push(OGmuhauscv[i][2].toString().slice(OGmuhauscv[i][2].toString().indexOf(" ~ Bootcamp LDI(s): ")+20, OGmuhauscv[i][2].toString().indexOf(" ~ Bootcamp Attempts: ")));
+      
+      //Recruited By
+      curVals.push(OGmuhauscv[i][2].toString().slice(OGmuhauscv[i][2].toString().indexOf("Recruited By: ")+14, OGmuhauscv[i][2].toString().indexOf(" ~ Bootcamp LDI(s): ")));
+      
+      //Additional Notes
+      curVals.push(OGmuhauscv[i][4].toString());
+      
+      //Submission Personnel
+      curVals.push(OGmuhauscv[i][2].toString().slice(OGmuhauscv[i][2].toString().indexOf(" ~ Bootcamp LDI(s): ")+20, OGmuhauscv[i][2].toString().indexOf(" ~ Bootcamp Attempts: ")));
+      
+      muhnmuscv.push(curVals);
+      
+    }//end 1st if
+  }//end 1st for
+  
+  muhnmus.deleteRows(3,muhnmus.getLastRow()-2);
+  
+  muhnmus.insertRowsAfter(2, muhnmuscv.length);
+  
+  muhnmus.getRange(3,1,muhnmuscv.length,8).setValues(muhnmuscv);
+  
+  muhnmus.setRowHeights(3, muhnmuscv.length, 105);
+  
+  
+  //formats everything to make sure its correctly formatted
+  muhnmus.getRange(3,1,muhnmuscv.length,8).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setFontWeight(null);
+  muhnmus.getRange(1,1,muhnmuscv.length+2,8).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  
+  //Reorganizes muhnmus
+  //Member Update Hub new member updates sheet
+  curVals = FunctionContainer.getmuhnmuscv("both", dllscv);
+  var muhnmus = curVals[0];
+  var muhnmuscv = curVals[1];
+  var muhnmuscvn = curVals[2];
+  curVals = undefined;
+  
+  
+  var muhnmustvn = [];
+  for(var i=0; i<muhnmuscvn.length; i+=1){//start 1st for
+    muhnmustvn.push([muhnmuscvn[i][3], muhnmuscvn[i][1], muhnmuscvn[i][2], muhnmuscvn[i][0], muhnmuscvn[i][4], muhnmuscvn[i][5], muhnmuscvn[i][6], muhnmuscvn[i][7]]);
+  }//end 1st for
+  
+  muhnmustvn = FunctionContainer.specialSortDesc(muhnmustvn);
+  
+  for(var i=0; i<muhnmustvn.length; i+=1){//start 1st for
+    muhnmuscvn[i] = [muhnmustvn[i][3], muhnmustvn[i][1], muhnmustvn[i][2], muhnmustvn[i][0], muhnmustvn[i][4], muhnmustvn[i][5], muhnmustvn[i][6], muhnmustvn[i][7]];
+  }//end 1st for
+  
+  
+  //pastes new data
+  FunctionContainer.tripleTrySetSSValues(muhnmus, 3, 1, muhnmuscv.length, muhnmuscv[0].length, muhnmuscvn);
+  
+}
+
+
+function eventDataGathering(){
+  var OGedhaeds = SpreadsheetApp.openById("1Wf_SKQwb4hFb9KxPPVKuVZ2qIoTKEcenC0olbd6yN9o").getSheetByName("All Events")
+  
+  var edhaeds = SpreadsheetApp.openById("1r7zsZ5cCGOrofAaXLMWIgE_sZVKWVIKiWO6nKi4D_OA").getSheetByName("All Event Debriefs");
+  
+  var OGedhaedscv = OGedhaeds.getRange(3,1,OGedhaeds.getLastRow()-2,10).getValues();
+  
+  var edhaedscv = [];
+  
+  for(var i=0; i<OGedhaedscv.length; i+=1){//start 1st for
+    var curVals = [];
+    
+    //Date
+    curVals.push(FunctionContainer.dateReplace(OGedhaedscv[i][0].toString()));
+    
+    //Start Time
+    curVals.push(FunctionContainer.timeRetrieval12Cycle(OGedhaedscv[i][1]));
+    
+    //End Time
+    curVals.push(FunctionContainer.timeRetrieval12Cycle(OGedhaedscv[i][2]));
+    
+    //Event Type
+    curVals.push(OGedhaedscv[i][3].toString());
+    
+    //Participating Group(s)
+    curVals.push("N/A");
+    
+    //Win/Loss
+    curVals.push("N/A");
+    
+    //Leader of Event
+    curVals.push(OGedhaedscv[i][4].toString());
+    
+    //Secondary Leader(s)
+    if(OGedhaedscv[i][5].toString() !== ""){//start 1st if
+      curVals.push(OGedhaedscv[i][5].toString());
+    }//end 1st if
+    else{curVals.push("N/A")}
+    
+    //Attendees
+    curVals.push(OGedhaedscv[i][6].toString());
+    
+    //Debrief
+    curVals.push(OGedhaedscv[i][7].toString());
+    
+    //Additional Notes
+    if(OGedhaedscv[i][8].toString() === ""){//start 1st if
+      curVals.push("N/A");
+    }//end 1st if
+    else{curVals.push(OGedhaedscv[i][8].toString())}
+    
+    //Map(s) Used
+    curVals.push(OGedhaedscv[i][9].toString());
+    
+    //Submission Personnel
+    curVals.push(OGedhaedscv[i][4].toString());
+    
+    
+    edhaedscv.push(curVals);
+  }//end 1st for
+  
+  
+  edhaeds.deleteRows(3,edhaeds.getLastRow()-2);
+  
+  edhaeds.insertRowsAfter(2, edhaedscv.length);
+  
+  edhaeds.getRange(3,1,edhaedscv.length,13).setValues(edhaedscv);
+  
+  edhaeds.setRowHeights(3, edhaedscv.length, 105);
+  
+  
+  //formats everything to make sure its correctly formatted
+  edhaeds.getRange(3,1,edhaedscv.length,13).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setFontWeight(null);
+  edhaeds.getRange(1,1,edhaedscv.length+2,13).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //reorganize hub
+  
+  //Event Debrief Hub All Event Debriefs sheet
+  //[edhaeds,edhaedscvn,edhaedslri]
+  curVals = FunctionContainer.getedhaedscv("num", dllscv);
+  var edhaeds = curVals[0];
+  var edhaedscvn = curVals[1];
+  var edhaedslri = curVals[2];
+  curVals = undefined;
+  
+  //organizes data
+  edhaedscvn = FunctionContainer.specialSortDesc(edhaedscvn);
+  
+  //pastes new data
+  FunctionContainer.tripleTrySetSSValues(edhaeds, 3, 1, edhaedscvn.length, edhaedscvn[0].length, edhaedscvn);
+  
+}
+
+
+function codeGathering(){
+  // Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  var cs = SpreadsheetApp.openById("1iS7phgT-EwCHt1rgYLx5K-YfShp8uUgqszIt48-k39w").getSheetByName("Codes");
+  var cscv = cs.getRange(1,1,4,2).getValues();
+  
+  FunctionContainer.tripleTrySetSSValues(dlls, 30, 3, 1, 4, [[cscv[3][1].toString(),cscv[2][1].toString(),cscv[1][1].toString(),cscv[0][1].toString()]])
+}
+
+
+function dischargeDateGathering(){
+  //PXE Member Data Discharged Members Sheet
+  var curVals = FunctionContainer.getpmddmscv("date");
+  var pmddms = curVals[0];
+  var pmddmslri = curVals[2];
+  var pmddmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  var muhaus = SpreadsheetApp.openById("1ag0JTAtXjxQGt2QIsrFl0TCYKO5i15TiInZ0dCEOhxY").getSheetByName("All Updates")
+  var muhauscv = muhaus.getRange(3,1,muhaus.getLastRow()-2,5).getValues();
+  
+  for(var i=0; i<pmddmscv.length; i+=1){//start 1st for
+    for(var x=0; x<muhauscv.length; x+=1){//start 2nd for
+      if(pmddmscv[i][0].toString() === muhauscv[x][1].toString()  &&  muhauscv[x][0].toString() === "Member Discharge"){//start 1st if
+        pmddmscv[i][28] = FunctionContainer.dateReplace(muhauscv[x][3].toString());
+        pmddmscv[i][21] = FunctionContainer.dateReplace(muhauscv[x][3].toString());
+        x = muhauscv.length;
+      }//end 1st if
+    }//end 2nd for
+  }//end 1st for
+  
+  
+  FunctionContainer.tripleTrySetSSValues(pmddms, 2, 1, pmddmscv.length, pmddmscv[0].length, pmddmscv);
+  FunctionContainer.tripleTrySetNumberFormat(pmddms, 2, 28, pmddmscv.length, 2, "#,##0.00");
+  
+}
+
+function rando1() {
+  console.log(ree);
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv("date");
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  FunctionContainer.updateAllFormLists1(dllscv, pmdcmscv);
+  FunctionContainer.updateAllFormLists2(dllscv, pmdcmscv);
+//  FunctionContainer.formTurnOn(["sf"], dllscv)
+  
+  var perpitraitor = FunctionContainer.getDiscordNickname("The Owl IV", dllscv, pmdcmscv);
+  Logger.log(perpitraitor);
+//  FunctionContainer.discordMemberUpdateFormSend("<:GetOnHalo:417888045925138432>");
+  
+}
+
+function rando2(){
+  var ss = SpreadsheetApp.openById("1pPh9DGWfmGtSEacktwJY6PPjCPO8QSXv-eXeUJV5u6E").getSheetByName("Sheet2");
+  var sscv = ss.getRange(1,1,500,1).getValues();
+  var message = "";
+  for(var i=0; i<sscv.length; i+=1){//start 1st for
+    if(sscv[i].toString() !== ""){//start 1st if
+      message = message + "\n['"+sscv[i].toString()+"'],";
+    }//end 1st if
+  }//end 1st for
+  Logger.log(message);
+}
+
+function rando3(){
+  
+  // Data Lists Data Sheet
+  var curVals = FunctionContainer.getdldscv();
+  var dlds = curVals[0];
+  var dldscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  var ss = SpreadsheetApp.openById("1pPh9DGWfmGtSEacktwJY6PPjCPO8QSXv-eXeUJV5u6E").getSheetByName("Sheet4");
+  
+  for(var i=0; i<49; i+=1){//start 1st for
+    var newVal = dllscv[40][i].toString();
+    ss.getRange(1,i+1).setValue(newVal.toString().replace(" ","").replace(" ","").replace(" ","").replace(" ",""));
+  }//end 1st for
+  
+}
+
+
+function rando4(){
+  var ss = SpreadsheetApp.openById("1pPh9DGWfmGtSEacktwJY6PPjCPO8QSXv-eXeUJV5u6E").getSheetByName("Sheet2");
+  var ss3 = SpreadsheetApp.openById("1pPh9DGWfmGtSEacktwJY6PPjCPO8QSXv-eXeUJV5u6E").getSheetByName("Sheet3");
+  var sscv = ss.getRange(1,1,ss.getLastRow(),1).getValues();
+  for(var i=sscv.length-1; i>=0; i-=1){//start 1st for
+    if(sscv[i][0].toString().indexOf("[0 seconds]") !== -1  ||  sscv[i][0].toString().indexOf(") [0.") !== -1){//start 1st if
+      sscv.splice(i, 1);
+    }//end 1st if
+  }//end 1st for
+  ss3.getRange(1,1,sscv.length,1).setValues(sscv)
+}
+
+
+function rando5(){
+  //gets rid of all ga files
+  var files = DriveApp.getFolderById("1llx04i10EupoO4COuntD0u_ABT7WOmR0").getFiles();
+  while(files.hasNext()){//start while
+    var curFileId = files.next().getId();
+    DriveApp.getFileById(curFileId).setTrashed(true);
+  }//end while
+  // Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  dlls.getRange(51,1,1,48).setValue("");
+}
+
+
+function rando6(){
+  // Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  ///*** DISCORD CALENDAR UPDATE ***///
+  FunctionContainer.updateDiscordCalendar(dllscv);
+}
+
+
+function rando7(){
+  // Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  var formulas = [["=TODAY()", "=TODAY()", "=TODAY()+365", "=TODAY()+365", "=TODAY()+6", "=TODAY()+6", "=TODAY()+5",
+    "=TODAY()+4", "=TODAY()+3", "=TODAY()+2", "=TODAY()+1", "=TODAY()+7", "=TODAY()-7", "=TODAY()-7", "=NOW()", 
+    "=NOW()", "=TODAY()-6", "=TODAY()-5", "=TODAY()-4", "=TODAY()-3", "=TODAY()-2", "=TODAY()-1"]];
+  dlls.getRange(11,1,1,22).setFormulas(formulas);
+}
+
+
+function rando8(){
+  var curVals = "Data Centers, Map Callouts || Event Debrief Hub, Forge Hub, Member Update Hub, Tech Form Hub || Misc 01, Misc 02, Misc 10 || Mora 1 ~ Everything | Mora 2 ~ Everything | Mora 3 ~ Everything | Mora 4 ~ Everything | Mora 5 ~ Everything";
+  curVals = FunctionContainer.permissionDecipher(curVals);
+  FunctionContainer.arrayToCodeArray(curVals[0]);
+  FunctionContainer.arrayToCodeArray(curVals[1]);
+  FunctionContainer.arrayToCodeArray(curVals[2]);
+  FunctionContainer.arrayToCodeArray(curVals[3]);
+}
+
+
+function rando9(){
+  var curVals = [[["Misc 01"], ["Misc 02"], ["Misc 10"]], [["Event Debrief Hub"], ["Forge Hub"], ["Member Update Hub"], ["Miscellaneous Form Hub"]], [["Data Lists"], ["Phoenix Member Data"]], [["Mora 1", [["Everything"]]], ["Mora 2", [["Everything"]]], ["Mora 3", [["Everything"]]], ["Mora 4", [["Everything"]]], ["Mora 5", [["Everything"]]]]]
+  curVals = FunctionContainer.permissionEncoder(curVals);
+  Logger.log(curVals);
+  Logger.log("");
+  var curVals1 = "Misc 01, Misc 02, Misc 10 || Event Debrief Hub, Forge Hub, Member Update Hub, Miscellaneous Form Hub || Data Lists, Phoenix Member Data || Mora 1 ~ Everything | Mora 2 ~ Everything | Mora 3 ~ Everything | Mora 4 ~ Everything | Mora 5 ~ Everything";
+  var curVals = FunctionContainer.permissionDecipher(curVals);
+  Logger.log(curVals);
+  Logger.log("");
+  curVals = FunctionContainer.permissionEncoder(curVals);
+  Logger.log(curVals);
+  Logger.log("");
+  Logger.log(curVals1 === curVals1);
+}
+
+
+function rando10(){
+  //Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  Logger.log(dllscv[31][0].toString() === dllscv[31][1].toString());
+  
+}
+
+
+function rando11(){
+  //this function is testing for form fillout errors and pasting them to the error sheet
+  FunctionContainer.formFilloutErrorReportEntry('Sirjon','Debrief Form','They done goofed','50');
+}
+
+
+function rando12(){
+  var array = ["1","2","3"];
+  var array2 = [[array[0].toString()], [array[1].toString()], [array[2].toString()]];
+  console.log(FunctionContainer.existsInArray(array2, ["1"]));
+  if(array.indexOf("1") !== -1){//end 1st if
+    console.log(true);
+  }//start 1st if
+  else{console.log(false);}
+}
+
+
+function rando13(){
+  var array = [["bruh", "crazy"], ["shits", "wild"], ["IKR", "stoopid"], ["loco", "holmes"], ["moist", "towelettes"]];
+  console.log(array);
+  FunctionContainer.arrayReverse(array);
+  console.log(array);
+}
+
+
+function rando14(){
+  //Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+
+  //Member Update Hub all updates sheet
+  curVals = FunctionContainer.getmuhauscv("date", dllscv);
+  var muhaus = curVals[0];
+  var muhauscv = curVals[1];
+  curVals = undefined;
+
+  //PXE Member Data Discharged Members Sheet
+  curVals = FunctionContainer.getpmddmscv("date");
+  var pmddmscv = curVals[1];
+  curVals = undefined;
+
+  
+
+  for(var i=0; i<muhauscv.length; i+=1){//start 1st for
+    if(muhauscv[i][0] === "Member Discharge"){//end 1st if
+      var check = true;
+      for(var x=pmddmscv.length-1; x>=0; x-=1){//start 2nd for
+        if(muhauscv[i][1].toString() === pmddmscv[x][0].toString()){//end 1st if
+          check = false;
+          muhauscv[i][2] = "Discharging Member From: " + pmddmscv[x][3];
+        }//start 1st if
+      }//end 2nd for
+      if(check){//end 1st if
+        muhauscv[i][2] = "Discharging Member From: ";
+      }//start 1st if
+    }//start 1st if
+  }//end 1st for
+  muhaus.getRange(3,1,muhauscv.length, 6).setValues(muhauscv);
+}
+
+function indFolders(folder){
+  /*
+  documents folder
+    general docs
+    group reports
+    important docs
+    
+  profiles folder
+    group profile
+    member profiles
+  */
+  
+  var docsFolder = folder.createFolder("Documents");Utilities.sleep(1000);
+  var docsFolderId = docsFolder.getId();
+  var docsFolderUrl = docsFolder.getUrl();
+  var gdocsFolder = docsFolder.createFolder("General Documents");Utilities.sleep(1000);
+  var gdocsFolderId = gdocsFolder.getId();
+  var gdocsFolderUrl = gdocsFolder.getUrl();
+  var idocsFolder = docsFolder.createFolder("Important Documents");Utilities.sleep(1000);
+  var idocsFolderId = idocsFolder.getId();
+  var idocsFolderUrl = idocsFolder.getUrl();
+  var rdocsFolder = docsFolder.createFolder("Group Reports");Utilities.sleep(1000);
+  var rdocsFolderId = rdocsFolder.getId();
+  var rdocsFolderUrl = rdocsFolder.getUrl();
+  
+  var profilesFolder = folder.createFolder("Profiles");Utilities.sleep(1000);
+  var profilesFolderId = profilesFolder.getId();
+  var profilesFolderUrl = profilesFolder.getUrl();
+  var gprofilesFolder = profilesFolder.createFolder("Group Profile");Utilities.sleep(1000);
+  var gprofilesFolderId = gprofilesFolder.getId();
+  var gprofilesFolderUrl = gprofilesFolder.getUrl();
+  var mprofilesFolder = profilesFolder.createFolder("Member Profiles");Utilities.sleep(1000);
+  var mprofilesFolderId = mprofilesFolder.getId();
+  var mprofilesFolderUrl = mprofilesFolder.getUrl();
+  
+  return [docsFolderId,docsFolderUrl,gdocsFolderId,gdocsFolderUrl,idocsFolderId,idocsFolderUrl,rdocsFolderId,rdocsFolderUrl,
+           profilesFolderId,profilesFolderUrl,gprofilesFolderId,gprofilesFolderUrl,mprofilesFolderId,mprofilesFolderUrl
+         ];
+}
+
+function moraGroupFolders() {
+  // Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  var overallGroupFolder = DriveApp.getFolderById("1I23PtgGLejfyjBL8cULGZDsqO0R7o9mv");
+  for(var i=0; i<21; i+=10){//start 1st for
+    //create group folder
+    var moraFolder = overallGroupFolder.createFolder(dllscv[40][i].toString());Utilities.sleep(1000);
+    var moraFolderId = moraFolder.getId();
+    var moraFolderUrl = moraFolder.getUrl();
+    
+    var curMoraVals = indFolders(moraFolder);
+    
+    dllscv[41][i] = moraFolderId;
+    
+    dllscv[49][i] = moraFolderUrl;
+    
+    dllscv[69][i] = curMoraVals[0];
+    
+    dllscv[70][i] = curMoraVals[1];
+    
+    dllscv[45][i] = curMoraVals[2];
+    
+    dllscv[58][i] = curMoraVals[3];
+    
+    dllscv[46][i] = curMoraVals[4];
+    
+    dllscv[59][i] = curMoraVals[5];
+    
+    dllscv[44][i] = curMoraVals[6];
+    
+    dllscv[57][i] = curMoraVals[7];
+    
+    dllscv[71][i] = curMoraVals[8];
+    
+    dllscv[72][i] = curMoraVals[9];
+    
+    dllscv[43][i] = curMoraVals[10];
+    
+    dllscv[73][i] = curMoraVals[11];
+    
+    dllscv[42][i] = curMoraVals[12];
+    
+    dllscv[56][i] = curMoraVals[13];
+    
+    for(var x=1; x<10; x+=1){//start 2nd for
+      //main group folder
+      var curGroupFolder = moraFolder.createFolder(dllscv[40][x+i].toString());
+      var curGroupFolderId = curGroupFolder.getId();
+      var curGroupFolderUrl = curGroupFolder.getUrl();
+    
+      var curGroupVals = indFolders(curGroupFolder);
+      
+      dllscv[41][i+x] = curGroupFolderId;
+      
+      dllscv[49][i+x] = curGroupFolderUrl;
+      
+      dllscv[69][i+x] = curGroupVals[0];
+      
+      dllscv[70][i+x] = curGroupVals[1];
+      
+      dllscv[45][i+x] = curGroupVals[2];
+      
+      dllscv[58][i+x] = curGroupVals[3];
+      
+      dllscv[46][i+x] = curGroupVals[4];
+      
+      dllscv[59][i+x] = curGroupVals[5];
+      
+      dllscv[44][i+x] = curGroupVals[6];
+      
+      dllscv[57][i+x] = curGroupVals[7];
+      
+      dllscv[71][i+x] = curGroupVals[8];
+      
+      dllscv[72][i+x] = curGroupVals[9];
+      
+      dllscv[43][i+x] = curGroupVals[10];
+      
+      dllscv[73][i+x] = curGroupVals[11];
+      
+      dllscv[42][i+x] = curGroupVals[12];
+      
+      dllscv[56][i+x] = curGroupVals[13];
+      
+    }//end 2nd for
+    
+  }//end 1st for
+  dlls.getRange(1,1,dllscv.length,dllscv[0].length).setValues(dllscv);
+}
+
+function swalGroupFolder(){
+  // Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  var overallGroupFolder = DriveApp.getFolderById("1LfN5Cg3sLoYon287eCS_Qtjz8_jpn9Hx");
+  
+  //create group folder
+  var moraFolder = overallGroupFolder.createFolder(dllscv[40][30].toString());Utilities.sleep(1000);
+  var moraFolderId = moraFolder.getId();
+  var moraFolderUrl = moraFolder.getUrl();
+  
+  var curMoraVals = indFolders(moraFolder);
+  
+  dllscv[41][30] = moraFolderId;
+  
+  dllscv[49][30] = moraFolderUrl;
+  
+  dllscv[69][30] = curMoraVals[0];
+  
+  dllscv[70][30] = curMoraVals[1];
+  
+  dllscv[45][30] = curMoraVals[2];
+  
+  dllscv[58][30] = curMoraVals[3];
+  
+  dllscv[46][30] = curMoraVals[4];
+  
+  dllscv[59][30] = curMoraVals[5];
+  
+  dllscv[44][30] = curMoraVals[6];
+  
+  dllscv[57][30] = curMoraVals[7];
+  
+  dllscv[71][30] = curMoraVals[8];
+  
+  dllscv[72][30] = curMoraVals[9];
+  
+  dllscv[43][30] = curMoraVals[10];
+  
+  dllscv[73][30] = curMoraVals[11];
+  
+  dllscv[42][30] = curMoraVals[12];
+  
+  dllscv[56][30] = curMoraVals[13];
+  
+  for(var x=1; x<4; x+=1){//start 2nd for
+    //main group folder
+    var curGroupFolder = moraFolder.createFolder(dllscv[40][30+x].toString());
+    var curGroupFolderId = curGroupFolder.getId();
+    var curGroupFolderUrl = curGroupFolder.getUrl();
+    
+    var curGroupVals = indFolders(curGroupFolder);
+    
+    dllscv[41][30+x] = curGroupFolderId;
+    
+    dllscv[49][30+x] = curGroupFolderUrl;
+    
+    dllscv[69][30+x] = curGroupVals[0];
+    
+    dllscv[70][30+x] = curGroupVals[1];
+    
+    dllscv[45][30+x] = curGroupVals[2];
+    
+    dllscv[58][30+x] = curGroupVals[3];
+    
+    dllscv[46][30+x] = curGroupVals[4];
+    
+    dllscv[59][30+x] = curGroupVals[5];
+    
+    dllscv[44][30+x] = curGroupVals[6];
+    
+    dllscv[57][30+x] = curGroupVals[7];
+    
+    dllscv[71][30+x] = curGroupVals[8];
+    
+    dllscv[72][30+x] = curGroupVals[9];
+    
+    dllscv[43][30+x] = curGroupVals[10];
+    
+    dllscv[73][30+x] = curGroupVals[11];
+    
+    dllscv[42][30+x] = curGroupVals[12];
+    
+    dllscv[56][30+x] = curGroupVals[13];
+    
+  }//end 2nd for
+  
+  dlls.getRange(1,1,dllscv.length,dllscv[0].length).setValues(dllscv);
+}
+
+function indGroupFolders(){
+  // Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  var overallGroupFolder = DriveApp.getFolderById("1LfN5Cg3sLoYon287eCS_Qtjz8_jpn9Hx");
+  var num = 48;
+  
+  //create group folder
+  var moraFolder = overallGroupFolder.createFolder(dllscv[40][num].toString());Utilities.sleep(1000);
+  var moraFolderId = moraFolder.getId();
+  var moraFolderUrl = moraFolder.getUrl();
+  
+  var curMoraVals = indFolders(moraFolder);
+  
+  dllscv[41][num] = moraFolderId;
+  
+  dllscv[49][num] = moraFolderUrl;
+  
+  dllscv[69][num] = curMoraVals[0];
+  
+  dllscv[70][num] = curMoraVals[1];
+  
+  dllscv[45][num] = curMoraVals[2];
+  
+  dllscv[58][num] = curMoraVals[3];
+  
+  dllscv[46][num] = curMoraVals[4];
+  
+  dllscv[59][num] = curMoraVals[5];
+  
+  dllscv[44][num] = curMoraVals[6];
+  
+  dllscv[57][num] = curMoraVals[7];
+  
+  dllscv[71][num] = curMoraVals[8];
+  
+  dllscv[72][num] = curMoraVals[9];
+  
+  dllscv[43][num] = curMoraVals[10];
+  
+  dllscv[73][num] = curMoraVals[11];
+  
+  dllscv[42][num] = curMoraVals[12];
+  
+  dllscv[56][num] = curMoraVals[13];
+  
+  
+  
+  dlls.getRange(1,1,dllscv.length,dllscv[0].length).setValues(dllscv);
+}
+
+function allCouncilFolders(){
+  // Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  var overallGroupFolder = DriveApp.getFolderById("1ZqRBd6IXom0FCBpox0bVG3cz8G8eKv7G");
+  for(var x=0; x<8; x+=1){//start 2nd for
+    //main group folder
+    var curGroupFolder = overallGroupFolder.createFolder(dllscv[40][49+x].toString());
+    var curGroupFolderId = curGroupFolder.getId();
+    var curGroupFolderUrl = curGroupFolder.getUrl();
+    
+    var curGroupVals = indFolders(curGroupFolder);
+    
+    dllscv[41][49+x] = curGroupFolderId;
+    
+    dllscv[49][49+x] = curGroupFolderUrl;
+    
+    dllscv[69][49+x] = curGroupVals[0];
+    
+    dllscv[70][49+x] = curGroupVals[1];
+    
+    dllscv[45][49+x] = curGroupVals[2];
+    
+    dllscv[58][49+x] = curGroupVals[3];
+    
+    dllscv[46][49+x] = curGroupVals[4];
+    
+    dllscv[59][49+x] = curGroupVals[5];
+    
+  }//end 2nd for
+  
+  dlls.getRange(1,1,dllscv.length,dllscv[0].length).setValues(dllscv);
+}
+function indFolders2(folder){
+  /*
+  documents folder
+    general docs
+    group reports
+    important docs
+  */
+  
+  var docsFolder = folder.createFolder("Documents");Utilities.sleep(1000);
+  var docsFolderId = docsFolder.getId();
+  var docsFolderUrl = docsFolder.getUrl();
+  var gdocsFolder = docsFolder.createFolder("General Documents");Utilities.sleep(1000);
+  var gdocsFolderId = gdocsFolder.getId();
+  var gdocsFolderUrl = gdocsFolder.getUrl();
+  var idocsFolder = docsFolder.createFolder("Important Documents");Utilities.sleep(1000);
+  var idocsFolderId = idocsFolder.getId();
+  var idocsFolderUrl = idocsFolder.getUrl();
+  
+  return [docsFolderId,docsFolderUrl,gdocsFolderId,gdocsFolderUrl,idocsFolderId,idocsFolderUrl];
+}
+
+function calendarWipe() {
+  var curVals = FunctionContainer.getdllscv();
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  var calendar = CalendarApp.getCalendarById("4j4jj1nqgk65ms2bs3i0sik5bs@group.calendar.google.com");
+  var events = calendar.getEvents(dllscv[10][0], dllscv[10][2]);
+  //[title, start date, start time, end time, event groups, description, leader]
+  for(var i=0; i<events.length; i+=1){//start 1st for
+    Logger.log([events[i].getTitle(), FunctionContainer.dateReplace(events[i].getStartTime()), 
+                FunctionContainer.timeRetrieval12Cycle(events[i].getStartTime()),
+                FunctionContainer.timeRetrieval12Cycle(events[i].getEndTime()),
+                eventGroupChangeReturnGroup(events, i),
+                eventGroupChangeReturnDescription(events, i),
+                events[i].getLocation()
+               ]);
+//    events[i].deleteEvent();
+  }//end 1st for
+  
+}
+
+//[Matchmaking, Mar 07 2022, 12:00 PM, 2:00 PM, Event Group(s): Everybody, Description: Warmups for events, ZERO Eidolon]
+//[Recruitment, Mar 07 2022, 5:00 PM, 7:00 PM, Event Group(s): Everybody, Description: Recruiting through messages and LFGs, ultmiate gamer]
+//[Rudis Crucible, Mar 07 2022, 8:00 PM, 10:00 PM, Event Group(s): Legion 4 Rudis, Description: Leaders vs Rudis, THAGODAMBATMAN]
+//[Matchmaking, Mar 08 2022, 12:00 PM, 2:00 PM, Event Group(s): Everybody, Description: Warmups for later events, ZERO Eidolon]
+//[Recruitment, Mar 08 2022, 5:00 PM, 7:00 PM, Event Group(s): Everybody, Description: Recruiting through messages and LFGs, ultmiate gamer]
+//[Crucible, Mar 08 2022, 7:30 PM, 9:30 PM, Event Group(s): Legion 3 Aquila, Legion 2 Vicarius, Description: Working on cohesion, rotations and map knowledge., SirGary#7438]
+//[Matchmaking, Mar 09 2022, 12:00 PM, 2:00 PM, Event Group(s): Everybody, Description: Warmups for later events, IReconvertI]
+//[Recruitment, Mar 09 2022, 5:00 PM, 7:00 PM, Event Group(s): Everybody, Description: Recruiting through messages and LFGs, ultmiate gamer]
+//[Crucible, Mar 09 2022, 7:30 PM, 9:30 PM, Event Group(s): Legion 3 Aquila, Legion 2 Vicarius, Description: Working on cohesion, rotations and map knowledge., SirGary#7438]
+//[Matchmaking, Mar 10 2022, 12:00 PM, 2:00 PM, Event Group(s): Everybody, Description: Warmups for later events, IReconvertI]
+//[Recruitment, Mar 10 2022, 5:00 PM, 7:00 PM, Event Group(s): Everybody, Description: Recruiting through messages and LFGs, ultmiate gamer]
+//[Crucible, Mar 10 2022, 7:30 PM, 9:30 PM, Event Group(s): Legion 3 Aquila, Legion 2 Vicarius, Description: Working on cohesion, rotations and map knowledge, SirGary#7438]
+//[Matchmaking, Mar 11 2022, 12:00 PM, 2:00 PM, Event Group(s): Everybody, Description: Warmups for later events, ZERO Eidolon]
+//[Recruitment, Mar 11 2022, 5:00 PM, 7:00 PM, Event Group(s): Everybody, Description: Recruiting through messages and LFGs, ultmiate gamer]
+//[Crucible, Mar 11 2022, 7:30 PM, 9:30 PM, Event Group(s): Legion 3 Aquila, Legion 2 Vicarius, Description: Working on cohesion, rotations and map knowledge, SirGary#7438]
+
+
+function eventGroupChangeReturnGroup(events,i){
+  var eventGroupAndDescription = events[i].getDescription().toString();
+  var endNumEventGroup = "";var startNumDescription = "";
+  for(var i = 0; i<eventGroupAndDescription.length;i++){if(eventGroupAndDescription[i].toString()==="~"){endNumEventGroup = i-1;var startNumDescription = i+2;}}
+  var oGEventGroup = "";var ogDescription = "";
+  for(var i = 0; i<endNumEventGroup;i++){oGEventGroup = oGEventGroup+eventGroupAndDescription[i];}
+  for(var i = startNumDescription; i<eventGroupAndDescription.length;i++){ogDescription = ogDescription+eventGroupAndDescription[i];}
+  return oGEventGroup;
+}
+function eventGroupChangeReturnDescription(events,i){
+  var eventGroupAndDescription = events[i].getDescription().toString();
+  var endNumEventGroup = "";var startNumDescription = "";
+  for(var i = 0; i<eventGroupAndDescription.length;i++){if(eventGroupAndDescription[i].toString()==="~"){endNumEventGroup = i-1;var startNumDescription = i+2;}}
+  var oGEventGroup = "";var ogDescription = "";
+  for(var i = 3; i<endNumEventGroup;i++){oGEventGroup = oGEventGroup+eventGroupAndDescription[i];}
+  for(var i = startNumDescription; i<eventGroupAndDescription.length;i++){ogDescription = ogDescription+eventGroupAndDescription[i];}
+  return ogDescription;
+}
+
+function discRolesAdder() {
+  //adds all possible roles to the server
+  
+  // Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  var discRoles = FunctionContainer.getAllPossibleDiscRoles(dllscv);
+  
+  Logger.log(discRoles.length);
+  
+  //finds any role im searching for
+  for(var i=0; i<discRoles.length; i+=1){//start 1st for
+    if(discRoles[i].toString()===""){//start 1st if
+      Logger.log(i);
+    }//end 1st if
+  }//end 1st for
+  
+  
+  
+  
+  //only grabs a few roles so it doesnt overflow the discord
+  var newDiscRoles = [];
+//  for(var i=0; i<25; i+=1){//start 1st for
+//  for(var i=25; i<50; i+=1){//start 1st for
+//  for(var i=50; i<75; i+=1){//start 1st for
+//  for(var i=75; i<100; i+=1){//start 1st for
+//  for(var i=100; i<125; i+=1){//start 1st for
+//  for(var i=125; i<150; i+=1){//start 1st for
+//  for(var i=150; i<175; i+=1){//start 1st for
+  for(var i=175; i<200; i+=1){//start 1st for
+//  for(var i=200; i<225; i+=1){//start 1st for
+//  for(var i=225; i<250; i+=1){//start 1st for
+    if(discRoles.length-1 >= i){//start 1st if
+      newDiscRoles.push([discRoles[i].toString()]);
+    }//end 1st if
+  }//end 1st for
+  Logger.log(newDiscRoles);
+  
+  FunctionContainer.createRoles(newDiscRoles);
+  
+  
+}//end discroles
+
+function memberDiscordInfo(){
+  //gives each member their specific roles and nickname in discord
+  
+  var ss = SpreadsheetApp.openById("1pPh9DGWfmGtSEacktwJY6PPjCPO8QSXv-eXeUJV5u6E").getSheetByName("Sheet1");
+  //what row being done
+  var num = ss.getRange(1,3,1,1).getValue();
+  
+  //pxe Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv("date");
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+
+  var sscv = ss.getRange(num,1,1,2).getValues()[0];
+  
+  var memberInQuestion = sscv[0].toString();
+  var currentNickname = sscv[1].toString();
+  Logger.log(memberInQuestion);
+  curVals = FunctionContainer.getMemberDiscordInfo(dllscv,pmdcmscv,memberInQuestion);
+  var nickname = curVals[0];
+  var discRoles = curVals[1];
+  var discRolesText = curVals[2];
+  curVals = undefined;
+  
+  Logger.log("Full Discord Nickname: "+nickname+"\nDiscord Roles: "+discRolesText);
+  
+  
+  //changes nickname
+  //c^n,Nickname,New Nickname
+  FunctionContainer.discordExpansionFormSend("c^n,"+currentNickname+","+nickname);
+  Utilities.sleep(1000);
+  
+  //gets rid of all roles
+  FunctionContainer.discordExpansionFormSend("ca^r,"+nickname);
+  Utilities.sleep(1000);
+  
+  //goes thru each role and gives it to them
+  //a^r,Nickname,Role
+  for(var i=0; i<discRoles.length; i+=1){//start 1st for
+    FunctionContainer.discordExpansionFormSend("a^r,"+nickname+","+discRoles[i].toString());
+    Utilities.sleep(1000);
+  }//end 1st for
+  
+  ss.getRange(1,3,1,1).setValue(num + 1);
+}//end memberDiscordInfo
+
+function memberDiscordInfoMass(){
+  for(var i=0; i<5; i+=1){//start 1st for
+    memberDiscordInfo();
+    Utilities.sleep(10000);
+  }//end 1st for
+  
+}
+
+
+
+
+
+function codeChatSetup(){
+  // Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  for(var i=1; i<7; i+=1){//start 1st for
+    FunctionContainer.discordExpansionFormSend("d^c,code-" + i + ",1");
+    Utilities.sleep(500);
+    FunctionContainer.discordExpansionFormSend("d^c,code-" + i + ",1");
+    Utilities.sleep(500);
+    FunctionContainer.discordExpansionFormSend(FunctionContainer.getCodeEmbeddedClearanceMessage(dllscv, i.toString()));
+    Utilities.sleep(500);
+    FunctionContainer.discordExpansionFormSend("s$m$^" + dllscv[29][i-1].toString() + "^code-" + i);
+    Utilities.sleep(500);
+  }//end 1st for
+}//end codeChatSetup
+
+function allMemberProfilesFAFDelete(){
+  //Lacedaemon Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv("date");
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+    Logger.log(pmdcmscv[i][0].toString());
+    var allProfileIds = FunctionContainer.splitEmUp(pmdcmscv[i][12]);
+    for(var x=0; x<allProfileIds.length; x+=1){//start 2nd for
+      var folderId = FunctionContainer.pmdcmsIdRetrieval(allProfileIds[x]);
+      DriveApp.getFolderById(folderId).setTrashed(true);
+      Utilities.sleep(1000);
+    }//end 2nd for
+  }//end 1st for
+  pmdcms.getRange(2,11,pmdcms.getLastRow()-1,3).setValue("");
+}//end allMemberProfilesFAFDelete
+
+function allMemberProfilesFAFAdd(){
+  //first get pmdcmscv and dllscv
+  //have for loop go through each person
+  //for each person have it separate their group
+  //declare the vars for their profile id stuff, and have it as a array
+  //next have another for loop that loops the length of the length of group variable
+  //have a third for loop that goes through each group on the bottom rows with the ids
+  //have an if statement that checks to see if group[].indexOf(dllscv[][])!==-1
+  //when if condition met it adds it to the correct group's folder and .pushes the ids to their respective vars
+  
+  //then after that inside of the end of the first for loop have it paste the correct ids for the folders and profiles
+  
+  //Lacedaemon Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv("date");
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+//  for(var i=0; i<30; i+=1){//start 1st for
+  for(var i=30; i<pmdcmscv.length; i+=1){//start 1st for
+    var curGroups = FunctionContainer.splitEmUp(pmdcmscv[i][3].toString());
+    var memberProfileFolderIDs = [];
+    var newMemberProfileFileIds = [];
+    var newMemberProfileFileUrls = [];
+    for(var x=0; x<curGroups.length; x+=1){//start 2nd for
+      for(var y=0; y<70; y+=1){//start 3rd for
+        if(curGroups[x].toString().indexOf(dllscv[40][y].toString())!==-1&&curGroups[x].toString().indexOf("Unblooded")===-1&&dllscv[40][y].toString()!==""){//start 1st if
+          Logger.log(pmdcmscv[i][0].toString());
+          Logger.log(curGroups[x].toString());
+          Logger.log(dllscv[40][y].toString());
+          var curMemberFolderId = DriveApp.getFolderById(dllscv[42][y].toString()).createFolder(pmdcmscv[i][0].toString()).getId();
+          memberProfileFolderIDs.push([dllscv[40][y].toString()+" ~ "+curMemberFolderId]);
+          var curMemberFileId = DriveApp.getFileById("1kLEvbo7sqdVk91lRhK233-Yq1SL81dt7jDxpG1BqkWY").makeCopy(pmdcmscv[i][0].toString(), DriveApp.getFolderById(curMemberFolderId)).getId()
+          newMemberProfileFileIds.push([dllscv[40][y].toString()+" ~ "+curMemberFileId]);
+          newMemberProfileFileUrls.push([dllscv[40][y].toString()+" ~ "+DriveApp.getFileById(curMemberFileId).getUrl()]);
+        }//end 1st if
+        else if(curGroups[x].toString()===dllscv[40][y].toString()&&curGroups[x].toString().indexOf("Unblooded")!==-1&&dllscv[40][y].toString()!==""){//start 1st if
+          Logger.log(pmdcmscv[i][0].toString());Logger.log(curGroups[x].toString());Logger.log(dllscv[40][y].toString());
+          var curMemberFolderId = DriveApp.getFolderById(dllscv[42][y].toString()).createFolder(pmdcmscv[i][0].toString()).getId();
+          memberProfileFolderIDs.push([dllscv[40][y].toString()+" ~ "+curMemberFolderId]);
+          var curMemberFileId = DriveApp.getFileById("1kLEvbo7sqdVk91lRhK233-Yq1SL81dt7jDxpG1BqkWY").makeCopy(pmdcmscv[i][0].toString(), DriveApp.getFolderById(curMemberFolderId)).getId()
+          newMemberProfileFileIds.push([dllscv[40][y].toString()+" ~ "+curMemberFileId]);
+          newMemberProfileFileUrls.push([dllscv[40][y].toString()+" ~ "+DriveApp.getFileById(curMemberFileId).getUrl()]);
+          Logger.log(FunctionContainer.array1LevelIntoString(memberProfileFolderIDs));Logger.log(FunctionContainer.array1LevelIntoString(newMemberProfileFileIds));Logger.log(FunctionContainer.array1LevelIntoString(newMemberProfileFileUrls));
+        }//end 1st if
+      }//end 3rd for
+      Utilities.sleep(1000);
+    }//end 2nd for
+    pmdcms.getRange(i+2,11,1,3).setValues([[FunctionContainer.array1LevelIntoString(newMemberProfileFileIds),FunctionContainer.array1LevelIntoString(newMemberProfileFileUrls),FunctionContainer.array1LevelIntoString(memberProfileFolderIDs)]]);
+  }//end 1st for
+}//end allMemberProfilesFAFAdd
+
+function turnOffAll(){
+  //Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dllscv = curVals[1];
+  curVals = undefined;
+  FunctionContainer.formTurnOff(["all"], dllscv);
+}
+
+function turnOnAll(){
+  //Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dllscv = curVals[1];
+  curVals = undefined;
+  FunctionContainer.formTurnOn(["all"], dllscv);
+}
+
+function addGroupProfileFiles(){
+  //Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  for(var i=0; i<25; i+=1){//start 1st for
+//  for(var i=25; i<49; i+=1){//start 1st for
+//  for(var i=0; i<0; i+=1){//start 1st for
+    if(dllscv[43][i].toString()!==""){//start 1st if
+      var curProfileId = DriveApp.getFileById("1LfXEqHicVk8B9NomYBVaXewDlmF7B9gvcmChGB2vtiM").makeCopy(dllscv[40][i].toString()+" Profile", DriveApp.getFolderById(dllscv[43][i].toString())).getId();
+      SpreadsheetApp.openById(curProfileId).createTextFinder("{}").replaceAllWith(dllscv[40][i].toString());
+      var curURL = SpreadsheetApp.openById(curProfileId).getUrl();
+      dlls.getRange(48,i+1,2).setValues([[curProfileId],[curURL]]);
+      Utilities.sleep(1000);
+    }//end 1st if
+  }//end 1st for
+}//end addGroupProfilesFiles
+
+
+function removeGroupProfileFiles(){
+  //gets rid of all group profile files in each groups folder
+  //Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  for(var i=0; i<48; i+=1){//start 1st for
+    var files = DriveApp.getFolderById(dllscv[43][i].toString()).getFiles();
+    while(files.hasNext()){//start while
+      var curFileId = files.next().getId();
+      DriveApp.getFileById(curFileId).setTrashed(true);
+    }//end while
+  }//end 1st for 
+  dlls.getRange(48,1,2,48).setValue("");
+}//end removeGroupProfilesFiles
+
+//takes too long
+
+
+
+
+function unshareFiles(allFiles, email){
+  while(allFiles.hasNext()){
+    var curFileId = allFiles.next().getId();
+    FunctionContainer.tripleTryUnshareEmailForFileEditor(email, curFileId);
+    FunctionContainer.tripleTryUnshareEmailForFileViewer(email, curFileId);
+  }
+}
+function unshareMain(){
+  
+  //email
+  var email = "afs.database.management3@gmail.com";
+  
+//  //pxe database
+//  var curMainFolder = DriveApp.getFolderById("1KYUgNRfVFabmCNJ1ZOQsP5VMDwzxL4NV");
+  
+  //mora1
+  var curMainFolder = DriveApp.getFolderById("1zNLaWmw3oQ0Tt1-ZudgySPOiuoVbetK9");
+//  
+//  //mora2
+//  var curMainFolder = DriveApp.getFolderById("1xWJsdoqzAGcNxL0bMwYYgE_4BhHxItQP");
+//  
+//  //mora3
+//  var curMainFolder = DriveApp.getFolderById("1HDrMnPCxMGRm_kJRw-4zao5JOTeR1w4z");
+//  
+//  //councils
+//  var curMainFolder = DriveApp.getFolderById("1ZqRBd6IXom0FCBpox0bVG3cz8G8eKv7G");
+//  
+//  //special groups
+//  var curMainFolder = DriveApp.getFolderById("1v9rnkSWh846J-YxqblxvBHfROcM-dQp-");
+//  
+//  //data centers
+//  var curMainFolder = DriveApp.getFolderById("1nro4tvCrBSwQuLbYeA-yyeq2PoP97WmV");
+//  
+//  //forms
+//  var curMainFolder = DriveApp.getFolderById("1pyOfs9uhDrpgSWbo-01Lb56uSPGHpHq7");
+//  
+//  //hubs
+//  var curMainFolder = DriveApp.getFolderById("1ojCDKtN0kjVL-okhwUfVD0IWKrnaupO1");
+//  
+//  //misc
+//  var curMainFolder = DriveApp.getFolderById("1-kKw8kBAi1JPx5yE66gZfKYHTnPkhjyp");
+  
+  unshareFiles(curMainFolder.getFiles(), email);
+  var allFolders1 = curMainFolder.getFolders();
+  while(allFolders1.hasNext()){
+    var curFolder1Id = allFolders1.next().getId();
+    FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder1Id);
+    FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder1Id);
+    var curFolder1 = DriveApp.getFolderById(curFolder1Id);
+    unshareFiles(curFolder1.getFiles(), email);
+    var allFolders2 = curFolder1.getFolders();
+    while(allFolders2.hasNext()){
+      var curFolder2Id = allFolders2.next().getId();
+      FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder2Id);
+      FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder2Id);
+      var curFolder2 = DriveApp.getFolderById(curFolder2Id);
+      unshareFiles(curFolder2.getFiles(), email);
+      var allFolders3 = curFolder2.getFolders();
+      while(allFolders3.hasNext()){
+        var curFolder3Id = allFolders3.next().getId();
+        FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder3Id);
+        FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder3Id);
+        var curFolder3 = DriveApp.getFolderById(curFolder3Id);
+        unshareFiles(curFolder3.getFiles(), email);
+        var allFolders4 = curFolder3.getFolders();
+        while(allFolders4.hasNext()){
+          var curFolder4Id = allFolders4.next().getId();
+          FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder4Id);
+          FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder4Id);
+          var curFolder4 = DriveApp.getFolderById(curFolder4Id);
+          unshareFiles(curFolder4.getFiles(), email);
+          var allFolders5 = curFolder4.getFolders();
+          while(allFolders5.hasNext()){
+            var curFolder5Id = allFolders5.next().getId();
+            FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder5Id);
+            FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder5Id);
+            var curFolder5 = DriveApp.getFolderById(curFolder5Id);
+            unshareFiles(curFolder5.getFiles(), email);
+            var allFolders6 = curFolder5.getFolders();
+            while(allFolders6.hasNext()){
+              var curFolder6Id = allFolders6.next().getId();
+              FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder6Id);
+              FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder6Id);
+              var curFolder6 = DriveApp.getFolderById(curFolder6Id);
+              unshareFiles(curFolder6.getFiles(), email);
+              var allFolders7 = curFolder6.getFolders();
+              while(allFolders7.hasNext()){
+                var curFolder7Id = allFolders7.next().getId();
+                FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder7Id);
+                FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder7Id);
+                var curFolder7 = DriveApp.getFolderById(curFolder7Id);
+                unshareFiles(curFolder7.getFiles(), email);
+                var allFolders8 = curFolder7.getFolders();
+                while(allFolders8.hasNext()){
+                  var curFolder8Id = allFolders8.next().getId();
+                  FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder8Id);
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder8Id);
+                  var curFolder8 = DriveApp.getFolderById(curFolder8Id);
+                  unshareFiles(curFolder8.getFiles(), email);
+                  var allFolders9 = curFolder8.getFolders();
+                  while(allFolders9.hasNext()){
+                    var curFolder9Id = allFolders9.next().getId();
+                    FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder9Id);
+                    FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder9Id);
+                    var curFolder9 = DriveApp.getFolderById(curFolder9Id);
+                    unshareFiles(curFolder9.getFiles(), email);
+                    var allFolders10 = curFolder9.getFolders();
+                    while(allFolders10.hasNext()){
+                      var curFolder10Id = allFolders10.next().getId();
+                      FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder10Id);
+                      FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder10Id);
+                      var curFolder10 = DriveApp.getFolderById(curFolder10Id);
+                      unshareFiles(curFolder10.getFiles(), email);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+//not finished
+
+function getAllPerms() {
+  //email
+  var email = "afs.database.management3@gmail.com";
+  
+  //mora1
+  var curMainFolder = DriveApp.getFolderById("1zNLaWmw3oQ0Tt1-ZudgySPOiuoVbetK9");
+//  
+//  //mora2
+//  var curMainFolder = DriveApp.getFolderById("1xWJsdoqzAGcNxL0bMwYYgE_4BhHxItQP");
+//  
+//  //mora3
+//  var curMainFolder = DriveApp.getFolderById("1HDrMnPCxMGRm_kJRw-4zao5JOTeR1w4z");
+//  
+//  //councils
+//  var curMainFolder = DriveApp.getFolderById("1ZqRBd6IXom0FCBpox0bVG3cz8G8eKv7G");
+//  
+//  //special groups
+//  var curMainFolder = DriveApp.getFolderById("1v9rnkSWh846J-YxqblxvBHfROcM-dQp-");
+//  
+//  //data centers
+//  var curMainFolder = DriveApp.getFolderById("1nro4tvCrBSwQuLbYeA-yyeq2PoP97WmV");
+//  
+//  //forms
+//  var curMainFolder = DriveApp.getFolderById("1pyOfs9uhDrpgSWbo-01Lb56uSPGHpHq7");
+//  
+//  //hubs
+//  var curMainFolder = DriveApp.getFolderById("1ojCDKtN0kjVL-okhwUfVD0IWKrnaupO1");
+//  
+//  //misc
+//  var curMainFolder = DriveApp.getFolderById("1-kKw8kBAi1JPx5yE66gZfKYHTnPkhjyp");
+  
+  var list = [];
+  var allFolders1 = curMainFolder.getFolders();
+  while(allFolders1.hasNext()){
+    var curFolder1Id = allFolders1.next().getId();
+    var curFolder1 = DriveApp.getFolderById(curFolder1Id);
+    
+    var allFolders2 = curFolder1.getFolders();
+    while(allFolders2.hasNext()){
+      var curFolder2Id = allFolders2.next().getId();
+      FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder2Id);
+      FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder2Id);
+      var curFolder2 = DriveApp.getFolderById(curFolder2Id);
+      var allFolders3 = curFolder2.getFolders();
+      while(allFolders3.hasNext()){
+        var curFolder3Id = allFolders3.next().getId();
+        FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder3Id);
+        FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder3Id);
+        var curFolder3 = DriveApp.getFolderById(curFolder3Id);
+        var allFolders4 = curFolder3.getFolders();
+        while(allFolders4.hasNext()){
+          var curFolder4Id = allFolders4.next().getId();
+          FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder4Id);
+          FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder4Id);
+          var curFolder4 = DriveApp.getFolderById(curFolder4Id);
+          var allFolders5 = curFolder4.getFolders();
+          while(allFolders5.hasNext()){
+            var curFolder5Id = allFolders5.next().getId();
+            FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder5Id);
+            FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder5Id);
+            var curFolder5 = DriveApp.getFolderById(curFolder5Id);
+            var allFolders6 = curFolder5.getFolders();
+            while(allFolders6.hasNext()){
+              var curFolder6Id = allFolders6.next().getId();
+              FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder6Id);
+              FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder6Id);
+              var curFolder6 = DriveApp.getFolderById(curFolder6Id);
+              var allFolders7 = curFolder6.getFolders();
+              while(allFolders7.hasNext()){
+                var curFolder7Id = allFolders7.next().getId();
+                FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder7Id);
+                FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder7Id);
+                var curFolder7 = DriveApp.getFolderById(curFolder7Id);
+                var allFolders8 = curFolder7.getFolders();
+                while(allFolders8.hasNext()){
+                  var curFolder8Id = allFolders8.next().getId();
+                  FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder8Id);
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder8Id);
+                  var curFolder8 = DriveApp.getFolderById(curFolder8Id);
+                  var allFolders9 = curFolder8.getFolders();
+                  while(allFolders9.hasNext()){
+                    var curFolder9Id = allFolders9.next().getId();
+                    FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder9Id);
+                    FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder9Id);
+                    var curFolder9 = DriveApp.getFolderById(curFolder9Id);
+                    var allFolders10 = curFolder9.getFolders();
+                    while(allFolders10.hasNext()){
+                      var curFolder10Id = allFolders10.next().getId();
+                      FunctionContainer.tripleTryUnshareEmailForFolderEditor(email, curFolder10Id);
+                      FunctionContainer.tripleTryUnshareEmailForFolderViewer(email, curFolder10Id);
+                      var curFolder10 = DriveApp.getFolderById(curFolder10Id);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

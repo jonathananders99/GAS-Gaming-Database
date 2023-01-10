@@ -1,0 +1,1300 @@
+function memberUpdateFormResponseUpdate(){
+  errorCheck("memberUpdateFormResponseUpdate","MemberUpdateFormResponseUpdate");
+}//end memberUpdateFormResponseUpdate
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  
+  //Member Update Form Response Sheet
+  var mufrs = FunctionContainer.tripleTryOpenSheet("","MU Responses");
+  var mufrslri = FunctionContainer.tripleTryGetLastRow(mufrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(100000);}catch(lockError){console.log(lockError)};
+  
+  var mufrscv = FunctionContainer.tripleTryGetValues(mufrs,mufrslri,1,1,80)[0];
+  //FunctionContainer.positionsInsideArray(mufrscv);
+  
+  /*
+  [Timestamp[0], Email Address[1], Code[2], Update form lists? (forms will turn off while they are updating)[3], 
+    Type of Update[4], **no longer used**[5], New Rank[6], Date of Rank Change[7], Reasoning For Rank Change[8], 
+    Is the Previous Credential a Full Credential or Learning Credential?[9], Previous Credential[10], 
+    Is the New Credential a Full Credential or Learning Credential?[11], New Credential[12], Date of Credential Change[13], 
+    Reasoning For Credential Change[14], Previous Group[15], New Group[16], Date of Group Change[17], 
+    Reasoning For Group Change[18], Date of Report[19], Report Title[20], Report Details[21], Date of Discharge[22], 
+    Reasoning For Discharge[23], New GT[24], Date of GT Change[25], Reasoning For GT Change[26], 
+    New Discord Nickname (EX: Old discord nickname: "[099 - Water Boy] Dunce" ~ Desired discord nickname: "[099 - Water Boy] Deez" ~ you will put only "Deez" in this question)[27], 
+    Date of Discord Nickname Change[28], Reasoning For Discord Nickname Change[29], 
+    General Availability (ET) (Choose all squares that the member is available normally) [Sunday][30], 
+    General Availability (ET) (Choose all squares that the member is available normally) [Monday][31], 
+    General Availability (ET) (Choose all squares that the member is available normally) [Tuesday][32], 
+    General Availability (ET) (Choose all squares that the member is available normally) [Wednesday][33], 
+    General Availability (ET) (Choose all squares that the member is available normally) [Thrusday][34], 
+    General Availability (ET) (Choose all squares that the member is available normally) [Friday][35], 
+    General Availability (ET) (Choose all squares that the member is available normally) [Saturday][36], 
+    Date of Availability Change[37], Reasoning For Availability Change[38], Leaving or Returning?[39], Start Date of LOA[40], 
+    Expected Return Date (if there is none leave blank)[41], Reasoning[42], End Date of LOA (day they returned)[43], 
+    Reasoning[44], Date of Birthday Change[45], Month[46], Day[47], Reasoning[48], Date of Mentor Change[49], Operation[50], 
+    Mentor in Question[51], Reasoning[52], New Position Code[53], Date of Position Code Change[54], Reasoning[55], 
+    Date of Reprimand[56], Severity of Reprimand[57], Reasoning[58], Group Selection[59], Member in Question[60], 
+    Member in Question[61], Member in Question[62], Member in Question[63], Member in Question[64], Member in Question[65], 
+    Member in Question[66], Member in Question[67], Member in Question[68], Member in Question[69], Member in Question[70], 
+    Member in Question[71], Member in Question[72], Fixer Form Row Deletion[73], [74], [75], [76], [77], [78], [79]]
+  */
+  
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Reorganizes by date desc
+  //Member Update Hub all updates sheet
+  curVals = FunctionContainer.getmuhauscv("num", dllscv);
+  var muhaus = curVals[0];
+  var muhauscvn = curVals[1];
+  curVals = undefined;
+  
+  
+  //member update form dates sheet
+  var mufds = FunctionContainer.tripleTryOpenSheet("","MU Dates");
+  
+  
+  //current date number
+  var cdNum = dllscv[10][1];
+  
+  
+  //dischargeCheck
+  var dischargeCheck = "N";
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(mufrscv[1].toString().trim(), pmdcmscv);
+  
+  
+  //trims everything and checks for illegal characters
+  var formTrimList = [1,2,8,14,18,20,21,23,24,26,27,29,38,44,47,48,52,53,55,57,58];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    if(mufrscv[formTrimList[i]] === " "){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "didnt put anything but a space in a required question (perp will not recieve pm with details)",mufrslri,dllscv[88][3].toString());
+    }//end 1st if
+    
+    mufrscv[formTrimList[i]] = mufrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(mufrscv[formTrimList[i]].indexOf("~") !== -1  ||  mufrscv[formTrimList[i]].indexOf("^") !== -1){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "included special characters ~ or ^ (perp will not recieve pm with details because ^ and ~ interfere with the bot commands)",mufrslri,dllscv[88][3].toString());
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  
+  
+  //** DATA GATHERING **//
+  
+  //type of update
+  var typeOfUpdate = mufrscv[4].toString();
+  
+  
+  //all ids of questions that contain the member in question
+  var memberInQuestionIds = [[60], [61], [62], [63], [64], [65], [66], [67], [68], [69], [70], [71], [72]];
+  
+  //member in question
+  var memberInQuestion = [];
+  for(var i=0; i<memberInQuestionIds.length; i+=1){
+    if(mufrscv[memberInQuestionIds[i]].toString()!==""&&mufrscv[memberInQuestionIds[i]].toString()!=="N/A"){
+      memberInQuestion.push(mufrscv[memberInQuestionIds[i]].toString());
+      i = memberInQuestionIds.length;
+    }//end 2nd if
+    else if(i===memberInQuestionIds.length-1){//start 2nd if/else
+      memberInQuestion = "N/A";
+    }//end 2nd if/else
+  }//end 1st for
+  
+  //gets rid of duplicates and turns it into a string if it doesnt = ""
+  if(memberInQuestion!=="N/A"){//start 1st if
+    memberInQuestion = FunctionContainer.arrayDuplicateFilter(memberInQuestion);
+    memberInQuestion = memberInQuestion.toString();
+  }//end 1st if
+  
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "inputted an email not in the database (perp will not recieve pm with details) in an entry for __" + memberInQuestion + "__",mufrslri,dllscv[88][3].toString());
+  }//end 2nd if
+  
+  
+  //finds all needed info
+  for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+    if(pmdcmscv[i][0].toString()===memberInQuestion){//start 2nd if
+      var memberRowNum = i+2;
+      var currentNickname = FunctionContainer.getDiscordNicknameWithRow(i, dllscv, pmdcmscv);
+      var curNick = pmdcmscv[i][1].toString();
+      var currentRank = pmdcmscv[i][2].toString();
+      var currentGroups = FunctionContainer.splitEmUp(pmdcmscv[i][3].toString());
+      var currentCreds = FunctionContainer.splitEmUp(pmdcmscv[i][4].toString());
+      var currentGen = pmdcmscv[i][5].toString();
+      var currentPermissions = FunctionContainer.splitEmUp(pmdcmscv[i][6].toString());
+      var currentPositionCode = pmdcmscv[i][7].toString();
+      var currentStatus = pmdcmscv[i][8].toString();
+      var currentEmail = pmdcmscv[i][9].toString();
+      var currentProfileIds = FunctionContainer.splitEmUp(pmdcmscv[i][10].toString());
+      var currentProfileUrls = FunctionContainer.splitEmUp(pmdcmscv[i][11].toString());
+      var currentProfileFolderIds = FunctionContainer.splitEmUp(pmdcmscv[i][12].toString());
+      var currentMentor = pmdcmscv[i][25].toString();
+      var currentBirthday = pmdcmscv[i][26].toString();
+      var currentPermFileIds = FunctionContainer.splitEmUp(pmdcmscv[i][29].toString());
+    }//end 2nd if
+  }//end 1st for
+  
+
+  //rank change
+  if(typeOfUpdate === "Rank Change"){//start 1st if
+    //New Rank[6], Date of Rank Change[7], Reasoning For Rank Change[8],
+    var newRank = mufrscv[6];
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[7]);
+    var reasoning = mufrscv[8];
+    var updateDetails = "Previous Rank: " + currentRank + " ~ New Rank: " + newRank;
+    var updateDetailsDiscordVersion = "Previous Rank: __" + currentRank + "__ ~ New Rank: __" + newRank + "__";
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Change: **" + dateOfUpdate + "**\n\n • New Rank: **" 
+      + newRank + "**\n\n • Reasoning: **" + reasoning + "**";
+  }//end 1st if
+
+  //Credential change
+  else if(typeOfUpdate === "Credential Change"){//start 1st if/else
+    //Is the Previous Credential a Full Credential or Learning Credential?[9], Previous Credential[10], 
+    //Is the New Credential a Full Credential or Learning Credential?[11], New Credential[12], 
+    //Date of Credential Change[13], Reasoning For Credential Change[14]
+    var fullOrLearnPreviousCred = mufrscv[9];
+    if(fullOrLearnPreviousCred === "N/A"  ||  fullOrLearnPreviousCred === "Full"){//start 2nd if
+      var previousCred = mufrscv[10];
+    }//end 2nd if
+    else if(fullOrLearnPreviousCred === "U/I"){//start 2nd if
+      var previousCred = mufrscv[10]+" U/I";
+    }//end 2nd if
+    var fullOrLearnNewCred = mufrscv[11];
+    if(fullOrLearnNewCred === "N/A"  ||  fullOrLearnNewCred === "Full"){//start 2nd if
+      var newCred = mufrscv[12];
+    }//end 2nd if
+    else if(fullOrLearnNewCred === "U/I"){//start 2nd if
+      var newCred = mufrscv[12]+" U/I";
+    }//end 2nd if
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[13]);
+    var reasoning = mufrscv[14];
+    var updateDetails = "Previous Credential: " + previousCred + " ~ New Credential: " + newCred;
+    var updateDetailsDiscordVersion = "Previous Credential: __" + previousCred + "__ ~ New Credential: __" + newCred + "__";
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Change: **" + dateOfUpdate + "**\n\n • Previous Credential: **" 
+      + previousCred + "**\n\n • New Credential: **" + newCred + "**\n\n • Reasoning: **" + reasoning + "**";
+  }//end 1st if/else
+
+  //Group Change
+  else if(typeOfUpdate === "Group Change"){//start 1st if/else
+    //Previous Group[15], New Group[16], Date of Group Change[17], Reasoning For Group Change[18]
+    var previousGroup = mufrscv[15];
+    var newGroup = mufrscv[16];
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[17]);
+    var reasoning = mufrscv[18];
+    var updateDetails = "Previous Group: "+previousGroup+" ~ New Group: "+newGroup;
+    var updateDetailsDiscordVersion = "Previous Group: __" + previousGroup + "__ ~ New Group: __" + newGroup + "__";
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Change: **" + dateOfUpdate + "**\n\n • Previous Group: **" 
+      + previousGroup + "**\n\n • New Group: **" + newGroup + "**\n\n • Reasoning: **" + reasoning + "**";
+  }//end 1st if/else
+
+  //Member Report
+  else if(typeOfUpdate === "Member Report"){//start 1st if/else
+    //Date of Report[19], Report Title[20], Report Details[21]
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[19]);
+    var reasoning = "Report Details: "+mufrscv[21];
+    var updateDetails = "Report Title: "+mufrscv[20];
+    var updateDetailsDiscordVersion = mufrscv[20];
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Change: **" + dateOfUpdate + "**\n\n • Report Title: **" 
+      + mufrscv[21] + "**\n\n • Report Details: **" + mufrscv[20] + "**";
+  }//end 1st if/else
+
+  //Member Discharge
+  else if(typeOfUpdate === "Member Discharge"){//start 1st if/else
+    //Date of Discharge[22], Reasoning For Discharge[23]
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[22]);
+    var reasoning = mufrscv[23];
+    var updateDetails = "Discharging Member From: " + FunctionContainer.array1LevelIntoString(currentGroups);
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Change: **" + dateOfUpdate + "**\n\n • Reasoning: **" + reasoning + "**";
+    var updateDetailsDiscordVersion = "Discharging Member From: " + FunctionContainer.array1LevelIntoString(currentGroups);
+  }//end 1st if/else
+
+  //Gamertag Change
+  else if(typeOfUpdate === "Gamertag Change"){//start 1st if/else
+    //New GT[24], Date of GT Change[25], Reasoning For GT Change[26]
+    var newGt = mufrscv[24];
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[25]);
+    var reasoning = mufrscv[26];
+    var updateDetails = "Previous GT: " + memberInQuestion + " ~ New GT: " + newGt;
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Change: **" + dateOfUpdate + "**\n\n • New Gamertag: **" 
+      + newGt + "**\n\n • Reasoning: **" + reasoning + "**";
+    var updateDetailsDiscordVersion = "Previous GT: __" + memberInQuestion + "__ ~ New GT: __" + newGt + "__";
+  }//end 1st if/else
+
+  //Discord Nickname Change
+  else if(typeOfUpdate === "Discord Nickname Change"){//start 1st if/else
+    //New Discord Nickname[27], Date of Discord Nickname Change[28], Reasoning For Discord Nickname Change[29], 
+    var newNickname = mufrscv[27];
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[28]);
+    var reasoning = mufrscv[29];
+    var updateDetails = "Previous Nickname: " + curNick + " ~ New Nickname: " + newNickname;
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Change: **" + dateOfUpdate + "**\n\n • New Discord Nickname: **" 
+      + newNickname + "**\n\n • Reasoning: **" + reasoning + "**";
+    var updateDetailsDiscordVersion = "Previous Nickname: __" + curNick + "__ ~ New Nickname: __" + newNickname + "__";
+  }//end 1st if/else
+
+  //Availability Change
+  else if(typeOfUpdate === "Availability Change"){//start 1st if/else
+    //General Availability (ET) (Choose all squares that the member is available normally) [Sunday][30], 
+    //General Availability (ET) (Choose all squares that the member is available normally) [Monday][31], 
+    //General Availability (ET) (Choose all squares that the member is available normally) [Tuesday][32], 
+    //General Availability (ET) (Choose all squares that the member is available normally) [Wednesday][33], 
+    //General Availability (ET) (Choose all squares that the member is available normally) [Thrusday][34], 
+    //General Availability (ET) (Choose all squares that the member is available normally) [Friday][35], 
+    //General Availability (ET) (Choose all squares that the member is available normally) [Saturday][36], 
+    //Date of Availability Change[37], Reasoning For Availability Change[38]
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[37]);
+    var reasoning = mufrscv[38];
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Change: **" + dateOfUpdate + "**\n\n • New GA: **" 
+      + "**\n\n • Sunday: **" + mufrscv[30].toString() + "**\n\n • Monday: **" + mufrscv[31].toString()
+      + "**\n\n • Tuesday: **" + mufrscv[32].toString() + "**\n\n • Wednesday: **" + mufrscv[33].toString()
+      + "**\n\n • Thursday: **" + mufrscv[34].toString() + "**\n\n • Friday: **" + mufrscv[35].toString()
+      + "**\n\n • Saturday: **" + mufrscv[36].toString()
+      + "**\n\n • Reasoning: **" + reasoning + "**";
+    var newGA = [];
+    //Sunday
+    newGA.push(mufrscv[30].toString());
+    //Monday
+    newGA.push(mufrscv[31].toString());
+    //Tuesday
+    newGA.push(mufrscv[32].toString());
+    //Wednesday
+    newGA.push(mufrscv[33].toString());
+    //Thursday
+    newGA.push(mufrscv[34].toString());
+    //Friday
+    newGA.push(mufrscv[35].toString());
+    //Saturday
+    newGA.push(mufrscv[36].toString());
+    var updateDetails = "New Days Available";
+    var daysOfWeek = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    //cycles thru newGA to see what days they are available
+    for(var i=0; i<newGA.length; i+=1){//start 1st for
+      //is available
+      if(newGA[i].toString()!==""){//start 2nd if
+        updateDetails = updateDetails+" ~ "+daysOfWeek[i]+": Yes";
+      }//end 2nd if
+      //is not available
+      else if(newGA[i].toString()===""){//start 2nd if
+        updateDetails = updateDetails+" ~ "+daysOfWeek[i]+": No";
+      }//end 2nd if
+    }//end 1st for
+    var updateDetailsDiscordVersion = updateDetails;
+  }//end 1st if/else
+
+  //Leaving on loa
+  else if(typeOfUpdate === "LOA"  &&  mufrscv[39] === "Leaving"){//start 1st if/else
+    //Leaving or Returning?[39], Start Date of LOA[40], Expected Return Date (if there is none leave blank)[41], 
+    //Reasoning[42]
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[40]);
+    var expectedReturnDate = FunctionContainer.dateReplace(mufrscv[41]);
+    if(expectedReturnDate===""){//start 2nd if
+      expectedReturnDate = "N/A";
+    }//end 2nd if
+    var reasoning = mufrscv[42];
+    var updateDetails = "Leaving on LOA Starting on: " + dateOfUpdate + " ~ Expected Return Date: " + expectedReturnDate;
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Change: **" + dateOfUpdate + "**\n\n • LOA Type: **" 
+      + mufrscv[63] + "**\n\n • Expected Date of Return: **" + expectedReturnDate
+      + "**\n\n • Reasoning: **" + reasoning + "**";
+    var updateDetailsDiscordVersion = "Leaving on LOA Starting on: __" + dateOfUpdate + "__ ~ Expected Return Date: __" + expectedReturnDate + "__";
+  }//end 1st if/else
+
+  //Returning from loa
+  else if(typeOfUpdate === "LOA"  &&  mufrscv[39] === "Returning"){//start 1st if/else
+    //End Date of LOA (day they returned)[43], Reasoning[44]
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[43]);
+    var reasoning = mufrscv[44];
+    var updateDetails = "Returned from LOA as of: " + dateOfUpdate;
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date Returned: **" + dateOfUpdate + "**\n\n • Reasoning: **" + reasoning + "**";
+    var updateDetailsDiscordVersion = "Returned from LOA as of: __" + dateOfUpdate + "__";
+  }//end 1st if/else
+
+  //Birthday Change
+  else if(typeOfUpdate === "Birthday Change"){//start 1st if/else
+    //Date of Birthday Change[45], Month[46], Day[47], Reasoning[48]
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[45]);
+    var bMonth = mufrscv[46];
+    var bDay = mufrscv[47];
+    var bMonthAndDay = bMonth + " " + bDay;
+    var reasoning = mufrscv[48];
+    //not blank current bday
+    if(currentBirthday !== ""){//start 1st if
+      var updateDetails = "Previous Birthday: " + currentBirthday + " ~ New Birthday: " + bMonthAndDay;
+      var updateDetailsDiscordVersion = "Previous Birthday: __" + currentBirthday + "__ ~ New Birthday: __" + bMonthAndDay + "__";
+    }//end 1st if
+    else{//start 1st else
+      var updateDetails = "Previous Birthday: N/A ~ New Birthday: " + bMonthAndDay;
+      var updateDetailsDiscordVersion = "Previous Birthday: __N/A__ ~ New Birthday: __" + bMonthAndDay + "__";
+    }//end 1st else
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Update: **" + dateOfUpdate + "**\n\n • Month: **" + bMonth
+      + "**\n\n • Day: **" + bDay + "**\n\n • Reasoning: **" + reasoning + "**";
+  }//end 1st if/else
+
+  //Mentor Change
+  else if(typeOfUpdate === "Mentor Change"){//start 1st if/else
+    //Date of Mentor Change[49], Operation[50], Mentor in Question[51], Reasoning[52]
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[49]);
+    var operation = mufrscv[50];
+    var mentor = mufrscv[51];
+    var reasoning = mufrscv[52];
+    //blank mentor
+    if(currentMentor === ""){//start 2nd if
+      var curMent = "N/A";
+    }//end 2nd if
+    //not blank mentor
+    else{var curMent = currentMentor}
+    //makes the update details look fancy depending on rewmoving or adding mentor
+    if(operation === "Add Mentor"){//start 2nd if
+      var updateDetails = "Previous Mentor: " + curMent + " ~ New Mentor: " + mentor;
+      var updateDetailsDiscordVersion = "Previous Mentor: __" + curMent + "__ ~ New Mentor: __" + mentor + "__";
+    }//end 2nd if
+    else if(operation === "Remove Mentor"){//start 2nd if/else
+      var updateDetails = "Previous Mentor: " + curMent + " ~ New Mentor: N/A";
+      var updateDetailsDiscordVersion = "Previous Mentor: __" + curMent + "__ ~ New Mentor: __N/A__";
+    }//end 2nd if/else
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Update: **" + dateOfUpdate + "**\n\n • Mentor: **" + mentor
+      + "**\n\n • Reasoning: **" + reasoning + "**";
+  }//end 1st if/else
+
+  //Position Code Change
+  else if(typeOfUpdate === "Position Code Change"){//start 1st if/else
+    //New Position Code[53], Date of Position Code Change[54], Reasoning[55]
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[54]);
+    var newPC = mufrscv[53];
+    var newFullPC = FunctionContainer.positionCodeDiscordTransformer(newPC);
+    var reasoning = mufrscv[55];
+    //blank pc
+    if(currentPositionCode === ""){//start 2nd if
+      var curPC = "N/A";
+    }//end 2nd if
+    //not blank pc
+    else{var curPC = FunctionContainer.positionCodeDiscordTransformer(currentPositionCode)}
+    var updateDetails = "Previous Position Code: " + curPC + " ~ New Position Code: " + newPC;
+    var updateDetailsDiscordVersion = "Previous Position Code: __" + curPC + "__ ~ New Position Code: __" + newPC + "__";
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Update: **" + dateOfUpdate + "**\n\n • Position Code: **" + newFullPC
+      + "**\n\n • Reasoning: **" + reasoning + "**";
+  }//end 1st if/else
+
+  //Reprimand
+  else if(typeOfUpdate === "Reprimand"){//start 1st if/else
+    //Date of Reprimand[56], Severity of Reprimand[57], Reasoning[58]
+    var dateOfUpdate = FunctionContainer.dateRetrieval(mufrscv[56]);
+    var severity = mufrscv[57];
+    var reasoning = mufrscv[58];
+    var updateDetails = "Severity of Reprimand(1-5): " + severity;
+    var updateDetailsDiscordVersion = "Severity of Reprimand(1-5): __" + severity + "__";
+    var errorInfo = "\n\n • Member in Question: **" + memberInQuestion + "**\n\n • Update Type: **" 
+      + typeOfUpdate + "**\n\n • Date of Update: **" + dateOfUpdate + "**\n\n • Severity of Reprimand: **" + severity
+      + "**\n\n • Reasoning: **" + reasoning + "**";
+  }//end 1st if/else
+  
+  
+  
+//  Logger.log(ree);
+  //** CHECKS AND DATA CHANGING **//
+  
+  //checks to see if member is N/A or ""
+  if(memberInQuestion==="N/A"||memberInQuestion===""||memberRowNum===undefined){//start 1st if
+    FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+    FunctionContainer.indFormErrorReport(perpitraitor, "member update form",
+      "inputted a member not in the database or N/A as the member in question in an entry for " 
+      + memberInQuestion, mufrslri, dllscv[88][3].toString());
+  }//end 1st if
+  
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "muf", mufrscv[2].toString())){//start 1st if
+    
+    //rank change
+    if(typeOfUpdate === "Rank Change"){//start 2nd if
+      
+      //checks to see if previous rank is same as new rank
+      if(currentRank===newRank){//end 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to give member the rank they already have in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //sets vals in pmdcms
+      FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 3, 1, 1, newRank);
+      
+      //sets val in pmdcmscv
+      pmdcmscv[memberRowNum-2][2] = newRank;
+      
+      //gives new disc role and takes away old one
+      FunctionContainer.discordRoles(newRank, currentRank, currentNickname);
+      
+      //gets new nickname
+      var newNickname = FunctionContainer.getDiscordNicknameWithRow(memberRowNum-2, dllscv, pmdcmscv);
+      
+      //send discord nickname change
+      FunctionContainer.discordNicknameChange(currentNickname,newNickname);
+      
+      //changes currentNickname to newFullDiscordNickname for correct update pm's
+      currentNickname = newNickname;
+      
+    }//end 2nd if
+    
+    
+    //Credential change
+    else if(typeOfUpdate === "Credential Change"){//start 2nd if/else
+      
+      //checks to see if both are N/A and sends error if so
+      if(newCred==="N/A"&&previousCred==="N/A"){//end 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "had both previous credential and new credential as N/A in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //checks to see if both are the same and sends error if so
+      if(newCred===previousCred){//end 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "had both previous credential and new credential as the same in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      var credCheck = true;
+      //checks to see if new cred is already held by member or if member doesnt have cred they are trying to get rid of
+      for(var i=0; i<currentCreds.length; i+=1){//start 1st for
+        if(previousCred===currentCreds[i].toString()){//start 3rd if
+          credCheck = false;
+        }//end 3rd if
+        if(newCred === currentCreds[i].toString()){//end 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to give a credential the member already had in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+        }//end 3rd if
+        if(previousCred !== "N/A"  &&  i === currentCreds.length-1  &&  previousCred !== currentCreds[i].toString()  &&  credCheck){//end 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to get rid of a credential the member does not have in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+        }//end 3rd if
+      }//end 1st for
+      
+      //replaces credentials
+      if(currentCreds.length === 0){//start 1st if
+        currentCreds = [["N/A"]];
+        FunctionContainer.arrayLVL1MultiReplace(currentCreds, [[previousCred, newCred]]);
+      }//end 1st if
+      else{FunctionContainer.arrayLVL1MultiReplace(currentCreds, [[previousCred, newCred]]);}
+      
+      //sets vals in pmdcms
+      FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 5, 1, 1, FunctionContainer.array1LevelIntoString(currentCreds));
+
+      //sets val in pmdcmscv
+      pmdcmscv[memberRowNum-2][4] = FunctionContainer.array1LevelIntoString(currentCreds);
+      
+      //gives new disc role and takes away old one (will send even if U/I but because those roles dont exist they wont do anything)
+      FunctionContainer.discordRoles(newCred, previousCred, currentNickname);
+      
+    }//end 2nd if/else
+    
+    
+    //Group Change
+    else if(typeOfUpdate === "Group Change"){//start 2nd if/else
+      
+      //checks to see if both are N/A and sends error if so
+      if(newGroup === "N/A"  &&  previousGroup === "N/A"){//end 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "had both previous group and new group as N/A in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //checks to see if both are the same and sends error if so
+      if(newGroup === previousGroup){//end 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "had both previous group and new group as the same in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //checks to see if new group is already held by member or if member doesnt have cred they are trying to get rid of
+      var prevGroupCheck = true;
+      for(var i=0; i<currentGroups.length; i+=1){//start 1st for
+        if(newGroup === currentGroups[i].toString()){//end 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to give a group the member already had in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+        }//end 3rd if
+        if(previousGroup === currentGroups[i].toString()  ||  previousGroup === "N/A"){//end 3rd if
+          prevGroupCheck = false;
+        }//end 3rd if
+        if(previousGroup !== "N/A"  &&  i === currentGroups.length-1  && prevGroupCheck){//end 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to get rid of a group the member does not have in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+        }//end 3rd if
+      }//end 1st for
+      
+      //checks to see if it's trying to take away the only group they have
+      if(currentGroups.length === 1  &&  newGroup === "N/A"){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to take a group away and leave __" + memberInQuestion + "__ group-less (member would be left with no group and wouldn't show up in selection screens)",mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //gets all old roles to see what needs to be gotten rid of or not later in code
+      curVals = FunctionContainer.getMemberDiscordInfo(dllscv,pmdcmscv,memberInQuestion);
+      var oldDiscRoles = curVals[1];
+      curVals = undefined;
+      
+      //changes the old groups according to group change
+      if(currentGroups.length > 0){//start 3rd if/else
+        
+        for(var i=0; i<currentGroups.length; i+=1){//start 1st for
+          //replaces old group when it finds the matching previous group and the new group isnt N/A
+          if(currentGroups[i].toString() === previousGroup  &&  newGroup !== "N/A"){//start 4th if
+            currentGroups[i] = newGroup;
+            i = currentGroups.length+5;
+          }//end 4th if
+          //splices/deletes old group when it finds the matching previous group and the new group is N/A
+          else if(currentGroups[i].toString() === previousGroup  &&  newGroup === "N/A"){//start 4th if
+            currentGroups.splice(i,1);
+            i = currentGroups.length+5;
+          }//end 4th if
+          //pushes new group if it loops thru and it reaches the end of the loop, new group isnt N/A amd prevoius group is N/A
+          else if(i === currentGroups.length-1  &&  newGroup !== "N/A"  &&  previousGroup === "N/A"){//start 4th if/else
+            currentGroups.push([newGroup]);
+            i = currentGroups.length+5;
+          }//end 4th if/else
+        }//end 1st for
+        
+        var allNewGroups = FunctionContainer.array1LevelIntoString(currentGroups);
+        
+        pmdcmscv[memberRowNum-2][3] = allNewGroups;
+        
+        //gets all new roles to see what needs to be gotten rid of or not later in code
+        curVals = FunctionContainer.getMemberDiscordInfo(dllscv,pmdcmscv,memberInQuestion);
+        var newDiscRoles = curVals[1];
+        curVals = undefined;
+        
+        //pastes updated currentGroups
+        FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 4, 1, 1, allNewGroups);
+      }//end 3rd if/else
+      
+      
+      //finds what roles need to be added/ taken away
+      var rolesAdded = [];
+      var rolesTaken = [];
+      
+      //take away roles first
+      for(var i=0; i<oldDiscRoles.length; i+=1){//start 1st for
+        var check = true;
+        for(var x=0; x<newDiscRoles.length; x+=1){//start 2nd for
+          if(oldDiscRoles[i].toString() === newDiscRoles[x].toString()){//start 3rd if
+            check = false;
+          }//end 3rd if
+        }//end 2nd for
+        if(check){//start 3rd if
+          rolesTaken.push(oldDiscRoles[i].toString());
+        }//end 3rd if
+      }//end 1st for
+      
+      //giving roles next
+      for(var i=0; i<newDiscRoles.length; i+=1){//start 1st for
+        var check = true;
+        for(var x=0; x<oldDiscRoles.length; x+=1){//start 2nd for
+          if(oldDiscRoles[x].toString() === newDiscRoles[i].toString()){//start 3rd if
+            check = false;
+          }//end 3rd if
+        }//end 2nd for
+        if(check){//start 3rd if
+          rolesAdded.push(newDiscRoles[i].toString());
+        }//end 3rd if
+      }//end 1st for
+      
+      //adds necesary elements to the smaller array
+      for(var i=1; i<=Math.max(rolesTaken.length, rolesAdded.length); i+=1){//start 1st for
+        if(rolesTaken.length < i){//start 3rd if
+          rolesTaken.push("N/A");
+        }//end 3rd if
+        if(rolesAdded.length < i){//start 3rd if
+          rolesAdded.push("N/A");
+        }//end 3rd if
+      }//end 1st for
+      
+      //removes/adds necessary roles
+      for(var i=0; i<rolesAdded.length; i+=1){//start 1st for
+        FunctionContainer.discordRoles(rolesAdded[i].toString(), rolesTaken[i].toString(), currentNickname);
+      }//end 1st for
+      
+      
+      //transfer of profile folder to correct place
+      //if its a group to group transfer
+      if(previousGroup!=="N/A"&&newGroup!=="N/A"){//start 3rd if
+        //finds correct group profileid
+        for(var i=0; i<currentProfileFolderIds.length; i+=1){//start 1st for
+          if(currentProfileFolderIds[i].toString().indexOf(previousGroup.replace(" Leadership","")) !== -1){//start 4th if
+            var oldFolderId = FunctionContainer.pmdcmsIdRetrieval(currentProfileFolderIds[i].toString());
+            //finds new parent folder id
+            for(var x=0; x<70; x+=1){//start 2nd for
+              if(dllscv[40][x].toString() === newGroup.replace(" Leadership","")){//start 5th if
+                var newFolderId = dllscv[42][x].toString();
+              }//end 5th if
+            }//end 2nd for
+            //moves folder
+            
+            DriveApp.getFolderById(oldFolderId).moveTo(DriveApp.getFolderById(newFolderId));
+            //updates currentProfileFolderIds with new location
+            currentProfileFolderIds[i] = newGroup.replace(" Leadership","")+" ~ "+oldFolderId;
+          }//end 4th if
+        }//end 1st for
+        
+        //finds the profile urls
+        for(var i=0; i<currentProfileUrls.length; i+=1){//start 1st for
+          if(currentProfileUrls[i].toString().indexOf(previousGroup.replace(" Leadership","")) !== -1){//start 4th if
+            currentProfileUrls[i] = currentProfileUrls[i].toString().replace(previousGroup.replace(" Leadership",""),newGroup.replace(" Leadership",""));
+          }//end 4th if
+        }//end 1st for
+        
+        //finds old profile file id
+        for(var i=0; i<currentProfileIds.length; i+=1){//start 1st for
+          if(currentProfileIds[i].toString().indexOf(previousGroup.replace(" Leadership","")) !== -1){//start 4th if
+            currentProfileIds[i] = currentProfileIds[i].toString().replace(previousGroup.replace(" Leadership",""),newGroup.replace(" Leadership",""));
+          }//end 4th if
+        }//end 1st for
+        
+        //updates currentProfile file, folder ids and urls
+        var stuff = [[FunctionContainer.array1LevelIntoString(currentProfileIds),FunctionContainer.array1LevelIntoString(currentProfileUrls),FunctionContainer.array1LevelIntoString(currentProfileFolderIds)]];
+        FunctionContainer.tripleTrySetSSValues(pmdcms, memberRowNum, 11, 1, 3, stuff);
+        stuff = undefined;
+        
+      }//end 3rd if
+
+      
+      //if its a group to nothing transfer
+      else if(previousGroup!=="N/A"&&newGroup==="N/A"){//start 3rd if
+        //deletes old group element in their own arrays and puts them in different variables for deletion
+        //profile folder
+        for(var i=0; i<currentProfileFolderIds.length; i+=1){//start 1st for
+          if(currentProfileFolderIds[i].toString().indexOf(previousGroup.replace(" Leadership","")) !== -1){//start 4th if
+            var curFolderId = FunctionContainer.pmdcmsIdRetrieval(currentProfileFolderIds[i].toString());
+            currentProfileFolderIds.splice(i,1);
+          }//end 4th if
+        }//end 1st for
+        
+        //profile url
+        for(var i=0; i<currentProfileUrls.length; i+=1){//start 1st for
+          if(currentProfileUrls[i].toString().indexOf(previousGroup.replace(" Leadership","")) !== -1){//start 4th if
+            currentProfileUrls.splice(i,1);
+          }//end 4th if
+        }//end 1st for
+        
+        //profileId
+        for(var i=0; i<currentProfileIds.length; i+=1){//start 1st for
+          if(currentProfileIds[i].toString().indexOf(previousGroup.replace(" Leadership","")) !== -1){//start 4th if
+            var curFileId = FunctionContainer.pmdcmsIdRetrieval(currentProfileIds[i].toString());
+            currentProfileIds.splice(i,1);
+          }//end 4th if
+        }//end 1st for
+        
+        //deletes files and folders
+        DriveApp.getFileById(curFileId).setTrashed(true);
+        DriveApp.getFolderById(curFolderId).setTrashed(true);
+        
+        //updates currentProfile file, folder ids and urls
+        var stuff = [[FunctionContainer.array1LevelIntoString(currentProfileIds),FunctionContainer.array1LevelIntoString(currentProfileUrls),FunctionContainer.array1LevelIntoString(currentProfileFolderIds)]];
+        FunctionContainer.tripleTrySetSSValues(pmdcms, memberRowNum, 11, 1, 3, stuff);
+        stuff = undefined;
+      }//end 3rd if
+      
+      
+      //if its a nothing to group transfer
+      else if(previousGroup === "N/A"  &&  newGroup !== "N/A"){//start 3rd if
+        
+        //finds group folder id
+        for(var i=0; i<70; i+=1){//start 1st for
+          if(dllscv[40][i].toString() === newGroup.replace(" Leadership","")){//start 4th if
+            var newFolderId = dllscv[42][i].toString();
+          }//end 4th if
+        }//end 1st for
+        
+        
+        //creates folder and file and gets url
+        var memberProfileFolderID = DriveApp.getFolderById(newFolderId).createFolder(memberInQuestion).getId();
+        var newMemberProfileFileId = DriveApp.getFileById("1kLEvbo7sqdVk91lRhK233-Yq1SL81dt7jDxpG1BqkWY").makeCopy(memberInQuestion, DriveApp.getFolderById(memberProfileFolderID)).getId();
+        var newMemberProfileFileUrl = DriveApp.getFileById(newMemberProfileFileId).getUrl();
+        
+        //fixes profile's <gt>
+        SpreadsheetApp.openById(newMemberProfileFileId).createTextFinder("<GT>").replaceAllWith(memberInQuestion);
+        
+        //update currentmember arrays
+        //profile folder
+        currentProfileFolderIds.push([newGroup.replace(" Leadership","")+" ~ "+memberProfileFolderID]);
+        //profile url
+        currentProfileUrls.push([newGroup.replace(" Leadership","")+" ~ "+newMemberProfileFileUrl]);
+        //profileId
+        currentProfileIds.push([newGroup.replace(" Leadership","")+" ~ "+newMemberProfileFileId]);
+        
+        //updates currentProfile file, folder ids and urls
+        var stuff = [[FunctionContainer.array1LevelIntoString(currentProfileIds),FunctionContainer.array1LevelIntoString(currentProfileUrls),FunctionContainer.array1LevelIntoString(currentProfileFolderIds)]];
+        FunctionContainer.tripleTrySetSSValues(pmdcms, memberRowNum, 11, 1, 3, stuff);
+        stuff = undefined;
+
+        //shares folder if email isnt N/A
+        if(currentEmail !== ""){//start 4th if
+          DriveApp.getFolderById(memberProfileFolderID).addViewer(currentEmail);
+        }//end 4th if
+        
+      }//end 3rd if
+      
+    }//end 2nd if/else
+    
+    
+    //Member Discharge
+    else if(typeOfUpdate === "Member Discharge"){//start 2nd if/else
+      dischargeCheck = "Y";
+      
+      //moves member profiles to discharged member folder
+      for(var i=0; i<currentProfileFolderIds.length; i+=1){//start 1st for
+        DriveApp.getFolderById(FunctionContainer.pmdcmsIdRetrieval(currentProfileFolderIds[i])).moveTo(DriveApp.getFolderById("1vfvU-XEpRxMMHnBEsgM1HgDCsKQAr3_t"));
+        Utilities.sleep(1000);
+      }//end 1st for
+      
+      pmdcmscv[memberRowNum-2][21] = dateOfUpdate;
+      pmdcmscv[memberRowNum-2][28] = dateOfUpdate;
+      
+      //moves row of member data to discharged members list
+      //Phoenix Era Member Data Discharged Members Sheet
+      curVals = FunctionContainer.getpmddmscv("min", dllscv);
+      var pmddms = curVals[0];
+      var pmddmslri = curVals[1];
+      curVals = undefined;
+      FunctionContainer.tripleTrySetSSValues(pmddms,pmddmslri+1,1,1,50,[pmdcmscv[memberRowNum-2]]);
+      
+      FunctionContainer.tripleTrySetNumberFormat(pmddms, 2, 28, pmddmslri-1, 2, "#,##0.00");
+      
+      pmdcmscv.splice(memberRowNum-2, 1);
+      
+      //deletes old row
+      FunctionContainer.tripleTryDeleteRows(pmdcms, memberRowNum, 1);
+      
+    }//end 2nd if/else
+    
+    
+    //Gamertag Change
+    else if(typeOfUpdate === "Gamertag Change"){//start 2nd if/else
+      //checks to see if gt is already taken or apart of someone else's and if not sends error
+      for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+        if(pmdcmscv[i][0].toString().indexOf(newGt) !== -1  &&  i !== memberRowNum-2){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put a gt that is already taken or apart of someone else's gt (which would cause problems in the database) in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+        }//end 3rd if
+      }//end 1st for
+    
+      //if gamertag is the same as any of the group names
+      for(var i=0; i<57; i+=1){//start 1st for
+        //sends error if gamertag = group name
+        if(newGt.toString()===dllscv[40][i].toString()){//start 2nd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put a gamertag that is the same name as an existing group in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+        }//end 2nd if
+      }//end 1st for
+      
+      //checks to see the gt is already the same as it used to be
+      if(memberInQuestion===newGt){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put the same gamertag that the member in question already had in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //sends error if gamertag is N/A
+      if(newGt==="N/A"){//start 2nd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put N/A as a gamertag in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 2nd if
+      
+      //sends error if gamertag is longer than 17 characters
+      if(newGt.length>17){//start 2nd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put a gamertag longer than 17 characters in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 2nd if
+      
+      //sends error if gamertag has a comma
+      if(newGt.toString().indexOf("Leadership")!==-1){//start 2nd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put __'Leadership'__ in the gamertag (which is not allowed) in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 2nd if
+        
+      //sends error if gamertag has a special character
+      if(newGt.toString().indexOf(",") !== -1  ||  newGt.toString().indexOf("~") !== -1  ||  newGt.toString().indexOf("]") !== -1
+        ||  newGt.toString().indexOf("|") !== -1  ||  newGt === ""  ||  newGt.toString().indexOf("[") !== -1
+        ||  newGt.toString().indexOf("(") !== -1  ||  newGt.toString().indexOf(")") !== -1  
+        ||  newGt.toString().indexOf("*") !== -1){//start 4th if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put a __special character__ in a gamertag in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 4th if
+      
+      
+      //if member in question and perpitraitor are both the same person
+      if(memberInQuestion === perpitraitor){//start 3rd if
+        perpitraitor = newGt;
+      }//end 3rd if
+      
+      //shuts down all forms
+      FunctionContainer.formTurnOff(["all"], dllscv);
+      
+      //waits for 15 seconds to make sure everything has stopped
+      Utilities.sleep(15000);
+      
+      //changes name in pmdcmscv
+      pmdcmscv[memberRowNum-2][0] = newGt;
+    
+      //sorts data regardless of capitalizations
+      pmdcmscv = FunctionContainer.specialSort(pmdcmscv);
+      
+      //Pastes pmdcmscv
+      FunctionContainer.tripleTrySetSSValues(pmdcms, 2, 1, pmdcmscv.length, pmdcmscv[0].length, pmdcmscv);
+      
+      //cycle thru perm docs and change name there
+      for(var i=0; i<currentPermFileIds.length; i+=1){//start 1st for
+        var curFile = DriveApp.getFileById(currentPermFileIds[i]);
+        var curFileName = curFile.getName().replace(memberInQuestion, newGt);
+        curFile.setName(curFileName);
+      }//end 1st for
+
+      //cycles thru like url update and changes old names in specified rows
+      var allFileIds = [["Forge Hub","Forge Entries",dllscv[82][1].toString(),[4,5,6]],
+        ["Forge Hub","Active Maps",dllscv[82][1].toString(),[6,7,8,10,15]],
+        ["Forge Hub","Inactive Maps",dllscv[82][1].toString(),[6,7,8,10,15]],
+        ["Member Update Hub","All Updates",dllscv[82][3].toString(),[2,6]],
+        ["Member Update Hub","New Member Updates",dllscv[82][3].toString(),[1,5,6,8]],
+        ["Event Debrief Hub","All Event Debriefs",dllscv[82][0].toString(),[7,8,9,13]],
+        ["Miscellaneous Form Hub","All Entries",dllscv[82][4].toString(),[4,5]]
+      ];
+      
+      for(var i=0; i<allFileIds.length; i+=1){//start 1st for
+        for(var x=0; x<allFileIds[i][3].length; x+=1){//start 2nd for
+          
+          //gets current sheet vals
+          var currentSheet = FunctionContainer.tripleTryOpenSheet(allFileIds[i][2], allFileIds[i][1]);
+          var currentSheetlri = FunctionContainer.tripleTryGetLastRow(currentSheet);
+          var currentSheetcv = FunctionContainer.tripleTryGetValues(currentSheet, 1, allFileIds[i][3][x], currentSheetlri, 1);
+          
+          //cycles through cv and replaces old gt with new gt
+          for(var y=0; y<currentSheetlri; y+=1){//start 3rd for
+            while(currentSheetcv[y][0].toString().indexOf(memberInQuestion)!==-1){//start 1st while
+              currentSheetcv[y][0] = currentSheetcv[y][0].toString().replace(memberInQuestion,newGt);
+            }//end 1st while
+          }//end 3rd for
+          
+          //pastes new data
+          FunctionContainer.tripleTrySetSSValues(currentSheet, 1, allFileIds[i][3][x], currentSheetcv.length, 1, currentSheetcv);
+          
+        }//end 2nd for
+        Utilities.sleep(250);
+      }//end 1st for
+      
+      //replaces gt in response sheets
+      for(var i=0; i<11; i+=1){//start 1st for
+        if(dllscv[86][i].toString() !== ""){//start 3rd if
+          FunctionContainer.tripleTrySheetTextReplacer(dllscv[86][i].toString(), memberInQuestion, newGt);
+          Utilities.sleep(250);
+        }//end 3rd if
+      }//end 1st for
+      
+      //member profile folders
+      for(var i=0; i<currentProfileFolderIds.length; i+=1){//start 1st for
+        var curFolderId = FunctionContainer.pmdcmsIdRetrieval(currentProfileFolderIds[i]);
+        DriveApp.getFolderById(curFolderId).setName(newGt);
+        Utilities.sleep(250);
+      }//end 1st for
+      
+      //member profile files
+      for(var i=0; i<currentProfileIds.length; i+=1){//start 1st for
+        var curFileId = FunctionContainer.pmdcmsIdRetrieval(currentProfileIds[i]);
+        DriveApp.getFileById(curFileId).setName(newGt);
+        Utilities.sleep(250);
+      }//end 1st for
+      
+      
+      //changes member in question to newgt
+      memberInQuestion = newGt;
+      
+    }//end 2nd if/else
+    
+    
+    //Discord Nickname Change
+    else if(typeOfUpdate === "Discord Nickname Change"){//start 2nd if/else
+      //checks to see if nickname is already taken and if not sends error
+      for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+        if(i!==memberRowNum-2){//start 3rd if
+          if(pmdcmscv[i][1].toString()===newNickname||pmdcmscv[i][0].toString()===newNickname){//start 4th if
+            FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+            FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put a discord nickname that is already taken by someone else's gamertag or discord nickname in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+          }//end 4th if
+        }//end 3rd if
+      }//end 1st for
+      
+      //checks to see the nickname is already the same as it used to be
+      if(curNick===newNickname){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put the same discord nickname that the member in question already had in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //sends error if nickname is N/A
+      if(newNickname==="N/A"){//start 2nd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put N/A as a discord nickname in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 2nd if
+      
+      //sends error if nickname is longer than 17 characters
+      if(newNickname.length>17){//start 2nd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put a discord nickname longer than 25 characters in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 2nd if
+      
+      //sends error if gamertag has a comma
+      if(newNickname.toString().indexOf("Leadership")!==-1){//start 2nd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put __'Leadership'__ in the discord nickname (which is not allowed) in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 2nd if
+        
+      //sends error if gamertag has a special character
+      if(newNickname.toString().indexOf(",") !== -1  ||  newNickname.toString().indexOf("~") !== -1  ||  newNickname.toString().indexOf("]") !== -1
+        ||  newNickname.toString().indexOf("|") !== -1  ||  newNickname === ""  ||  newNickname.toString().indexOf("[") !== -1
+        ||  newNickname.toString().indexOf("(") !== -1  ||  newNickname.toString().indexOf(")") !== -1  
+        ||  newNickname.toString().indexOf("*") !== -1){//start 4th if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put a __special character__ in a discord nickname in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 4th if
+      
+      //pastes new nickname in pmdcms
+      FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 2, 1, 1, newNickname);
+      
+      //changes vals in pmdcmscv
+      pmdcmscv[memberRowNum-2][1] = newNickname;
+      
+      var newFullDiscordNickname = FunctionContainer.getDiscordNicknameWithRow(memberRowNum-2, dllscv, pmdcmscv);
+      
+      //send discord nickname change
+      FunctionContainer.discordNicknameChange(currentNickname, newFullDiscordNickname);
+      
+      Utilities.sleep(1500);
+      
+      //changes currentNickname to newFullDiscordNickname for correct update pm's
+      currentNickname = newFullDiscordNickname;
+    }//end 2nd if/else
+    
+    
+    //Availability Change
+    else if(typeOfUpdate === "Availability Change"){//start 2nd if/else
+      //pastes new nickname in pmdcms
+      FunctionContainer.tripleTrySetSSValues(pmdcms, memberRowNum, 14, 1, 7, [newGA]);
+    }//end 2nd if/else
+    
+    
+    //Leaving on loa
+    else if(typeOfUpdate === "LOA"  &&  mufrscv[39] === "Leaving"){//start 2nd if/else
+      //if member is already on loa
+      if(currentStatus==="LOA"){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put someone already on LOA on another LOA in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //checks for a date in the past
+      if(expectedReturnDate!=="N/A"){//start 4th if
+        var expectedReturnDateNum = mufds.getRange(1,1).setValue(expectedReturnDate).setNumberFormat('#,##0.00').getValue();
+        if(expectedReturnDateNum<cdNum){//start 5th if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "put an expected LOA return date for in the past in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+        }//end 5th if
+      }//end 4th if
+      
+      //if the expected return date is the same as today
+      if(expectedReturnDateNum === dllscv[10][1]){//start 1st if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "put the expected date of return from loa as todays date in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 1st if
+      
+      //paste new status in pmdcms
+      FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 9, 1, 1, "LOA");
+      
+      //give loa role in discord
+      FunctionContainer.discordRoles("LOA", "N/A", currentNickname);
+    }//end 2nd if/else
+    
+    
+    //Returning from loa
+    else if(typeOfUpdate === "LOA"  &&  mufrscv[39] === "Returning"){//start 2nd if/else
+      //gets number for date of update
+      FunctionContainer.tripleTrySetSSValuesSingleString(mufds, 5, 1, 1, 1, dateOfUpdate);
+      FunctionContainer.tripleTrySetNumberFormat(mufds, 5, 1, 1, 1, "#,##0.00");
+      var dateOfUpdateNum = FunctionContainer.tripleTryGetValues(mufds, 5, 1, 1, 1)[0][0];
+      
+      //if member is not on loa
+      if(currentStatus!=="LOA"){//start 4th if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to take someone not on LOA off of LOA in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 4th if
+      
+      //finds most recent loa member update entry
+      for(var i=0; i<muhauscvn.length; i+=1){//start 1st for
+        if(muhauscvn[i][0].toString() === "LOA"  
+           &&  muhauscvn[i][1].toString() === memberInQuestion  
+           &&  muhauscvn[i][2].toString().indexOf("Leaving") !== -1){//start 1st if
+          var dateLeftOnLOA = muhauscvn[i][3];
+        }//end 1st if
+      }//end 1st for
+      
+      //if dateLeftOnLOA was not found
+      if(dateLeftOnLOA === undefined){//start 1st if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "didn't do anything wrong, but the system can't find the last time " + memberInQuestion + " went on an loa in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 1st if
+      
+      //if date is before when they went on loa
+      if(dateLeftOnLOA > dateOfUpdateNum){//start 1st if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "put the date of returned from loa as before " + memberInQuestion + " left on loa in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 1st if
+      
+      //if date is the same as when they went on loa
+      if(dateLeftOnLOA === dateOfUpdateNum){//start 1st if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "put the same date of returned from loa from when " + memberInQuestion + " left on loa in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 1st if
+
+      //paste new status in pmdcms
+      FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 9, 1, 1, "Active");
+      
+      //give loa role in discord
+      FunctionContainer.discordRoles("N/A", "LOA", currentNickname);
+    }//end 2nd if/else
+    
+    
+    //Returning from loa
+    else if(typeOfUpdate === "Birthday Change"){//start 2nd if/else
+      //if their cur bday matches new bday
+      if(bMonthAndDay === currentBirthday){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "put new birthday the same as the current listed birthday in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //sees if birthday is a valid date
+      var possibleDates = FunctionContainer.getPossibleDates();
+      var dateCheck = true;
+      for(var i=0; i<possibleDates.length; i+=1){//start 1st for
+        if(bMonthAndDay === possibleDates[i].toString()){//start 3rd if
+          dateCheck = false;
+        }//end 3rd if
+      }//end 1st for
+      if(dateCheck){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "put a date that doesn't exist in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      possibleDates = undefined;
+      
+      //paste new status in pmdcms
+      FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 27, 1, 1, bMonthAndDay);
+    }//end 2nd if/else
+    
+    
+    //Mentor Change
+    else if(typeOfUpdate === "Mentor Change"){//start 2nd if/else
+      //if mentor and member in question are the same person
+      if(mentor === memberInQuestion){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to have the member in question mentor themself in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //if they are trying to remove a mentor that doesn't mentor the member in question
+      if(operation === "Remove Mentor"  &&  mentor !== currentMentor){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to remove a mentor the member didn't have in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //if they are trying to add a mentor when the member already has one
+      if(operation === "Add Mentor"  &&  currentMentor !== ""){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to add a mentor when the member already has a mentor in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      var mentorNickname = FunctionContainer.getDiscordNickname(mentor, dllscv, pmdcmscv);
+      
+      //dm$e$^Nickname^Title^Description^Author^Author Avatar^Image^Footer
+      if(operation === "Add Mentor"){//start 3rd if
+        //send message to mentor saying they now officially mentor the member in question
+        FunctionContainer.discordMemberUpdateFormSend("dm$e$^" + mentorNickname + "^**Mentee Update**^You have been __added__ as a mentor to **__" + memberInQuestion + "__**\n\nDate of Update: **" + dateOfUpdate + "**^^^^Phoenix Era Member Updates");
+        //paste new status in pmdcms
+        FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 26, 1, 1, mentor);
+      }//end 3rd if
+      
+      else if(operation === "Remove Mentor"){//start 3rd if/else
+        //send message to mentor saying they now officially mentor the member in question
+        FunctionContainer.discordMemberUpdateFormSend("dm$e$^" + mentorNickname + "^**Mentee Update**^You have been __removed__ as a mentor to **__" + memberInQuestion + "__**\n\nDate of Update: **" + dateOfUpdate + "**^^^^Phoenix Era Member Updates");
+        //paste new status in pmdcms
+        FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 26, 1, 1, "");
+      }//end 3rd if/else
+    }//end 2nd if/else
+    
+    
+    //Position Code Change
+    else if(typeOfUpdate === "Position Code Change"){//start 2nd if/else
+      //if new pc is already taken
+      for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+        if(FunctionContainer.positionCodeDiscordTransformer(pmdcmscv[i][7].toString()) === newFullPC  &&  newFullPC !== "N/A"){//start 1st if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put a taken position code in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+        }//end 1st if
+      }//end 1st for
+      
+      //if new pc isn't a number and isnt N/A
+      if("N/A" !== newFullPC  &&  isNaN(newFullPC)){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put an illegal position code in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //if new pc isn't a number and isnt N/A
+      if(newFullPC.length > 3){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "tried to put position code longer than 3 characters in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+      }//end 3rd if
+      
+      //sets val in pmdcms
+      FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 8, 1, 1, newFullPC);
+      
+      //sets val in pmdcmscv
+      pmdcmscv[memberRowNum-2][7] = newFullPC;
+      
+      //gets new nickname
+      var newNickname = FunctionContainer.getDiscordNicknameWithRow(memberRowNum-2, dllscv, pmdcmscv);
+      
+      //changes nickname in discord
+      FunctionContainer.discordNicknameChange(currentNickname, newNickname);
+      
+      //changes current nickname
+      currentNickname = newNickname;
+    }//end 2nd if/else
+    
+    
+    
+    
+    //** FINALIZES DATA AND SENDS UPDATES **//
+//    Logger.log(ree);
+    //new vals for member update hub
+    var muhaussv = [[typeOfUpdate, memberInQuestion, updateDetailsDiscordVersion, dateOfUpdate, reasoning, perpitraitor]];
+    
+    //send discord pm for update
+    if(typeOfUpdate === "Member Report"){FunctionContainer.discordReportDM(currentNickname, muhaussv)}
+    else{FunctionContainer.discordUpdateDM(currentNickname, muhaussv)}
+    
+    //new vals for member update hub
+    var muhausnv = [[typeOfUpdate, memberInQuestion, updateDetails, dateOfUpdate, reasoning, perpitraitor]];
+    
+    //if discharged it discharges them now so they can get the last member update b4 they are kicked from the server
+    if(dischargeCheck === "Y"){//start 2nd if
+      FunctionContainer.discordDischarge(currentNickname);
+      if(currentPermissions.toString() !== "N/A || N/A || N/A || N/A"){//start 3rd if
+        if(currentPermissions.toString().length > 1000){//start 4th if
+          FunctionContainer.discordGeekSquadWarning("Member Update Form Warnings", "Member: **" + memberInQuestion + "** has been discharged and has the following permissions that need to be removed:\n**Too many to list out**");
+        }//end 4th if
+        else{FunctionContainer.discordGeekSquadWarning("Member Update Form Warnings", "Member: **" + memberInQuestion + "** has been discharged and has the following permissions that need to be removed:\n**" + currentPermissions.toString().replace("||", "\n") + "**");}
+      }//end 3rd if
+    }//end 2nd if
+    
+    //if perp and mem in question are same
+    if(memberInQuestion === perpitraitor){//start 2nd if
+      FunctionContainer.discordGeekSquadWarning("Member Update Form Warnings", "Member: **" + memberInQuestion + "** has filled out a member update form for themself. Type of Update: **" + typeOfUpdate + "** ~ Form Row Number: **[" + mufrslri + "](" + dllscv[88][3].toString() + ")**");
+    }//end 2nd if
+    
+    
+    //adds vals to muhaus
+    //Member Update Hub all updates sheet
+    curVals = FunctionContainer.getmuhauscv("min", dllscv);
+    var muhaus = curVals[0];
+    var muhauslri = curVals[1];
+    curVals = undefined;
+    
+    //adds new row and pastes vals in it and formats it correctly
+    FunctionContainer.tripleTryAddRows(muhaus, 2, 1);
+    FunctionContainer.tripleTrySetRowsSize(muhaus, 3, 1, 105);
+    FunctionContainer.tripleTrySetSSValues(muhaus, 3, 1, 1, 6, muhausnv);
+
+    //formats everything to make sure its correctly formatted
+    muhaus.getRange(3,1,muhauslri-1,muhausnv[0].length).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setFontWeight(null);
+    muhaus.getRange(1,1,muhauslri+1,muhausnv[0].length).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+    
+    
+    //Reorganizes by date desc
+    //Member Update Hub all updates sheet
+    curVals = FunctionContainer.getmuhauscv("both", dllscv);
+    var muhaus = curVals[0];
+    var muhauscv = curVals[1];
+    var muhauscvn = curVals[2];
+    curVals = undefined;
+    
+    for(var i=0; i<muhauscvn.length; i+=1){//start 1st for
+      muhauscvn[i] = [muhauscvn[i][3], muhauscvn[i][1], muhauscvn[i][2], muhauscvn[i][0], muhauscvn[i][4], muhauscvn[i][5]];
+    }//end 1st for
+    
+    muhauscvn = FunctionContainer.specialSortDesc(muhauscvn);
+    
+    for(var i=0; i<muhauscvn.length; i+=1){//start 1st for
+      muhauscvn[i] = [muhauscvn[i][3], muhauscvn[i][1], muhauscvn[i][2], muhauscvn[i][0], muhauscvn[i][4], muhauscvn[i][5]];
+    }//end 1st for
+    
+    //pastes new data
+    FunctionContainer.tripleTrySetSSValues(muhaus, 3, 1, muhauscv.length, muhauscv[0].length, muhauscvn);
+    
+    
+    
+    
+    //** FORM LIST UPDATES **//
+    //updates form lists if yes is chosen or gamertag is chosen
+    if(mufrscv[3].toString() === "Yes"  ||  typeOfUpdate === "Gamertag Change"){//start 2nd if
+      
+      //shuts down all forms
+      FunctionContainer.formTurnOff(["all"], dllscv);
+      
+      //updates all forms apart of list 1
+      FunctionContainer.updateAllFormLists1(dllscv, pmdcmscv);
+      
+      //turns on all forms
+      FunctionContainer.formTurnOn(["all"], dllscv);
+      
+    }//end 2nd if
+    
+    
+  }//end 1st if
+  
+  
+  //if code is wrong
+  else{
+    FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Member Update Form Errors", dllscv);
+    FunctionContainer.indFormErrorReport(perpitraitor, "member update form", "inputted an incorrect code in an entry for __" + memberInQuestion + "__", mufrslri, dllscv[88][3].toString());
+  }//end 1st else
+  
+  
+}//end main

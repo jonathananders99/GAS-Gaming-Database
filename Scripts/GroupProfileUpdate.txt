@@ -1,0 +1,1131 @@
+function check(){
+//  var valsForGroupProfileUpdate = [0];//mora 1
+  var valsForGroupProfileUpdate = [0,1];//mora 1 and camp 01
+  
+  groupProfileUpdate(valsForGroupProfileUpdate);
+}//end check
+
+//need to make sure eligibility uses correct number in array
+function groupProfileUpdate(valsForGroupProfileUpdate){
+  var curVals = undefined;
+  
+  
+  //PXE Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv("date");
+  var pmdcms = curVals[0];
+  var pmdcmslri = curVals[2];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //PXE Member Data Discharged Members Sheet
+  var curVals = FunctionContainer.getpmddmscv("date");
+  var pmddms = curVals[0];
+  var pmddmslri = curVals[2];
+  var pmddmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  var currentDateNum = dllscv[10][1];
+  var currentDate = FunctionContainer.dateReplace(dllscv[10][0]);
+  curVals = undefined;
+  
+  
+  //Event Debrief Hub all Event debriefs sheet
+  curVals = FunctionContainer.getedhaedscv("both", dllscv);
+  var edhaeds = curVals[0];
+  var edhaedscv = curVals[1];
+  var edhaedscvn = curVals[2];
+  curVals = undefined;
+  
+  
+  //Forge Hub Forge Entries sheet
+  curVals = FunctionContainer.getfhfescv("both", dllscv);
+  var fhfes = curVals[0];
+  var fhfescv = curVals[1];
+  var fhfescvn = curVals[2];
+  curVals = undefined;
+  
+  
+  //Member Update Hub all updates sheet
+  curVals = FunctionContainer.getmuhauscv("both", dllscv);
+  var muhaus = curVals[0];
+  var muhauscv = curVals[1];
+  var muhauscvn = curVals[2];
+  curVals = undefined;
+  
+  
+  //member update Hub New Member updates sheet
+  curVals = FunctionContainer.getmuhnmuscv("both", dllscv);
+  var muhnmuscv = curVals[1];
+  var muhnmuscvn = curVals[2];
+  curVals = undefined;
+  
+  
+  //misc form hub all entries sheet
+  curVals = FunctionContainer.getmfhaescv("both", dllscv);
+  var mfhaes = curVals[0];
+  var mfhaescv = curVals[1];
+  var mfhaescvn = curVals[2];
+  curVals = undefined;
+  
+  
+  //Forge Hub Active Maps sheet
+  var curVals = FunctionContainer.getfhamscv("date", dllscv);
+  var fhams = curVals[0];
+  var fhamscv = curVals[1];
+  curVals = undefined;
+  
+  
+  for(var z=0; z<valsForGroupProfileUpdate.length; z+=1){//start 1st for
+    //general info and finding members done here
+    //declares necessary vars
+    var cgpgis = FunctionContainer.tripleTryOpenSheet(dllscv[47][valsForGroupProfileUpdate[z]].toString(),"General Info");
+    var cgpgismri = FunctionContainer.tripleTryGetMaxRows(cgpgis);
+    var cgpgiscv = [];
+    //[group,,,,,,,,,,,,,],["Position","Gamertag","Status","Rank","Eligibility","Generation",etc]]
+    var curGroupLocation = [];
+    //[name of group, col in dllscv for main group selections, number of rows below to go through, [sheets of inclusion], row in dllscv]
+    
+    
+    //where all the member in the group will be pooled
+    var curGroupcv = [["cgpgiscv",cgpgiscv,[],[],cgpgis,cgpgismri,[],[],[],[],[],[],[],[],[]]]
+    /*["sheetcv",[0]
+      sheetcv,[1]
+      [row to merge,row to merge],[2]
+      [if it needs to formated to main or not],[3]
+      sheet,[4]
+      sheet max rows num,[5]
+      [],[6]
+      [],[7]
+      [],[8]
+      [],[9]
+      [],[10]
+      [],[11]
+      [],[12]
+      [],[13]
+      []][14]
+    */
+    
+    //all groups and their locations in data lists sheet
+    var groupLocations = [
+      //Upper Echelon
+      [dllscv[0][156].toString(),156,1,["cgpgiscv"],0],
+      //Phoenix S.W.A.L
+      [dllscv[0][39].toString(),39,4,["cgpgiscv"],0],
+      //Lochos 13
+      [dllscv[1][39].toString(),39,1,["cgpgiscv"],1],
+      //Lochos 14
+      [dllscv[2][39].toString(),39,1,["cgpgiscv"],2],
+      //Lochos 15
+      [dllscv[3][39].toString(),39,1,["cgpgiscv"],3],
+      //Praetorian Guard
+      [dllscv[0][52].toString(),52,1,["cgpgiscv"],0],
+      //Seeker Intelligence
+      [dllscv[0][65].toString(),65,1,["cgpgiscv"],0],
+      //Vicarius Senate
+      [dllscv[0][78].toString(),78,1,["cgpgiscv"],0],
+      //Special Group 04
+      [dllscv[0][91].toString(),91,1,["cgpgiscv"],0],
+      //Special Group 05
+      [dllscv[0][104].toString(),104,1,["cgpgiscv"],0],
+      //Special Group 06
+      [dllscv[0][117].toString(),117,1,["cgpgiscv"],0],
+      //Special Group 07
+      [dllscv[0][130].toString(),130,1,["cgpgiscv"],0],
+      //Special Group 08
+      [dllscv[0][143].toString(),143,7,["cgpgiscv"],0],
+      //Special Sub-Group 01
+      [dllscv[1][143].toString(),143,3,["cgpgiscv"],1],
+      //Special Sub-Sub-Group 01
+      [dllscv[2][143].toString(),143,1,["cgpgiscv"],2],
+      //Special Sub-Sub-Group 02
+      [dllscv[3][143].toString(),143,1,["cgpgiscv"],3],
+      //Special Sub-Group 02
+      [dllscv[4][143].toString(),143,3,["cgpgiscv"],4],
+      //Special Sub-Sub-Group 03
+      [dllscv[5][143].toString(),143,1,["cgpgiscv"],5],
+      //Special Sub-Sub-Group 04
+      [dllscv[6][143].toString(),143,1,["cgpgiscv"],6],
+      //Mora 1
+      [dllscv[0][0].toString(),0,10,["cgpgiscv"],0],
+      //Camp 01
+      [dllscv[1][0].toString(),0,1,["cgpgiscv"],1],
+      //Camp 02
+      [dllscv[2][0].toString(),0,1,["cgpgiscv"],2],
+      //Camp 03
+      [dllscv[3][0].toString(),0,1,["cgpgiscv"],3],
+      //Lochos 01
+      [dllscv[4][0].toString(),0,1,["cgpgiscv"],4],
+      //Lochos 02
+      [dllscv[5][0].toString(),0,1,["cgpgiscv"],5],
+      //Lochos 03
+      [dllscv[6][0].toString(),0,1,["cgpgiscv"],6],
+      //Lochos 04
+      [dllscv[7][0].toString(),0,1,["cgpgiscv"],7],
+      //Extra Group 01
+      [dllscv[8][0].toString(),0,1,["cgpgiscv"],8],
+      //Extra Other Group 01
+      [dllscv[9][0].toString(),0,1,["cgpgiscv"],9],
+      //Mora 2
+      [dllscv[0][13].toString(),13,10,["cgpgiscv"],0],
+      //Camp 04
+      [dllscv[1][13].toString(),13,1,["cgpgiscv"],1],
+      //Camp 05
+      [dllscv[2][13].toString(),13,1,["cgpgiscv"],2],
+      //Camp 06
+      [dllscv[3][13].toString(),13,1,["cgpgiscv"],3],
+      //Lochos 05
+      [dllscv[4][13].toString(),13,1,["cgpgiscv"],4],
+      //Lochos 06
+      [dllscv[5][13].toString(),13,1,["cgpgiscv"],5],
+      //Lochos 07
+      [dllscv[6][13].toString(),13,1,["cgpgiscv"],6],
+      //Lochos 08
+      [dllscv[7][13].toString(),13,1,["cgpgiscv"],7],
+      //Extra Group 02
+      [dllscv[8][13].toString(),13,1,["cgpgiscv"],8],
+      //Extra Other Group 02
+      [dllscv[9][13].toString(),13,1,["cgpgiscv"],9],
+      //Mora 3
+      [dllscv[0][26].toString(),26,10,["cgpgiscv"],0],
+      //Camp 07
+      [dllscv[1][26].toString(),26,1,["cgpgiscv"],1],
+      //Camp 08
+      [dllscv[2][26].toString(),26,1,["cgpgiscv"],2],
+      //Camp 09
+      [dllscv[3][26].toString(),26,1,["cgpgiscv"],3],
+      //Lochos 09
+      [dllscv[4][26].toString(),26,1,["cgpgiscv"],4],
+      //Lochos 10
+      [dllscv[5][26].toString(),26,1,["cgpgiscv"],5],
+      //Lochos 11
+      [dllscv[6][26].toString(),26,1,["cgpgiscv"],6],
+      //Lochos 12
+      [dllscv[7][26].toString(),26,1,["cgpgiscv"],7],
+      //Extra Group 03
+      [dllscv[8][26].toString(),26,1,["cgpgiscv"],8],
+      //Extra Other Group 03
+      [dllscv[9][26].toString(),26,1,["cgpgiscv"],9]];
+    //[name of group, location in main array, number of rows below to go through, [sheets of inclusion], row in dllscv]
+    
+    
+    //finds correct group
+    for(var i=0; i<groupLocations.length; i+=1){//start 2nd for
+      if(groupLocations[i][0]===dllscv[40][valsForGroupProfileUpdate[z]].toString()){//start 1st if
+        curGroupLocation.push(groupLocations[i]);
+      }//end 1st if
+    }//end 2nd for
+    
+    
+    //gets all members in the group(s)
+    FunctionContainer.memberFinderForGroupProfiles(curGroupcv,curGroupLocation,dllscv,pmdcmscv);
+    
+    
+    //Logger.log(dllscv[curGroupLocation[0][4]][curGroupLocation[0][1]].toString()+" ~ "+dllscv[curGroupLocation[0][4]][curGroupLocation[0][1]+1].toString());
+    //if there isnt anyone in the group it does nothing
+    if(cgpgiscv.length>0&&dllscv[curGroupLocation[0][4]][curGroupLocation[0][1]+1].toString()==="Active"){//start 1st if
+      
+      //declares a couple vars for future sheets
+      var curGroupsIncluded = [];
+      var allCurMembers = [];
+      
+      
+      //adds another element so it does the last group
+      curGroupcv[0][2].push(curGroupcv[0][1].length);
+      
+      
+      //gets info for each person for gis
+      for(var w=0; w<curGroupcv[0][2].length; w+=1){//start 2nd for
+        //if the group isnt nothing
+        if(w!==curGroupcv[0][2].length-1){//start 2nd if
+          //adds group to group list
+          curGroupsIncluded.push(cgpgiscv[curGroupcv[0][2][w]][0].toString());
+          
+          //declares this as the current group
+          var curGroup = cgpgiscv[curGroupcv[0][2][w]][0].toString();
+          
+          //gets group profile url and makes it the correct row in the array
+          cgpgiscv[curGroupcv[0][2][w]][0] = FunctionContainer.getGroupProfileUrlForSheets(cgpgiscv[curGroupcv[0][2][w]][0],dllscv);
+        }//end 2nd if
+        
+        
+        
+        
+        /// *** GENERAL INFO ***///
+        for(var r=curGroupcv[0][2][w]+2; r<curGroupcv[0][2][w+1]; r+=1){//start 3rd for
+          
+          //declares some necessary vars
+          var curMemberRowNum = cgpgiscv[r][2];
+          var curPosition = cgpgiscv[r][0].toString();
+          var curGt = cgpgiscv[r][1].toString();
+          
+          
+          //Status
+          var curStatus = pmdcmscv[curMemberRowNum][8].toString();
+          
+          
+          allCurMembers.push([cgpgiscv[r][1],curStatus,curMemberRowNum]);
+          
+          
+          //Rank
+          var curRank = pmdcmscv[curMemberRowNum][2].toString();
+          
+          
+          //Eligibility
+          //have not tested out if there is no most recent rank change
+          var comboOfVals = FunctionContainer.memberElegibility(pmdcmscv[curMemberRowNum], muhauscvn, 
+                                                                currentDateNum, dllscv, muhauscv);
+          var curEli = comboOfVals[0].toString();
+          var curRCDateNum = comboOfVals[1];
+          var curRCNumDays = comboOfVals[2];
+          var curRCDate = comboOfVals[3].toString();
+          var curRCDetails = comboOfVals[4].toString();
+          comboOfVals = undefined;
+          
+          //Generation
+          var curGeneration = pmdcmscv[curMemberRowNum][5].toString();
+          
+          
+          //Creds
+          var curCreds = pmdcmscv[curMemberRowNum][4].toString();
+          if(curCreds===""){//start 2nd if
+            curCreds = "N/A";
+          }//end 2nd if
+          
+          
+          //Enlistment Date
+          var curEnlist = FunctionContainer.dateReplace(pmdcmscv[curMemberRowNum][20]);
+          
+          
+          //Declares variable for 6 and 29 days ago
+          var todayMinus6 = currentDateNum-6;
+          var todayMinus29 = currentDateNum-29;
+          
+          
+          //Events Attended
+          var curLastEventDate = "";
+          var curEventsAttend7 = 0;
+          var curEventsAttendRC = 0;
+          
+          //cycles thru event hub events
+          for(var y=0; y<edhaedscvn.length; y+=1){//start 4th for
+            
+            //went to the event and curLastEventDate is empty
+            if(edhaedscvn[y][8].toString().indexOf(curGt)!==-1&&curLastEventDate===""){//start 2nd if
+              curLastEventDate = FunctionContainer.dateReplace(edhaedscv[y][0]);
+            }//end 2nd if
+            
+            //within 7 days and went to the event
+            if(edhaedscvn[y][8].toString().indexOf(curGt)!==-1&&todayMinus6<=edhaedscvn[y][0]&&currentDateNum>=edhaedscvn[y][0]){//start 2nd if
+              curEventsAttend7 = curEventsAttend7+1;
+            }//end 2nd if
+            
+            //within last RC date and went to the event
+            if(edhaedscvn[y][8].toString().indexOf(curGt)!==-1&&curRCDateNum<=edhaedscvn[y][0]&&currentDateNum>=edhaedscvn[y][0]){//start 2nd if
+              curEventsAttendRC = curEventsAttendRC+1;
+            }//end 2nd if
+            
+          }//end 4th for
+          
+          //if curLastEventDate is empty
+          if(curLastEventDate===""){//start 2nd if
+            curLastEventDate = curEnlist.toString();
+          }//end 2nd if
+          
+          
+          //Members Recruited
+          var curNumRecruits = 0;
+          for(var y=0; y<muhnmuscv.length; y+=1){//start 4th for
+            
+            //if the gamertag matches current gt
+            if(muhnmuscv[y][5].toString()===curGt){//start 3rd if
+              curNumRecruits = curNumRecruits+1;
+            }//end 3rd if
+            
+          }//end 4th for
+          
+          
+          //gets the link to member profile for this group
+          var curUrlAndGt = FunctionContainer.getMemberProfileUrlForSheets(curGroup,curGt,pmdcmscv[curMemberRowNum]);
+          
+          
+          //rewrites current row to have correct info
+          cgpgiscv[r] = [curPosition, curUrlAndGt, curStatus, curRank, curEli, curGeneration, curCreds, 
+            curEnlist, curRCNumDays+" Days", curRCDate, curRCDetails, curLastEventDate, curEventsAttend7, curEventsAttendRC, curNumRecruits];
+        }//end 3rd for
+      }//end 2nd for
+      
+      
+      //takes off last element
+      curGroupcv[0][2].pop();
+      
+      
+      //takes off any duplicates
+      FunctionContainer.arrayDuplicateFilter(allCurMembers);
+      
+      
+      FunctionContainer.memberPasterForGroupProfiles(curGroupcv);
+      //Logger.log(curGroupsIncluded);
+      //Logger.log(allCurMembers);
+      
+      
+      
+      
+      
+      ///*** EXTRA INFO ***///
+      
+      var cgpeis = FunctionContainer.tripleTryOpenSheet(dllscv[47][valsForGroupProfileUpdate[z]].toString(),"Extra Info");
+      
+      
+      //Last Member to Join
+      var curLastMem = "N/A";
+      
+      //finds most recent new member update for group if it has an Camp group included
+      if(curGroupsIncluded.toString().indexOf("Camp")!==-1){//start 2nd if
+        for(var i=0; i<muhnmuscv.length; i+=1){//start 2nd for
+          if(curGroupsIncluded.toString().indexOf(muhnmuscv[i][2].toString())!==-1){//start 3rd if
+            curLastMem = muhnmuscv[i][0].toString();
+            i = muhnmuscv.length;
+          }//end 3rd if
+        }//end 2nd for
+      }//end 2nd if
+      
+      else if(curGroupsIncluded.toString().indexOf("Camp")===-1){//start 2nd if
+        for(var i=0; i<muhauscv.length; i+=1){//start 2nd for
+          if(muhauscv[i][0].toString()==="Group Change"){//start 3rd if
+            curVals = FunctionContainer.splitUpRankChangeDetails(muhauscv[i][2].toString());
+            var curVal = curVals[3];
+            var curVal2 = curVals[1];
+            if(curGroupsIncluded.toString().indexOf(curVal)!==-1&&curLastMem==="N/A"&&curGroupsIncluded.toString().indexOf(curVal2)===-1){//start 4th if
+              curLastMem = muhauscv[i][1].toString();
+            }//end 4th if
+          }//end 3rd if
+        }//end 2nd for
+      }//end 2nd if
+      
+      
+      //Total Member Count
+      var curTotMems = allCurMembers.length;
+      
+      
+      //Number of Active Members
+      //Number of Inactive Members
+      //Number of Members on Leave of Absence
+      //Number of Members on Inquiry
+      var curActiveMembers = 0;
+      var curInactiveMembers = 0;
+      var curLOAMembers = 0;
+      var curInquiryMembers = 0;
+      for(var i=0; i<allCurMembers.length; i+=1){//start 2nd for
+        //active
+        if(allCurMembers[i][1].toString()==="Active"){//start 2nd if
+          curActiveMembers = curActiveMembers+1;
+        }//end 2nd if
+        //active
+        else if(allCurMembers[i][1].toString()==="Inactive"){//start 2nd if
+          curInactiveMembers = curInactiveMembers+1;
+        }//end 2nd if
+        //active
+        else if(allCurMembers[i][1].toString()==="LOA"){//start 2nd if
+          curLOAMembers = curLOAMembers+1;
+        }//end 2nd if
+        //active
+        else if(allCurMembers[i][1].toString()==="Inquiry"){//start 2nd if
+          curInquiryMembers = curInquiryMembers+1;
+        }//end 2nd if
+      }//end 2nd for
+      
+      //adds percentage to each num
+      var curNum = ((100*curActiveMembers)/curTotMems);
+      curActiveMembers = curActiveMembers+" ("+curNum.toFixed(1)+"% of Total Members)";
+      curNum = ((100*curInactiveMembers)/curTotMems);
+      curInactiveMembers = curInactiveMembers+" ("+curNum.toFixed(1)+"% of Total Members)";
+      curNum = ((100*curLOAMembers)/curTotMems);
+      curLOAMembers = curLOAMembers+" ("+curNum.toFixed(1)+"% of Total Members)";
+      curNum = ((100*curInquiryMembers)/curTotMems);
+      curInquiryMembers = curInquiryMembers+" ("+curNum.toFixed(1)+"% of Total Members)";
+      
+      
+      //Last Group Event
+      //Number of Group Events in the Past 7 Days
+      //Number of Group Events in the Past 30 Days
+      //Total Number of Group Events
+      var curLastGroupEventDate = "N/A";
+      var curGroupEvents7Days = 0;
+      var curGroupEvents30Days = 0;
+      var curTotGroupEvents = 0;
+      var cgpevscv = [];
+      
+      
+      //cycles thru event hub
+      for(var i=0; i<edhaedscvn.length; i+=1){//start 2nd for
+        var curVals1 = FunctionContainer.splitEmUp(edhaedscvn[i][4]);
+        
+        //cycles thru participating groups curVals1 length
+        for(var x=0; x<curVals1.length; x+=1){//start 3rd for
+          //if the ind part group is included in the cur
+          if(curGroupsIncluded.toString().indexOf(curVals1[x].toString())!==-1){//start 2nd if
+            
+            //curLastGroupEventDate
+            if(curLastGroupEventDate==="N/A"){//start 3rd if
+              curLastGroupEventDate = FunctionContainer.dateReplace(edhaedscv[i][0]);
+            }//end 3rd if
+            
+            //curGroupEvents7Days
+            if(todayMinus6<=edhaedscvn[i][0]&&currentDateNum>=edhaedscvn[i][0]){//start 3rd if
+              curGroupEvents7Days = curGroupEvents7Days+1;
+            }//end 3rd if
+            
+            //curGroupEvents30Days
+            if(todayMinus29<=edhaedscvn[i][0]&&currentDateNum>=edhaedscvn[i][0]){//start 3rd if
+              curGroupEvents30Days = curGroupEvents30Days+1;
+            }//end 3rd if
+            
+            //curTotGroupEvents
+            curTotGroupEvents = curTotGroupEvents+1;
+            
+            //cgpevscv
+            cgpevscv.push(edhaedscv[i]);
+          }//end 2nd if
+        }//end 3rd for
+      }//end 2nd for
+      
+      
+      var cgpeiscv = [
+        ["Extra Info"],
+        ["Last Member to Join"],
+        [curLastMem],
+        ["Total Member Count"],
+        [curTotMems],
+        ["Number of Active Members"],
+        [curActiveMembers],
+        ["Number of Inactive Members"],
+        [curInactiveMembers],
+        ["Number of Members on Leave of Absence"],
+        [curLOAMembers],
+        ["Last Group Event Date"],
+        [curLastGroupEventDate],
+        ["Number of Group Events in the Past 7 Days"],
+        [curGroupEvents7Days],
+        ["Number of Group Events in the Past 30 Days"],
+        [curGroupEvents30Days],
+        ["Total Number of Group Events"],
+        [curTotGroupEvents]
+      ];
+      
+      //paste data
+      FunctionContainer.tripleTrySetSSValues(cgpeis,1,1,cgpeiscv.length,cgpeiscv[0].length,cgpeiscv);
+      
+
+      
+      
+      
+      ///*** EXTRA LINKS ***///
+      var cgpels = FunctionContainer.tripleTryOpenSheet(dllscv[47][valsForGroupProfileUpdate[z]].toString(),"Extra Links");
+      //most of this is old code so it will look bad
+      
+      //deletes old file if there is one
+      if(dllscv[50][valsForGroupProfileUpdate[z]].toString()){//start 3rd if
+        //if all else fails just delete every ga file and delete row values 51 in dlls manually
+        try{DriveApp.getFileById(dllscv[50][valsForGroupProfileUpdate[z]].toString()).setTrashed(true);}
+        catch(e){FunctionContainer.tripleTrySetSSValuesSingleString(dlls, 51, valsForGroupProfileUpdate[z]+1, 1, 1, "")}
+      }//end 3rd if
+      
+      
+      //makes copy of ga template sheet and puts it in ga files folder
+      var newFileId = DriveApp.getFileById("1DRqMX0cFzbMDN3-56iOtiAACD9Mq6SzXJxyyDPfv_YU").makeCopy(curGroupsIncluded[0].toString()+" General Availability "+currentDate, DriveApp.getFolderById("1llx04i10EupoO4COuntD0u_ABT7WOmR0")).getId();
+      
+      //puts new id in dlls
+      FunctionContainer.tripleTrySetSSValues(dlls,51,valsForGroupProfileUpdate[z]+1,1,1,[[newFileId]]);
+      
+      //gets sheet url
+      var sheetLink = DriveApp.getFileById(newFileId).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW).getUrl();
+      
+      //links
+      var curVals = [
+        ['=HYPERLINK("'+sheetLink+'", "' + curGroupsIncluded[0].toString() + ' Availability")'],
+        [curGroupsIncluded[0].toString() + ' Folder Links'],
+        ['=HYPERLINK("'+dllscv[49][dllscv[curGroupLocation[0][4]][curGroupLocation[0][1]+11]].toString()+'", "Main Folder")'],
+        ['=HYPERLINK("'+dllscv[58][dllscv[curGroupLocation[0][4]][curGroupLocation[0][1]+11]].toString()+'", "General Documents")'],
+        ['=HYPERLINK("'+dllscv[59][dllscv[curGroupLocation[0][4]][curGroupLocation[0][1]+11]].toString()+'", "Important Documents")'],
+        ['=HYPERLINK("'+dllscv[57][dllscv[curGroupLocation[0][4]][curGroupLocation[0][1]+11]].toString()+'", "Group Reports")'],
+        ['=HYPERLINK("'+dllscv[73][dllscv[curGroupLocation[0][4]][curGroupLocation[0][1]+11]].toString()+'", "Group Profile")'],
+        ['=HYPERLINK("'+dllscv[56][dllscv[curGroupLocation[0][4]][curGroupLocation[0][1]+11]].toString()+'", "Member Profiles")']
+      ];
+      
+      //puts url in profile
+      FunctionContainer.tripleTrySetSSValues(cgpels,2,1,8,1,curVals);
+      
+      //new spreadsheet vars
+      var gpgas = FunctionContainer.tripleTryOpenSheet(newFileId,"General Availability");
+      var gpgads = FunctionContainer.tripleTryOpenSheet(newFileId,"GA Data");
+      var gpgadscv = FunctionContainer.tripleTryGetValues(gpgads,1,1,168,3);
+      
+      //General Availability
+      
+      //resetting ga data
+      for(var i = 0; i<gpgadscv.length;i++){gpgadscv[i][2]=0}
+      
+      //getting the new ga data
+      //cycles thru pmdcmscv
+      for(var i = 0; i<allCurMembers.length;i++){
+        //each for loop is just seeing if someone has the specified time included in the cell and if so add one if not nothing
+        for(var x = 0 ;x<24;x++){if(pmdcmscv[allCurMembers[i][2]][13].toString().indexOf(gpgadscv[x][0])!==-1){gpgadscv[x][2]=gpgadscv[x][2]+1;}}
+        for(var x = 24 ;x<48;x++){if(pmdcmscv[allCurMembers[i][2]][14].toString().indexOf(gpgadscv[x][0])!==-1){gpgadscv[x][2]=gpgadscv[x][2]+1;}}
+        for(var x = 48 ;x<72;x++){if(pmdcmscv[allCurMembers[i][2]][15].toString().indexOf(gpgadscv[x][0])!==-1){gpgadscv[x][2]=gpgadscv[x][2]+1;}}
+        for(var x = 72 ;x<96;x++){if(pmdcmscv[allCurMembers[i][2]][16].toString().indexOf(gpgadscv[x][0])!==-1){gpgadscv[x][2]=gpgadscv[x][2]+1;}}
+        for(var x = 96 ;x<120;x++){if(pmdcmscv[allCurMembers[i][2]][17].toString().indexOf(gpgadscv[x][0])!==-1){gpgadscv[x][2]=gpgadscv[x][2]+1;}}
+        for(var x = 120 ;x<144;x++){if(pmdcmscv[allCurMembers[i][2]][18].toString().indexOf(gpgadscv[x][0])!==-1){gpgadscv[x][2]=gpgadscv[x][2]+1;}}
+        for(var x = 144 ;x<168;x++){if(pmdcmscv[allCurMembers[i][2]][19].toString().indexOf(gpgadscv[x][0])!==-1){gpgadscv[x][2]=gpgadscv[x][2]+1;}}}
+      
+      //paste data
+      FunctionContainer.tripleTrySetSSValues(gpgads,1,1,gpgadscv.length,3,gpgadscv);
+      
+      //chart sunday
+      var chart = gpgas.newChart().asBarChart().addRange(gpgads.getRange(1,2,24,2))
+      .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+      .setTransposeRowsAndColumns(false)
+      .setNumHeaders(-1)
+      .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+      .setOption('bubble.stroke', '#000000')
+      .setOption('subtitle', 'ET')
+      .setOption('annotations.domain.textStyle.color', '#808080')
+      .setOption('textStyle.color', '#000000')
+      .setOption('legend.textStyle.color', '#191919')
+      .setOption('subtitleTextStyle.color', '#999999')
+      .setOption('subtitleTextStyle.alignment', 'center')
+      .setOption('subtitleTextStyle.italic', true)
+      .setOption('titleTextStyle.color', '#757575')
+      .setOption('annotations.total.textStyle.color', '#808080')
+      .setOption('hAxis.textStyle.color', '#000000')
+      .setOption('vAxes.0.textStyle.color', '#000000')
+      .setOption('vAxes.0.titleTextStyle.color', '#000000')
+      .setOption('height', 597)
+      .setPosition(2, 1, 0, 0)
+      .build();
+      gpgas.insertChart(chart);
+      
+      //chart monday
+      var chart = gpgas.newChart().asBarChart().addRange(gpgads.getRange(25,2,24,2))
+      .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+      .setTransposeRowsAndColumns(false)
+      .setNumHeaders(-1)
+      .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+      .setOption('bubble.stroke', '#000000')
+      .setOption('subtitle', 'ET')
+      .setOption('annotations.domain.textStyle.color', '#808080')
+      .setOption('textStyle.color', '#000000')
+      .setOption('legend.textStyle.color', '#191919')
+      .setOption('subtitleTextStyle.color', '#999999')
+      .setOption('subtitleTextStyle.alignment', 'center')
+      .setOption('subtitleTextStyle.italic', true)
+      .setOption('annotations.total.textStyle.color', '#808080')
+      .setOption('hAxis.textStyle.color', '#000000')
+      .setOption('vAxes.0.textStyle.color', '#000000')
+      .setOption('vAxes.0.titleTextStyle.color', '#000000')
+      .setOption('height', 597)
+      .setPosition(4, 1, 0, 0)
+      .build();
+      gpgas.insertChart(chart);
+      
+      //chart tuesday
+      var chart = gpgas.newChart().asBarChart().addRange(gpgads.getRange(49,2,24,2))
+      .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+      .setTransposeRowsAndColumns(false)
+      .setNumHeaders(-1)
+      .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+      .setOption('bubble.stroke', '#000000')
+      .setOption('subtitle', 'ET')
+      .setOption('annotations.domain.textStyle.color', '#808080')
+      .setOption('textStyle.color', '#000000')
+      .setOption('legend.textStyle.color', '#191919')
+      .setOption('subtitleTextStyle.color', '#999999')
+      .setOption('subtitleTextStyle.alignment', 'center')
+      .setOption('subtitleTextStyle.italic', true)
+      .setOption('annotations.total.textStyle.color', '#808080')
+      .setOption('hAxis.textStyle.color', '#000000')
+      .setOption('vAxes.0.textStyle.color', '#000000')
+      .setOption('vAxes.0.titleTextStyle.color', '#000000')
+      .setOption('height', 597)
+      .setPosition(6, 1, 0, 0)
+      .build();
+      gpgas.insertChart(chart);
+      
+      //chart wednesday
+      var chart = gpgas.newChart().asBarChart().addRange(gpgads.getRange(73,2,24,2))
+      .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+      .setTransposeRowsAndColumns(false)
+      .setNumHeaders(-1)
+      .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+      .setOption('bubble.stroke', '#000000')
+      .setOption('subtitle', 'ET')
+      .setOption('annotations.domain.textStyle.color', '#808080')
+      .setOption('textStyle.color', '#000000')
+      .setOption('legend.textStyle.color', '#191919')
+      .setOption('subtitleTextStyle.color', '#999999')
+      .setOption('subtitleTextStyle.alignment', 'center')
+      .setOption('subtitleTextStyle.italic', true)
+      .setOption('annotations.total.textStyle.color', '#808080')
+      .setOption('hAxis.textStyle.color', '#000000')
+      .setOption('vAxes.0.textStyle.color', '#000000')
+      .setOption('vAxes.0.titleTextStyle.color', '#000000')
+      .setOption('height', 597)
+      .setPosition(8, 1, 0, 0)
+      .build();
+      gpgas.insertChart(chart);
+      
+      //chart thursday
+      var chart = gpgas.newChart().asBarChart().addRange(gpgads.getRange(97,2,24,2))
+      .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+      .setTransposeRowsAndColumns(false)
+      .setNumHeaders(-1)
+      .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+      .setOption('bubble.stroke', '#000000')
+      .setOption('subtitle', 'ET')
+      .setOption('annotations.domain.textStyle.color', '#808080')
+      .setOption('textStyle.color', '#000000')
+      .setOption('legend.textStyle.color', '#191919')
+      .setOption('subtitleTextStyle.color', '#999999')
+      .setOption('subtitleTextStyle.alignment', 'center')
+      .setOption('subtitleTextStyle.italic', true)
+      .setOption('annotations.total.textStyle.color', '#808080')
+      .setOption('hAxis.textStyle.color', '#000000')
+      .setOption('vAxes.0.textStyle.color', '#000000')
+      .setOption('vAxes.0.titleTextStyle.color', '#000000')
+      .setOption('height', 597)
+      .setPosition(10, 1, 0, 0)
+      .build();
+      gpgas.insertChart(chart);
+      
+      //chart friday
+      var chart = gpgas.newChart().asBarChart().addRange(gpgads.getRange(121,2,24,2))
+      .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+      .setTransposeRowsAndColumns(false)
+      .setNumHeaders(-1)
+      .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+      .setOption('bubble.stroke', '#000000')
+      .setOption('subtitle', 'ET')
+      .setOption('annotations.domain.textStyle.color', '#808080')
+      .setOption('textStyle.color', '#000000')
+      .setOption('legend.textStyle.color', '#191919')
+      .setOption('subtitleTextStyle.color', '#999999')
+      .setOption('subtitleTextStyle.alignment', 'center')
+      .setOption('subtitleTextStyle.italic', true)
+      .setOption('annotations.total.textStyle.color', '#808080')
+      .setOption('hAxis.textStyle.color', '#000000')
+      .setOption('vAxes.0.textStyle.color', '#000000')
+      .setOption('vAxes.0.titleTextStyle.color', '#000000')
+      .setOption('height', 597)
+      .setPosition(12, 1, 0, 0)
+      .build();
+      gpgas.insertChart(chart);
+      
+      //chart saturday
+      var chart = gpgas.newChart().asBarChart().addRange(gpgads.getRange(145,2,24,2))
+      .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+      .setTransposeRowsAndColumns(false)
+      .setNumHeaders(-1)
+      .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+      .setOption('bubble.stroke', '#000000')
+      .setOption('subtitle', 'ET')
+      .setOption('annotations.domain.textStyle.color', '#808080')
+      .setOption('textStyle.color', '#000000')
+      .setOption('legend.textStyle.color', '#191919')
+      .setOption('subtitleTextStyle.color', '#999999')
+      .setOption('subtitleTextStyle.alignment', 'center')
+      .setOption('subtitleTextStyle.italic', true)
+      .setOption('annotations.total.textStyle.color', '#808080')
+      .setOption('hAxis.textStyle.color', '#000000')
+      .setOption('vAxes.0.textStyle.color', '#000000')
+      .setOption('vAxes.0.titleTextStyle.color', '#000000')
+      .setOption('height', 597)
+      .setPosition(14, 1, 0, 0)
+      .build();
+      gpgas.insertChart(chart);
+      
+
+
+
+
+
+      ///*** EVENTS ***///
+      //info obtained when extra info got details about events
+      var cgpevs = FunctionContainer.tripleTryOpenSheet(dllscv[47][valsForGroupProfileUpdate[z]].toString(),"Events");
+      if(dllscv[65][valsForGroupProfileUpdate[z]].toString().indexOf("evs")!==-1){//start 2nd if
+        //hide sheet
+        FunctionContainer.tripleTryHideSheet(cgpevs);
+        
+        //gets last row
+        var cgpevslri = FunctionContainer.tripleTryGetLastRow(cgpevs);
+        
+        //deletes rows if last row is above 2
+        if(cgpevslri>2){//start 3rd if
+          FunctionContainer.tripleTryDeleteRows(cgpevs,3,cgpevslri-2);
+        }//end 3rd if
+        
+        //if cgpevscv isnt empty
+        if(cgpevscv.length>0){//start 3rd if
+        
+          //removes duplicates
+          cgpevscv = FunctionContainer.arrayDuplicateFilter(cgpevscv);
+          
+          //adds rows
+          FunctionContainer.tripleTryAddRows(cgpevs,2,cgpevscv.length);
+          
+          //formats rows to certain height
+          cgpevs.setRowHeights(3,cgpevscv.length,105);
+          
+          //paste data and format
+          cgpevs.getRange(3,1,cgpevscv.length,cgpevscv[0].length).setValues(cgpevscv).setFontWeight(null).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP).setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000');
+          
+          //formats outside border
+          cgpevs.getRange(1,1,cgpevscv.length+2,cgpevscv[0].length).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+          
+        }//end 3rd if
+        
+        //showsheet
+        FunctionContainer.tripleTryShowSheet(cgpevs);
+        
+      }//end 2nd if
+      
+      //hides sheet if not included
+      else{FunctionContainer.tripleTryHideSheet(cgpevs)}
+      
+      
+      
+      
+      
+      
+      ///*** MEMBER UPDATES ***///
+      var cgpmus = FunctionContainer.tripleTryOpenSheet(dllscv[47][valsForGroupProfileUpdate[z]].toString(),"Member Updates");
+      if(dllscv[65][valsForGroupProfileUpdate[z]].toString().indexOf("mus")!==-1){//start 2nd if
+        var cgpmuscv = [];
+        var cgpmrscv = [];
+        var cgprscv = [];
+        
+        //gets info
+        for(var i=0; i<muhauscv.length; i+=1){//start 2nd for
+          for(var x=0; x<allCurMembers.length; x+=1){//start 3rd for
+            if(allCurMembers[x][0].toString()===muhauscv[i][1].toString()&&muhauscv[i][0].toString()!=="Member Report"&&muhauscv[i][0].toString()!=="Reprimand"){//start 3rd if
+              cgpmuscv.push(muhauscv[i]);
+            }//end 3rd if
+            else if(allCurMembers[x][0].toString()===muhauscv[i][1].toString()&&muhauscv[i][0].toString()==="Member Report"){//start 3rd if
+              cgpmrscv.push([muhauscv[i][1].toString(),muhauscv[i][3],muhauscv[i][2].toString().replace("Report Title: ",""),muhauscv[i][4].toString().replace("Report Details: ",""),muhauscv[i][5].toString()]);
+            }//end 3rd if
+            else if(allCurMembers[x][0].toString()===muhauscv[i][1].toString()&&muhauscv[i][0].toString()==="Reprimand"){//start 3rd if
+              cgprscv.push([muhauscv[i][1].toString(),muhauscv[i][3],muhauscv[i][2].toString().replace("Severity of Reprimand(1-5): ",""),muhauscv[i][4].toString(),muhauscv[i][5].toString()]);
+            }//end 3rd if
+          }//end 3rd for
+        }//end 2nd for
+        
+        //hide sheet
+        FunctionContainer.tripleTryHideSheet(cgpmus);
+        
+        //gets last row
+        var cgpmuslri = FunctionContainer.tripleTryGetLastRow(cgpmus);
+        
+        //deletes rows if last row is above 2
+        if(cgpmuslri>2){//start 3rd if
+          FunctionContainer.tripleTryDeleteRows(cgpmus,3,cgpmuslri-2);
+        }//end 3rd if
+        
+        //if cgpmuscv isnt empty
+        if(cgpmuscv.length>0){//start 3rd if
+          //adds rows
+          FunctionContainer.tripleTryAddRows(cgpmus,2,cgpmuscv.length);
+          
+          //formats rows to certain height
+          cgpmus.setRowHeights(3,cgpmuscv.length,105);
+          
+          //paste data and format
+          cgpmus.getRange(3,1,cgpmuscv.length,cgpmuscv[0].length).setValues(cgpmuscv).setFontWeight(null).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP).setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000');
+          
+          //formats outside border
+          cgpmus.getRange(1,1,cgpmuscv.length+2,cgpmuscv[0].length).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+          
+        }//end 3rd if
+        
+        //showsheet
+        FunctionContainer.tripleTryShowSheet(cgpmus);
+        
+      }//end 2nd if
+      
+      //hides sheet if not included
+      else{FunctionContainer.tripleTryHideSheet(cgpmus)}
+      
+      
+      
+      
+      
+      
+      ///*** MEMBER REPORTS ***///
+      //info obtained in previous section
+      var cgpmrs = FunctionContainer.tripleTryOpenSheet(dllscv[47][valsForGroupProfileUpdate[z]].toString(),"Member Reports");
+      if(dllscv[65][valsForGroupProfileUpdate[z]].toString().indexOf("mrs")!==-1){//start 2nd if
+        //hide sheet
+        FunctionContainer.tripleTryHideSheet(cgpmrs);
+        
+        //gets last row
+        var cgpmrslri = FunctionContainer.tripleTryGetLastRow(cgpmrs);
+        
+        //deletes rows if last row is above 2
+        if(cgpmrslri>2){//start 3rd if
+          FunctionContainer.tripleTryDeleteRows(cgpmrs,3,cgpmrslri-2);
+        }//end 3rd if
+        
+        //if cgpmrscv isnt empty
+        if(cgpmrscv.length>0){//start 3rd if
+          //adds rows
+          FunctionContainer.tripleTryAddRows(cgpmrs,2,cgpmrscv.length);
+          
+          //formats rows to certain height
+          cgpmrs.setRowHeights(3,cgpmrscv.length,105);
+          
+          //paste data and format
+          cgpmrs.getRange(3,1,cgpmrscv.length,cgpmrscv[0].length).setValues(cgpmrscv).setFontWeight(null).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP).setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000');
+          
+          //formats outside border
+          cgpmrs.getRange(1,1,cgpmrscv.length+2,cgpmrscv[0].length).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+          
+        }//end 3rd if
+        
+        //showsheet
+        FunctionContainer.tripleTryShowSheet(cgpmrs);
+        
+      }//end 2nd if
+      
+      //hides sheet if not included
+      else{FunctionContainer.tripleTryHideSheet(cgpmrs)}
+      
+      
+      
+      
+      
+      
+      
+      
+      ///*** REPRIMANDS ***///
+      //info obtained in member update section
+      var cgprs = FunctionContainer.tripleTryOpenSheet(dllscv[47][valsForGroupProfileUpdate[z]].toString(),"Reprimands");
+      if(dllscv[65][valsForGroupProfileUpdate[z]].toString().indexOf("mds")!==-1){//start 2nd if
+        //hide sheet
+        FunctionContainer.tripleTryHideSheet(cgprs);
+        
+        //gets last row
+        var cgprslri = FunctionContainer.tripleTryGetLastRow(cgprs);
+        
+        //deletes rows if last row is above 2
+        if(cgprslri>2){//start 3rd if
+          FunctionContainer.tripleTryDeleteRows(cgprs,3,cgprslri-2);
+        }//end 3rd if
+        
+        //if cgprscv isnt empty
+        if(cgprscv.length>0){//start 3rd if
+          //adds rows
+          FunctionContainer.tripleTryAddRows(cgprs,2,cgprscv.length);
+          
+          //formats rows to certain height
+          cgprs.setRowHeights(3,cgprscv.length,105);
+          
+          //paste data and format
+          cgprs.getRange(3,1,cgprscv.length,cgprscv[0].length).setValues(cgprscv).setFontWeight(null).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP).setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000');
+          
+          //formats outside border
+          cgprs.getRange(1,1,cgprscv.length+2,cgprscv[0].length).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+          
+        }//end 3rd if
+        
+        //showsheet
+        FunctionContainer.tripleTryShowSheet(cgprs);
+        
+      }//end 2nd if
+      
+      //hides sheet if not included
+      else{FunctionContainer.tripleTryHideSheet(cgprs)}
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      ///*** NEW MEMBERS ***///
+      var cgpnms = FunctionContainer.tripleTryOpenSheet(dllscv[47][valsForGroupProfileUpdate[z]].toString(),"New Members");
+      if(dllscv[65][valsForGroupProfileUpdate[z]].toString().indexOf("nms")!==-1){//start 2nd if
+        var cgpnmscv = [];
+        
+        //gets info
+        for(var i=0; i<muhnmuscv.length; i+=1){//start 2nd for
+          if(curGroupsIncluded.toString().indexOf(muhnmuscv[i][2].toString())!==-1){//start 3rd if
+            cgpnmscv.push(muhnmuscv[i]);
+          }//end 3rd if
+        }//end 2nd for
+        
+        //hide sheet
+        FunctionContainer.tripleTryHideSheet(cgpnms);
+        
+        //gets last row
+        var cgpnmslri = FunctionContainer.tripleTryGetLastRow(cgpnms);
+        
+        //deletes rows if last row is above 2
+        if(cgpnmslri>2){//start 3rd if
+          FunctionContainer.tripleTryDeleteRows(cgpnms,3,cgpnmslri-2);
+        }//end 3rd if
+        
+        //if cgpnmscv isnt empty
+        if(cgpnmscv.length>0){//start 3rd if
+          //adds rows
+          FunctionContainer.tripleTryAddRows(cgpnms,2,cgpnmscv.length);
+          
+          //formats rows to certain height
+          cgpnms.setRowHeights(3,cgpnmscv.length,105);
+          
+          //paste data and format
+          cgpnms.getRange(3,1,cgpnmscv.length,cgpnmscv[0].length).setValues(cgpnmscv).setFontWeight(null).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP).setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000');
+          
+          //formats outside border
+          cgpnms.getRange(1,1,cgpnmscv.length+2,cgpnmscv[0].length).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+          
+        }//end 3rd if
+        
+        //showsheet
+        FunctionContainer.tripleTryShowSheet(cgpnms);
+        
+      }//end 2nd if
+      
+      //hides sheet if not included
+      else{FunctionContainer.tripleTryHideSheet(cgpnms)}
+      
+      
+      
+      
+      
+      
+      
+      
+      ///*** MAPS ***///
+      var cgpmas = FunctionContainer.tripleTryOpenSheet(dllscv[47][valsForGroupProfileUpdate[z]].toString(),"Maps");
+      if(dllscv[65][valsForGroupProfileUpdate[z]].toString().indexOf("mas")!==-1){//start 2nd if
+        var cgpmascv = [];
+        
+        //gets info
+        for(var i=0; i<fhamscv.length; i+=1){//start 2nd for
+          if(fhamscv[i][3].toString()===dllscv[0][curGroupLocation[0][1]]||fhamscv[i][3].toString()==="All Groups"){//start 3rd if
+            cgpmascv.push(fhamscv[i]);
+          }//end 3rd if
+        }//end 2nd for
+        
+        //hide sheet
+        FunctionContainer.tripleTryHideSheet(cgpmas);
+        
+        //gets last row
+        var cgpmaslri = FunctionContainer.tripleTryGetLastRow(cgpmas);
+        
+        //deletes rows if last row is above 2
+        if(cgpmaslri>2){//start 3rd if
+          FunctionContainer.tripleTryDeleteRows(cgpmas,3,cgpmaslri-2);
+        }//end 3rd if
+        
+        //if cgpmascv isnt empty
+        if(cgpmascv.length>0){//start 3rd if
+          //adds rows
+          FunctionContainer.tripleTryAddRows(cgpmas,2,cgpmascv.length);
+          
+          //formats rows to certain height
+          cgpmas.setRowHeights(3,cgpmascv.length,105);
+          
+          //paste data and format
+          cgpmas.getRange(3,1,cgpmascv.length,cgpmascv[0].length).setValues(cgpmascv).setFontWeight(null).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP).setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000');
+          
+          //formats outside border
+          cgpmas.getRange(1,1,cgpmascv.length+2,cgpmascv[0].length).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+          
+        }//end 3rd if
+        
+        //showsheet
+        FunctionContainer.tripleTryShowSheet(cgpmas);
+        
+      }//end 2nd if
+      
+      //hides sheet if not included
+      else{FunctionContainer.tripleTryHideSheet(cgpmas)}
+      
+      
+      
+      
+      
+      
+      
+      
+      ///*** DISCHARGED MEMBERS ***///
+      var cgpdms = FunctionContainer.tripleTryOpenSheet(dllscv[47][valsForGroupProfileUpdate[z]].toString(),"Discharged Members");
+      if(dllscv[65][valsForGroupProfileUpdate[z]].toString().indexOf("mas")!==-1){//start 2nd if
+        var cgpdmscv = [];
+        
+        //gets info
+        for(var i=0; i<pmddmscv.length; i+=1){//start 2nd for
+          //makes creds N/A if its empty
+          if(pmddmscv[i][4].toString()===""){//start 3rd if
+            pmddmscv[i][4] = "N/A";
+          }//end 3rd if
+          //contains an included group
+          for(var x=0; x<curGroupsIncluded.length; x+=1){//start 3rd for
+            if(pmddmscv[i][3].toString().indexOf(curGroupsIncluded[x].toString())!==-1){//start 3rd if
+              //adds to all array
+              cgpdmscv.push([pmddmscv[i][3].toString(),pmddmscv[i][0].toString(),pmddmscv[i][2].toString(),
+                pmddmscv[i][5].toString(),pmddmscv[i][4].toString(),FunctionContainer.dateReplace(pmddmscv[i][20].toString()),pmddmscv[i][21]]);
+              
+              x = curGroupsIncluded.length;
+            }//end 3rd if
+          }//end 3rd for
+          
+      
+        }//end 2nd for
+        
+        //hide sheet
+        FunctionContainer.tripleTryHideSheet(cgpdms);
+        
+        //gets last row
+        var cgpdmslri = FunctionContainer.tripleTryGetLastRow(cgpdms);
+        
+        //deletes rows if last row is above 2
+        if(cgpdmslri>2){//start 3rd if
+          FunctionContainer.tripleTryDeleteRows(cgpdms,3,cgpdmslri-2);
+        }//end 3rd if
+        
+        //if cgpdmscv isnt empty
+        if(cgpdmscv.length>0){//start 3rd if
+          //adds rows
+          FunctionContainer.tripleTryAddRows(cgpdms,2,cgpdmscv.length);
+          
+          //formats rows to certain height
+          cgpdms.setRowHeights(3,cgpdmscv.length,50);
+          
+          //paste data and format
+          cgpdms.getRange(3,1,cgpdmscv.length,cgpdmscv[0].length).setValues(cgpdmscv).setFontWeight(null).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP).setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000');
+          
+          //formats outside border
+          cgpdms.getRange(1,1,cgpdmscv.length+2,cgpdmscv[0].length).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+          
+        }//end 3rd if
+        
+        //showsheet
+        FunctionContainer.tripleTryShowSheet(cgpdms);
+        
+      }//end 2nd if
+      
+      //hides sheet if not included
+      else{FunctionContainer.tripleTryHideSheet(cgpdms)}
+      
+    }//end 1st if
+    
+    
+  }//end 1st for
+}//end groupProfileUpdate

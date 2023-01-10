@@ -1,0 +1,697 @@
+function memberHubUpdate(){
+  errorCheck("4:03",38,"memberHubUpdate","MemberHubUpdate");
+}//end memberHubUpdate
+
+
+function errorCheck(time,col,functionName,projectName){
+  try{main();triggerCreator(time,col,functionName);}//end 1st try
+  catch(error){console.log(error);
+    if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+      try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 2nd try
+      catch(error){console.log(error);
+        if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+          try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 3rd try
+          catch(error){console.log(error);
+            FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 3rd catch
+        else{FunctionContainer.discErrorReport(error,functionName,projectName);}}}//end 2nd catch
+    else{FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 1st catch
+}//end errorCheck
+
+
+function triggerCreator(ct,tColNum,scriptName){
+  var datSheetOriginal=FunctionContainer.tripleTryOpenSheet("", "Dates");var cdd=datSheetOriginal.getRange(1,1,15,datSheetOriginal.getLastColumn()).getValues();var triggerChangesMade = [];var vals = [[],[],[],[],[],[],[],[],[],[],[]];
+  triggerChangesMade.push("Old Trigger Id's and Dates:\nTrigger ID: "+cdd[9][tColNum-1].toString()+" For Date: "+cdd[1][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[10][tColNum-1].toString()+" For Date: "+cdd[4][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[11][tColNum-1].toString()+" For Date: "+cdd[5][tColNum-1].toString());
+  if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[1][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())){
+    var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){if(t[i].getUniqueId()===cdd[9][tColNum-1].toString()){ScriptApp.deleteTrigger(t[i]);triggerChangesMade.push("\nTrigger Deleted ~ "+cdd[9][tColNum-1].toString()+" for date: "+cdd[1][tColNum-1].toString());}}
+    var bruhX3 = cdd[3][0].toString();for(var iii = 0;iii<4;iii++){cdd[iii][0]=cdd[iii][0].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    for(var m=0;m<months.length;m++){if(bruhX3.indexOf(months[m].toString())!==-1){m=m+1;triggerTime = bruhX3[11].toString()+bruhX3[12].toString()+bruhX3[13].toString()+bruhX3[14].toString()+"-"+m+"-"+bruhX3[8].toString()+bruhX3[9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[0] = [cdd[4][tColNum-1]];vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[3] = [cdd[5][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];
+    vals[8] = [cdd[10][tColNum-1]];vals[9] = [cdd[11][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}
+  else if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[3][0].toString())){triggerChangesMade.push("\nNo Trigger Changes Made");}
+  else{var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){triggerChangesMade.push("\nTrigger Deleted ~ "+t[i].getUniqueId());ScriptApp.deleteTrigger(t[i]);}var cd=datSheetOriginal.getRange(1,1,4).getValues();
+    for(var iii = 0;iii<4;iii++){cd[iii]=cd[iii].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[0].indexOf(months[m].toString())!==-1){
+    m=m+1;triggerTime = cd[0][11].toString()+cd[0][12].toString()+cd[0][13].toString()+cd[0][14].toString()+"-"+m+"-"+cd[0][8].toString()+cd[0][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(2,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();
+    var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[0] = [tt];vals[8] = [uniqueTriggerID];var triggerTime="";
+    var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[2].indexOf(months[m].toString())!==-1){m=m+1;triggerTime = cd[2][11].toString()+cd[2][12].toString()+cd[2][13].toString()+cd[2][14].toString()+"-"+m+"-"+cd[2][8].toString()+cd[2][9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(5,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[3] = [tt];vals[9] = [uniqueTriggerID];var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[3].indexOf(months[m].toString())!==-1){m=m+1;
+    triggerTime = cd[3][11].toString()+cd[3][12].toString()+cd[3][13].toString()+cd[3][14].toString()+"-"+m+"-"+cd[3][8].toString()+cd[3][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();
+    triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}console.log(triggerChangesMade);
+}//end triggerCreator
+
+
+function main(){
+  try{var lock = LockService.getScriptLock();lock.waitLock(150000);}catch(lockError){console.log(lockError)};
+  
+  
+  var curVals = undefined;
+  
+  
+  //Member Hub All Groups Sheet
+  var mhags = FunctionContainer.tripleTryOpenSheet("","All Groups");
+  var mhagsmri = FunctionContainer.tripleTryGetMaxRows(mhags);
+  var mhagsmci = 6;
+  
+  
+  //Member Hub Discord Nicknames Sheet
+  var mhdns = FunctionContainer.tripleTryOpenSheet("","Discord Nicknames");
+  var mhdnsmri = FunctionContainer.tripleTryGetMaxRows(mhdns);
+  var mhdnsmci = 2;
+  
+  
+  //Member Hub Morai Sheet
+  var mhms = FunctionContainer.tripleTryOpenSheet("","Morai");
+  var mhmsmri = FunctionContainer.tripleTryGetMaxRows(mhms);
+  var mhmsmci = 6;
+  
+  
+  //Member Hub Upper Echelon Sheet
+  var mhues = FunctionContainer.tripleTryOpenSheet("","Upper Echelon");
+  var mhuesmri = FunctionContainer.tripleTryGetMaxRows(mhues);
+  var mhuesmci = 6;
+  
+  
+  //Member Hub Special Groups Sheet
+  var mhsgs = FunctionContainer.tripleTryOpenSheet("","Special Groups");
+  var mhsgsmri = FunctionContainer.tripleTryGetMaxRows(mhsgs);
+  var mhsgsmci = 6;
+  
+  
+  //Member Hub Councils Sheet
+  var mhcs = FunctionContainer.tripleTryOpenSheet("","Councils");
+  var mhcsmri = FunctionContainer.tripleTryGetMaxRows(mhcs);
+  var mhcsmci = 6;
+  
+  
+  //Member Hub Extra Info Sheet
+  var mheis = FunctionContainer.tripleTryOpenSheet("","Extra Info");
+  var mheismri = FunctionContainer.tripleTryGetMaxRows(mheis);
+  var mheismci = 1;
+  
+  
+  //Member Hub Extra Links Sheet
+  var mhels = FunctionContainer.tripleTryOpenSheet("","Extra Links");
+  var mhelsmri = FunctionContainer.tripleTryGetMaxRows(mhels);
+  var mhelsmci = 1;
+  
+  
+  //Member Hub All Discharged Members Sheet
+  var mhadms = FunctionContainer.tripleTryOpenSheet("","All Discharged Members");
+  var mhadmsmri = FunctionContainer.tripleTryGetMaxRows(mhadms);
+  var mhadmsmci = 7;
+  
+  
+  //PXE Member Data Discharged Members Sheet
+  curVals = FunctionContainer.getpmddmscv("date");
+  var pmddms = curVals[0];
+  var pmddmslri = curVals[2];
+  var pmddmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //PXE Member Data Current Members Sheet
+  curVals = FunctionContainer.getpmdcmscv("date");
+  var pmdcms = curVals[0];
+  var pmdcmslri = curVals[2];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  var currentDateNum = dllscv[10][1];
+  var currentDate = FunctionContainer.dateReplace(dllscv[10][0]);
+  curVals = undefined;
+  
+  
+  //Event Debrief Hub all Event debriefs sheet
+  curVals = FunctionContainer.getedhaedscv("num", dllscv);
+  var edhaeds = curVals[0];
+  var edhaedslri = curVals[2];
+  var edhaedscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //member update Hub New Member updates sheet
+  curVals = FunctionContainer.getmuhnmuscv("date", dllscv);
+  var muhnmuscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Sheets being done here
+  //All Groups
+  //Upper Echelon
+  //Special Groups
+  //Morai
+  //Councils
+  
+  
+  //declares necessary vars
+  
+  var mhagscv = [];
+  var mhuescv = [];
+  var mhsgscv = [];
+  var mhmscv = [];
+  var mhcscv = [];
+  //[group,,,,,],[position,gamertag,rank,Generation,credentials,date enlisted]]
+  
+  var allGroupSheetcvs = [
+    //all groups
+    ["mhagscv",mhagscv,[],[],mhags,mhagsmri,[],[],[],[],[],[],[],[],[]],
+    //upper echelon
+    ["mhuescv",mhuescv,[],[],mhues,mhuesmri,[],[],[],[],[],[],[],[],[]],
+    //special groups
+    ["mhsgscv",mhsgscv,[],[],mhsgs,mhsgsmri,[],[],[],[],[],[],[],[],[]],
+    //morai
+    ["mhmscv",mhmscv,[],[],mhms,mhmsmri,[],[],[],[],[],[],[],[],[]],
+    //councils
+    ["mhcscv",mhcscv,[],[],mhcs,mhcsmri,[],[],[],[],[],[],[],[],[]]
+  ];
+    /*["sheetcv",[0]
+      sheetcv,[1]
+      [row to merge,row to merge],[2]
+      [if it needs to formated to main or not],[3]
+      sheet,[4]
+      sheet max rows num,[5]
+      [],[6]
+      [],[7]
+      [],[8]
+      [],[9]
+      [],[10]
+      [],[11]
+      [],[12]
+      [],[13]
+      []][14]
+    */
+  //order:
+  //Upper Echelon - Special Groups - Morai - Councils
+  var orderOfGroups = [
+    //Upper Echelon
+    [dllscv[0][156].toString(),156,1,["mhagscv","mhuescv"],0],
+    //Phoenix S.W.A.L
+    [dllscv[0][39].toString(),39,4,["mhagscv","mhsgscv"],0],
+    //Praetorian Guard
+    [dllscv[0][52].toString(),52,1,["mhagscv","mhsgscv"],0],
+    //Seeker Intelligence
+    [dllscv[0][65].toString(),65,1,["mhagscv","mhsgscv"],0],
+    //Vicarius Senate
+    [dllscv[0][78].toString(),78,1,["mhagscv","mhsgscv"],0],
+    //Special Group 04
+    [dllscv[0][91].toString(),91,1,["mhagscv","mhsgscv"],0],
+    //Special Group 05
+    [dllscv[0][104].toString(),104,1,["mhagscv","mhsgscv"],0],
+    //Special Group 06
+    [dllscv[0][117].toString(),117,1,["mhagscv","mhsgscv"],0],
+    //Special Group 07
+    [dllscv[0][130].toString(),130,1,["mhagscv","mhsgscv"],0],
+    //Special Group 08
+    [dllscv[0][143].toString(),143,7,["mhagscv","mhsgscv"],0],
+    //Mora 1
+    [dllscv[0][0].toString(),0,10,["mhagscv","mhmscv"],0],
+    //Mora 2
+    [dllscv[0][13].toString(),13,10,["mhagscv","mhmscv"],0],
+    //Mora 3
+    [dllscv[0][26].toString(),26,10,["mhagscv","mhmscv"],0],
+    //Council 01
+    [dllscv[0][169].toString(),169,1,["mhcscv"],0],
+    //Council 02
+    [dllscv[0][182].toString(),182,1,["mhcscv"],0],
+    //Council 03
+    [dllscv[0][195].toString(),195,1,["mhcscv"],0],
+    //Council 04
+    [dllscv[0][208].toString(),208,1,["mhcscv"],0],
+    //Council 05
+    [dllscv[0][221].toString(),221,1,["mhcscv"],0],
+    //Council 06
+    [dllscv[0][234].toString(),234,1,["mhcscv"],0],
+    //Council 07
+    [dllscv[0][247].toString(),247,1,["mhcscv"],0],
+    //Council 08
+    [dllscv[0][260].toString(),260,1,["mhcscv"],0]
+  ];
+  //[name of group, location in main array, number of rows below to go through, [sheets of inclusion], row in dllscv]
+  
+  
+  FunctionContainer.memberFinderForMemberHub(allGroupSheetcvs,orderOfGroups,dllscv,pmdcmscv);
+  
+  
+  FunctionContainer.memberPasterForProfilesAndMemberHub(allGroupSheetcvs);
+  
+  
+  //Sheets being done here
+  //Extra Info
+  /*[Lacedaemon Extra Info[0], 
+    Current Member Count[1], 
+    #[2], 
+    Last Member to Join[3], 
+    member[4], 
+    Number of Active Members[5], 
+    #[6], 
+    Number of Inactive Members[7], 
+    #[8], 
+    Number of Members on Leave of Absence[9], 
+    #[10], 
+    Number of Members on Inquiry[11], 
+    #[12], 
+    Last Clan Event[13], 
+    date[14], 
+    Number of Clan Events in the Past 7 Days[15], 
+    #[16], 
+    Number of Clan Events in the Past 30 Days[17], 
+    #[18], 
+    # of Normal Forms Submitted in the Past 7 Days[19], 
+    #[20], 
+    # of Normal Forms Submitted in the Past 30 Days[21], 
+    #[22]]
+  */
+  
+  
+  //declares vars
+  
+  var memberCount = 0;
+  var lastMemberToJoin = "";
+  var activeMembers = 0;
+  var inactiveMembers = 0;
+  var membersOnLOA = 0;
+  var lastEventDate = "";
+  var numEvents7Days = 0;
+  var numEvents30Days = 0;
+  var mhdnscv = [];
+  
+  
+  //info finding time
+  
+  //Current Member Count
+  memberCount = pmdcmscv.length;
+  
+  
+  //Last Member to Join
+  lastMemberToJoin = muhnmuscv[0][0].toString();
+  
+  
+  //member status and nickname
+  for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+    //nicknames
+    if(pmdcmscv[i][0].toString() !== ""){//start 1st if
+      mhdnscv.push([FunctionContainer.getDiscordNicknameWithRow(i,dllscv,pmdcmscv), pmdcmscv[i][0].toString()]);
+    }//end 1st if
+    
+    //Number of Active Members
+    if(pmdcmscv[i][8].toString()==="Active"){//start 1st if
+      activeMembers = activeMembers+1;
+    }//end 1st if
+    
+    //Number of Inactive Members
+    if(pmdcmscv[i][8].toString()==="Inactive"){//start 1st if
+      inactiveMembers = inactiveMembers+1;
+    }//end 1st if
+    
+    //Number of Members on Leave of Absence
+    if(pmdcmscv[i][8].toString()==="LOA"){//start 1st if
+      membersOnLOA = membersOnLOA+1;
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  //adds percentage to each num
+  var curNum = ((100*activeMembers)/memberCount);
+  activeMembers = activeMembers+" ("+curNum.toFixed(1)+"% of Total Members)";
+  var curNum = ((100*inactiveMembers)/memberCount);
+  inactiveMembers = inactiveMembers+" ("+curNum.toFixed(1)+"% of Total Members)";
+  var curNum = ((100*membersOnLOA)/memberCount);
+  membersOnLOA = membersOnLOA+" ("+curNum.toFixed(1)+"% of Total Members)";
+  
+  
+  //Last Clan Event Date
+  lastEventDate = edhaedscv[0][0];
+  
+  
+  //Number of Clan Events
+  for(var i=0; i<edhaedscv.length; i+=1){//start 1st for
+    //Number of Clan Events in the Past 7 Days
+    if(edhaedscv[i][0]<=currentDateNum&&edhaedscv[i][0]>=currentDateNum-6){//start 1st if
+      numEvents7Days = numEvents7Days+1;
+    }//end 1st if
+    
+    //Number of Clan Events in the Past 30 Days
+    if(edhaedscv[i][0]<=currentDateNum&&edhaedscv[i][0]>=currentDateNum-29){//start 1st if
+      numEvents30Days = numEvents30Days+1;
+    }//end 1st if
+  }//end 1st for
+  
+  
+  var mheiscv = [
+    ["Phoenix Era Extra Info"], 
+    ["Current Member Count"], 
+    [memberCount], 
+    ["Last Member to Join"], 
+    [lastMemberToJoin], 
+    ["Number of Active Members"], 
+    [activeMembers], 
+    ["Number of Inactive Members"], 
+    [inactiveMembers], 
+    ["Number of Members on Leave of Absence"], 
+    [membersOnLOA], 
+    ["Last Clan Event Date"], 
+    [lastEventDate], 
+    ["Number of Clan Events in the Past 7 Days"], 
+    [numEvents7Days], 
+    ["Number of Clan Events in the Past 30 Days"], 
+    [numEvents30Days]
+  ];
+  
+  
+  //paste data
+  FunctionContainer.tripleTrySetSSValues(mheis,1,1,mheiscv.length,1,mheiscv);
+  
+  
+  
+  //Sheets being done here
+  //Overall General Availability
+  //most of this is old code so it will look bad
+  
+  //deletes old file
+  var files = DriveApp.getFolderById("1mGphplnzZMTPXjiBshwrnxAeFCfGpfFz").getFiles();
+  while(files.hasNext()){files.next().setTrashed(true);}
+  
+  //makes copy of ga template sheet and puts it in ga files folder
+  var newFileId = DriveApp.getFileById("1DRqMX0cFzbMDN3-56iOtiAACD9Mq6SzXJxyyDPfv_YU").makeCopy("Clan General Availability "+currentDate, DriveApp.getFolderById("1mGphplnzZMTPXjiBshwrnxAeFCfGpfFz")).getId();
+  
+  //gets sheet url
+  var sheetLink = DriveApp.getFileById(newFileId).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW).getUrl();
+  
+  //puts url in member hub
+  FunctionContainer.tripleTrySetSSValues(mhels,2,1,1,1,[['=HYPERLINK("'+sheetLink+'", "Current Clan Availability")']]);
+  
+  //puts links for misc folders
+  var miscFolderInfo = [
+    ['=HYPERLINK("' + dllscv[98][1] + '", "All Miscellaneous Folders")'],
+    ['=HYPERLINK("' + dllscv[102][0] + '", "' + dllscv[99][0] + '")'],
+    ['=HYPERLINK("' + dllscv[102][1] + '", "' + dllscv[99][1] + '")'],
+    ['=HYPERLINK("' + dllscv[102][2] + '", "' + dllscv[99][2] + '")'],
+    ['=HYPERLINK("' + dllscv[102][3] + '", "' + dllscv[99][3] + '")'],
+    ['=HYPERLINK("' + dllscv[102][4] + '", "' + dllscv[99][4] + '")'],
+    ['=HYPERLINK("' + dllscv[102][5] + '", "' + dllscv[99][5] + '")'],
+    ['=HYPERLINK("' + dllscv[102][6] + '", "' + dllscv[99][6] + '")'],
+    ['=HYPERLINK("' + dllscv[102][7] + '", "' + dllscv[99][7] + '")'],
+    ['=HYPERLINK("' + dllscv[102][8] + '", "' + dllscv[99][8] + '")'],
+    ['=HYPERLINK("' + dllscv[102][9] + '", "' + dllscv[99][9] + '")']
+  ];
+  FunctionContainer.tripleTrySetSSValues(mhels,23,1,11,1,miscFolderInfo);
+  
+  //new spreadsheet vars
+  var mhgas = FunctionContainer.tripleTryOpenSheet(newFileId,"General Availability");
+  var mhogads = FunctionContainer.tripleTryOpenSheet(newFileId,"GA Data");
+  var mhogadscv = FunctionContainer.tripleTryGetValues(mhogads,1,1,168,3);
+  
+  //General Availability
+  
+  //resetting ga data
+  for(var i = 0; i<mhogadscv.length;i++){mhogadscv[i][2]=0}
+ 
+  //getting the new ga data
+  //cycles thru pmdcmscv
+  for(var i = 0; i<pmdcmscv.length;i++){
+    //each for loop is just seeing if someone has the specified time included in the cell and if so add one if not nothing
+    for(var x = 0 ;x<24;x++){if(pmdcmscv[i][13].toString().indexOf(mhogadscv[x][0])!==-1){mhogadscv[x][2]=mhogadscv[x][2]+1;}}
+    for(var x = 24 ;x<48;x++){if(pmdcmscv[i][14].toString().indexOf(mhogadscv[x][0])!==-1){mhogadscv[x][2]=mhogadscv[x][2]+1;}}
+    for(var x = 48 ;x<72;x++){if(pmdcmscv[i][15].toString().indexOf(mhogadscv[x][0])!==-1){mhogadscv[x][2]=mhogadscv[x][2]+1;}}
+    for(var x = 72 ;x<96;x++){if(pmdcmscv[i][16].toString().indexOf(mhogadscv[x][0])!==-1){mhogadscv[x][2]=mhogadscv[x][2]+1;}}
+    for(var x = 96 ;x<120;x++){if(pmdcmscv[i][17].toString().indexOf(mhogadscv[x][0])!==-1){mhogadscv[x][2]=mhogadscv[x][2]+1;}}
+    for(var x = 120 ;x<144;x++){if(pmdcmscv[i][18].toString().indexOf(mhogadscv[x][0])!==-1){mhogadscv[x][2]=mhogadscv[x][2]+1;}}
+    for(var x = 144 ;x<168;x++){if(pmdcmscv[i][19].toString().indexOf(mhogadscv[x][0])!==-1){mhogadscv[x][2]=mhogadscv[x][2]+1;}}}
+  
+  //paste data
+  FunctionContainer.tripleTrySetSSValues(mhogads,1,1,mhogadscv.length,3,mhogadscv);
+  
+  //chart sunday
+  var chart = mhgas.newChart().asBarChart().addRange(mhogads.getRange(1,2,24,2))
+  .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+  .setTransposeRowsAndColumns(false)
+  .setNumHeaders(-1)
+  .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+  .setOption('bubble.stroke', '#000000')
+  .setOption('subtitle', 'ET')
+  .setOption('annotations.domain.textStyle.color', '#808080')
+  .setOption('textStyle.color', '#000000')
+  .setOption('legend.textStyle.color', '#191919')
+  .setOption('subtitleTextStyle.color', '#999999')
+  .setOption('subtitleTextStyle.alignment', 'center')
+  .setOption('subtitleTextStyle.italic', true)
+  .setOption('titleTextStyle.color', '#757575')
+  .setOption('annotations.total.textStyle.color', '#808080')
+  .setOption('hAxis.textStyle.color', '#000000')
+  .setOption('vAxes.0.textStyle.color', '#000000')
+  .setOption('vAxes.0.titleTextStyle.color', '#000000')
+  .setOption('height', 597)
+  .setPosition(2, 1, 0, 0)
+  .build();
+  mhgas.insertChart(chart);
+  
+  //chart monday
+  var chart = mhgas.newChart().asBarChart().addRange(mhogads.getRange(25,2,24,2))
+  .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+  .setTransposeRowsAndColumns(false)
+  .setNumHeaders(-1)
+  .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+  .setOption('bubble.stroke', '#000000')
+  .setOption('subtitle', 'ET')
+  .setOption('annotations.domain.textStyle.color', '#808080')
+  .setOption('textStyle.color', '#000000')
+  .setOption('legend.textStyle.color', '#191919')
+  .setOption('subtitleTextStyle.color', '#999999')
+  .setOption('subtitleTextStyle.alignment', 'center')
+  .setOption('subtitleTextStyle.italic', true)
+  .setOption('annotations.total.textStyle.color', '#808080')
+  .setOption('hAxis.textStyle.color', '#000000')
+  .setOption('vAxes.0.textStyle.color', '#000000')
+  .setOption('vAxes.0.titleTextStyle.color', '#000000')
+  .setOption('height', 597)
+  .setPosition(4, 1, 0, 0)
+  .build();
+  mhgas.insertChart(chart);
+  
+  //chart tuesday
+  var chart = mhgas.newChart().asBarChart().addRange(mhogads.getRange(49,2,24,2))
+  .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+  .setTransposeRowsAndColumns(false)
+  .setNumHeaders(-1)
+  .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+  .setOption('bubble.stroke', '#000000')
+  .setOption('subtitle', 'ET')
+  .setOption('annotations.domain.textStyle.color', '#808080')
+  .setOption('textStyle.color', '#000000')
+  .setOption('legend.textStyle.color', '#191919')
+  .setOption('subtitleTextStyle.color', '#999999')
+  .setOption('subtitleTextStyle.alignment', 'center')
+  .setOption('subtitleTextStyle.italic', true)
+  .setOption('annotations.total.textStyle.color', '#808080')
+  .setOption('hAxis.textStyle.color', '#000000')
+  .setOption('vAxes.0.textStyle.color', '#000000')
+  .setOption('vAxes.0.titleTextStyle.color', '#000000')
+  .setOption('height', 597)
+  .setPosition(6, 1, 0, 0)
+  .build();
+  mhgas.insertChart(chart);
+  
+  //chart wednesday
+  var chart = mhgas.newChart().asBarChart().addRange(mhogads.getRange(73,2,24,2))
+  .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+  .setTransposeRowsAndColumns(false)
+  .setNumHeaders(-1)
+  .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+  .setOption('bubble.stroke', '#000000')
+  .setOption('subtitle', 'ET')
+  .setOption('annotations.domain.textStyle.color', '#808080')
+  .setOption('textStyle.color', '#000000')
+  .setOption('legend.textStyle.color', '#191919')
+  .setOption('subtitleTextStyle.color', '#999999')
+  .setOption('subtitleTextStyle.alignment', 'center')
+  .setOption('subtitleTextStyle.italic', true)
+  .setOption('annotations.total.textStyle.color', '#808080')
+  .setOption('hAxis.textStyle.color', '#000000')
+  .setOption('vAxes.0.textStyle.color', '#000000')
+  .setOption('vAxes.0.titleTextStyle.color', '#000000')
+  .setOption('height', 597)
+  .setPosition(8, 1, 0, 0)
+  .build();
+  mhgas.insertChart(chart);
+  
+  //chart thursday
+  var chart = mhgas.newChart().asBarChart().addRange(mhogads.getRange(97,2,24,2))
+  .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+  .setTransposeRowsAndColumns(false)
+  .setNumHeaders(-1)
+  .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+  .setOption('bubble.stroke', '#000000')
+  .setOption('subtitle', 'ET')
+  .setOption('annotations.domain.textStyle.color', '#808080')
+  .setOption('textStyle.color', '#000000')
+  .setOption('legend.textStyle.color', '#191919')
+  .setOption('subtitleTextStyle.color', '#999999')
+  .setOption('subtitleTextStyle.alignment', 'center')
+  .setOption('subtitleTextStyle.italic', true)
+  .setOption('annotations.total.textStyle.color', '#808080')
+  .setOption('hAxis.textStyle.color', '#000000')
+  .setOption('vAxes.0.textStyle.color', '#000000')
+  .setOption('vAxes.0.titleTextStyle.color', '#000000')
+  .setOption('height', 597)
+  .setPosition(10, 1, 0, 0)
+  .build();
+  mhgas.insertChart(chart);
+  
+  //chart friday
+  var chart = mhgas.newChart().asBarChart().addRange(mhogads.getRange(121,2,24,2))
+  .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+  .setTransposeRowsAndColumns(false)
+  .setNumHeaders(-1)
+  .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+  .setOption('bubble.stroke', '#000000')
+  .setOption('subtitle', 'ET')
+  .setOption('annotations.domain.textStyle.color', '#808080')
+  .setOption('textStyle.color', '#000000')
+  .setOption('legend.textStyle.color', '#191919')
+  .setOption('subtitleTextStyle.color', '#999999')
+  .setOption('subtitleTextStyle.alignment', 'center')
+  .setOption('subtitleTextStyle.italic', true)
+  .setOption('annotations.total.textStyle.color', '#808080')
+  .setOption('hAxis.textStyle.color', '#000000')
+  .setOption('vAxes.0.textStyle.color', '#000000')
+  .setOption('vAxes.0.titleTextStyle.color', '#000000')
+  .setOption('height', 597)
+  .setPosition(12, 1, 0, 0)
+  .build();
+  mhgas.insertChart(chart);
+  
+  //chart saturday
+  var chart = mhgas.newChart().asBarChart().addRange(mhogads.getRange(145,2,24,2))
+  .setMergeStrategy(Charts.ChartMergeStrategy.MERGE_COLUMNS)
+  .setTransposeRowsAndColumns(false)
+  .setNumHeaders(-1)
+  .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.IGNORE_BOTH)
+  .setOption('bubble.stroke', '#000000')
+  .setOption('subtitle', 'ET')
+  .setOption('annotations.domain.textStyle.color', '#808080')
+  .setOption('textStyle.color', '#000000')
+  .setOption('legend.textStyle.color', '#191919')
+  .setOption('subtitleTextStyle.color', '#999999')
+  .setOption('subtitleTextStyle.alignment', 'center')
+  .setOption('subtitleTextStyle.italic', true)
+  .setOption('annotations.total.textStyle.color', '#808080')
+  .setOption('hAxis.textStyle.color', '#000000')
+  .setOption('vAxes.0.textStyle.color', '#000000')
+  .setOption('vAxes.0.titleTextStyle.color', '#000000')
+  .setOption('height', 597)
+  .setPosition(14, 1, 0, 0)
+  .build();
+  mhgas.insertChart(chart);
+  
+  
+  //Sheets being done here
+  //Discharged Members Past 30 Days
+  //All Discharged Members
+  
+  //declares any needed vars
+  var mhadmscv = [];
+  
+  
+  //cycles thru discharged member list from pmddms
+  for(var i=0; i<pmddmscv.length; i+=1){//start 1st for
+    //makes creds N/A if its empty
+    if(pmddmscv[i][4].toString()===""){//start 1st if
+      pmddmscv[i][4] = "N/A";
+    }//end 1st if
+    
+    //adds to all array
+    mhadmscv.push([pmddmscv[i][3].toString(),pmddmscv[i][0].toString(),
+      FunctionContainer.positionCodeDiscordTransformer(pmddmscv[i][7].toString()),pmddmscv[i][2].toString(),
+      pmddmscv[i][5].toString(),pmddmscv[i][4].toString(),
+      FunctionContainer.dateReplace(pmddmscv[i][20].toString()),pmddmscv[i][21]]);
+  }//end 1st for
+  
+  mhadmscv = FunctionContainer.arraySortObjNumDesc(mhadmscv);
+  
+  
+  //mhadms first
+  
+  if(mhadmscv.length!==0){//start 1st if
+    
+    //hides sheet
+    FunctionContainer.tripleTryHideSheet(mhadms);
+    
+    //deletes all rows except one
+    if(mhadmsmri!==2){//start 2nd if
+      FunctionContainer.tripleTryDeleteRows(mhadms, 3, mhadmsmri-2);
+    }//end 2nd if
+    
+    //adds necessary rows
+    FunctionContainer.tripleTryAddRows(mhadms, 2, mhadmscv.length);
+    
+    //paste data and format all to normal format
+    mhadms.getRange(3,1,mhadmscv.length,8).setValues(mhadmscv).setFontWeight(null)
+      .setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID)
+      .setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP)
+      .setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000');
+    
+    //changes all rows to normal size
+    FunctionContainer.tripleTrySetRowsSize(mhadms, 3, mhadmscv.length, 50);
+    
+    //formats Generation
+    FunctionContainer.tripleTrySetNumberFormat(mhadms, 3, 5, mhadmscv.length, 1, '00');
+    
+    //formats border
+    mhadms.getRange(1,1,mhadmscv.length+2,8).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+  
+    //formats Date Discharged Row
+    FunctionContainer.tripleTrySetNumberFormat(mhadms, 3, 7, mhadmscv.length, 2, 'mmm" "dd" "yyyy');
+    mhadms.getRange(3,7,mhadmscv.length,2).setNumberFormat('mmm" "dd" "yyyy');
+    
+    //shows sheet
+    FunctionContainer.tripleTryShowSheet(mhadms);
+  
+  }//end 1st if
+  
+  
+  //mhdns next
+  
+  if(mhdnscv.length!==0){//start 1st if
+    
+    //hides sheet
+    FunctionContainer.tripleTryHideSheet(mhdns);
+    
+    //filter duplicates
+    mhdnscv = FunctionContainer.arrayDuplicateFilter(mhdnscv);
+    
+    //sort
+    mhdnscv = FunctionContainer.specialSort(mhdnscv);
+    
+    //deletes all rows except one
+    if(mhdnsmri>2){//start 1st if
+      FunctionContainer.tripleTryDeleteRows(mhdns, 3, mhdnsmri-2);
+    }//end 1st if
+    
+    //adds necessary rows
+    FunctionContainer.tripleTryAddRows(mhdns, 2, mhdnscv.length);
+    
+    //paste data and format all to normal format
+    mhdns.getRange(3,1,mhdnscv.length,2).setValues(mhdnscv).setFontWeight(null)
+      .setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID)
+      .setHorizontalAlignment('center').setVerticalAlignment('middle').setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP)
+      .setFontFamily('Times New Roman').setFontSize(13).setFontColor('#000000');
+    
+    //changes all rows to normal size
+    FunctionContainer.tripleTrySetRowsSize(mhdns, 3, mhdnscv.length, 30);
+    
+    //formats border
+    mhdns.getRange(1,1,mhdnscv.length+2,2).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+    
+    //shows sheet
+    FunctionContainer.tripleTryShowSheet(mhdns);
+  
+  }//end 1st if
+  
+}//end main

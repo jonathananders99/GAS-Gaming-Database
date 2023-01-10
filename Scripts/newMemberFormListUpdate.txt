@@ -1,0 +1,281 @@
+function newMemberFormListUpdate(){
+  errorCheck("4:05",7,"newMemberFormListUpdate","NewMemberFormListUpdate");
+}//end newMemberFormListUpdate
+
+
+function errorCheck(time,col,functionName,projectName){
+  try{main();triggerCreator(time,col,functionName);}//end 1st try
+  catch(error){console.log(error);
+    if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+      try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 2nd try
+      catch(error){console.log(error);
+        if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+          try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 3rd try
+          catch(error){console.log(error);
+            FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 3rd catch
+        else{FunctionContainer.discErrorReport(error,functionName,projectName);}}}//end 2nd catch
+    else{FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 1st catch
+}//end errorCheck
+
+
+function triggerCreator(ct,tColNum,scriptName){
+  var datSheetOriginal=FunctionContainer.tripleTryOpenSheet("", "Dates");var cdd=datSheetOriginal.getRange(1,1,15,datSheetOriginal.getLastColumn()).getValues();var triggerChangesMade = [];var vals = [[],[],[],[],[],[],[],[],[],[],[]];
+  triggerChangesMade.push("Old Trigger Id's and Dates:\nTrigger ID: "+cdd[9][tColNum-1].toString()+" For Date: "+cdd[1][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[10][tColNum-1].toString()+" For Date: "+cdd[4][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[11][tColNum-1].toString()+" For Date: "+cdd[5][tColNum-1].toString());
+  if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[1][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())){
+    var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){if(t[i].getUniqueId()===cdd[9][tColNum-1].toString()){ScriptApp.deleteTrigger(t[i]);triggerChangesMade.push("\nTrigger Deleted ~ "+cdd[9][tColNum-1].toString()+" for date: "+cdd[1][tColNum-1].toString());}}
+    var bruhX3 = cdd[3][0].toString();for(var iii = 0;iii<4;iii++){cdd[iii][0]=cdd[iii][0].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    for(var m=0;m<months.length;m++){if(bruhX3.indexOf(months[m].toString())!==-1){m=m+1;triggerTime = bruhX3[11].toString()+bruhX3[12].toString()+bruhX3[13].toString()+bruhX3[14].toString()+"-"+m+"-"+bruhX3[8].toString()+bruhX3[9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[0] = [cdd[4][tColNum-1]];vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[3] = [cdd[5][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];
+    vals[8] = [cdd[10][tColNum-1]];vals[9] = [cdd[11][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}
+  else if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[3][0].toString())){triggerChangesMade.push("\nNo Trigger Changes Made");}
+  else{var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){triggerChangesMade.push("\nTrigger Deleted ~ "+t[i].getUniqueId());ScriptApp.deleteTrigger(t[i]);}var cd=datSheetOriginal.getRange(1,1,4).getValues();
+    for(var iii = 0;iii<4;iii++){cd[iii]=cd[iii].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[0].indexOf(months[m].toString())!==-1){
+    m=m+1;triggerTime = cd[0][11].toString()+cd[0][12].toString()+cd[0][13].toString()+cd[0][14].toString()+"-"+m+"-"+cd[0][8].toString()+cd[0][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(2,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();
+    var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[0] = [tt];vals[8] = [uniqueTriggerID];var triggerTime="";
+    var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[2].indexOf(months[m].toString())!==-1){m=m+1;triggerTime = cd[2][11].toString()+cd[2][12].toString()+cd[2][13].toString()+cd[2][14].toString()+"-"+m+"-"+cd[2][8].toString()+cd[2][9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(5,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[3] = [tt];vals[9] = [uniqueTriggerID];var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[3].indexOf(months[m].toString())!==-1){m=m+1;
+    triggerTime = cd[3][11].toString()+cd[3][12].toString()+cd[3][13].toString()+cd[3][14].toString()+"-"+m+"-"+cd[3][8].toString()+cd[3][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();
+    triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}console.log(triggerChangesMade);
+}//end triggerCreator
+
+
+function main(){
+  try{var lock = LockService.getScriptLock();lock.waitLock(150000);}catch(lockError){console.log(lockError)};
+  
+  
+  //PXE Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  formListUpdate(dllscv, pmdcmscv);
+  
+}//end main
+
+function formListUpdate(dllscv, pmdcmscv){
+  
+  
+  //New Member Form
+  var nmf = FormApp.openById(dllscv[85][2].toString());
+//  FunctionContainer.getDaFormIds(dllscv[85][2].toString());
+  
+  
+  //Entry Group
+  var allEntryGroups = [];
+  for(var i=0; i<57; i+=1){//start 1st for
+    if(dllscv[12][i].toString() !== ""){//start 1st if
+      allEntryGroups.push([dllscv[12][i].toString()]);
+    }//end 1st if
+  }//end 1st for
+  
+  //gets only active ones
+  for(var i=allEntryGroups.length-1; i>=0; i-=1){//start 1st for
+    for(var x=0; x<49; x+=1){//start 2nd for
+      if(dllscv[40][x].toString() === allEntryGroups[i].toString()  &&  dllscv[dllscv[51][x]][dllscv[52][x]+1].toString() === "Inactive"){//start 1st if
+        allEntryGroups.splice(i);
+        x = 50;
+      }//end 1st if
+    }//end 2nd for
+  }//end 1st for
+  
+  nmf.getItemById("766060038").asListItem().setChoiceValues(allEntryGroups);
+
+  
+  //All Date Questions
+  var datesMinus7 = [[FunctionContainer.dateReplace(dllscv[10][0])+" (Today)"],
+    [FunctionContainer.dateReplace(dllscv[10][21])+" (Yesterday)"],
+    [FunctionContainer.dateReplace(dllscv[10][20])+" (2 Days ago)"],
+    [FunctionContainer.dateReplace(dllscv[10][19])+" (3 Days ago)"],
+    [FunctionContainer.dateReplace(dllscv[10][18])+" (4 Days ago)"],
+    [FunctionContainer.dateReplace(dllscv[10][17])+" (5 Days ago)"],
+    [FunctionContainer.dateReplace(dllscv[10][16])+" (6 Days ago)"]];
+  
+  nmf.getItemById("643529612").asListItem().setChoiceValues(datesMinus7);
+  
+  
+  //LDI's Group
+  var lDIgroupSelectionIQuestion = nmf.getItemById("1345855348").asMultipleChoiceItem();
+  var lDIgroupSelectionIChoices = [lDIgroupSelectionIQuestion.createChoice("Submitter", nmf.getItemById("902051777").asPageBreakItem())];
+  
+  for(var i=1; i<165; i+=13){
+    if(dllscv[0][i]==="Active"){
+      lDIgroupSelectionIChoices.push(lDIgroupSelectionIQuestion.createChoice(dllscv[0][i-1].toString(), nmf.getItemById(dllscv[0][i+6].toString()).asPageBreakItem()));
+    }//end 1st if
+  }//end 2nd for
+  
+  lDIgroupSelectionIQuestion.setChoices(lDIgroupSelectionIChoices);
+  
+  
+  //Recruiter's Group
+  var recruiterGroupSelectionIQuestion = nmf.getItemById("1729024760").asMultipleChoiceItem();
+  var recruiterGroupSelectionIChoices = [recruiterGroupSelectionIQuestion.createChoice("Submitter", FormApp.PageNavigationType.SUBMIT)];
+  
+  for(var i=1; i<165; i+=13){
+    if(dllscv[0][i]==="Active"){
+      recruiterGroupSelectionIChoices.push(recruiterGroupSelectionIQuestion.createChoice(dllscv[0][i-1].toString(), nmf.getItemById(dllscv[0][i+8].toString()).asPageBreakItem()));
+    }//end 1st if
+  }//end 2nd for
+  
+  recruiterGroupSelectionIQuestion.setChoices(recruiterGroupSelectionIChoices);
+  
+  
+  //LDI In Question Q's And Recruiter
+  var ldiCreds = [];
+  for(var i=0; i<25; i+=1){//start 1st for
+    if(dllscv[33][i].toString() !== ""){//start 1st if
+      ldiCreds.push([dllscv[33][i].toString()]);
+      ldiCreds.push([dllscv[33][i].toString() + " U/I"]);
+    }//end 1st if
+  }//end 1st for
+  for(var i=1; i<165; i+=13){
+    var allGroups = [];
+    for(var x=0; x<10; x+=1){//start 2nd for
+      if(dllscv[x][i].toString() === "Active"){//start 2nd if
+        allGroups.push(dllscv[x][i-1].toString());
+      }//end 2nd if
+    }//end 2nd for
+    var individualGroupRecruiterChoices = [];
+    var individualGroupLDIChoices = [];
+    //if group is active
+    if(dllscv[0][i].toString() === "Active"){//start 1st if
+      //cycles thru each member
+      for(var x=0; x<pmdcmscv.length; x+=1){//start 2nd for
+        var curMemberGroups = FunctionContainer.splitEmUp(pmdcmscv[x][3]);
+        //cycles thru current member groups
+        for(var y=0; y<curMemberGroups.length; y+=1){//start 3rd for
+          //cycles thru all groups
+          for(var w=0; w<allGroups.length; w+=1){//start 4th for
+            //if cur member group contains all group
+            if(curMemberGroups[y].toString().indexOf(allGroups[w].toString()) !== -1){//start 2nd if
+              individualGroupRecruiterChoices.push([pmdcmscv[x][0].toString()]);
+              var curCreds = FunctionContainer.splitEmUp(pmdcmscv[x][4]);
+              var union = FunctionContainer.arrayLVL1Intersection(ldiCreds, curCreds);
+              if(union.length !== 0){//start 3rd if
+                individualGroupLDIChoices.push([pmdcmscv[x][0].toString()]);
+              }//end 3rd if
+            }//end 2nd if
+          }//end 4th for
+        }//end 3rd for
+      }//end 2nd for
+      individualGroupRecruiterChoices = FunctionContainer.arrayDuplicateFilter(individualGroupRecruiterChoices);
+      //no members in group
+      if(individualGroupRecruiterChoices.length === 0){//start 2nd if
+        nmf.getItemById(dllscv[0][i+9].toString()).asListItem().setChoiceValues([["N/A"]]);
+      }//end 2nd if
+      //members in group
+      else{nmf.getItemById(dllscv[0][i+9].toString()).asListItem().setChoiceValues(individualGroupRecruiterChoices);}
+      individualGroupLDIChoices = FunctionContainer.arrayDuplicateFilter(individualGroupLDIChoices);
+      //no members in group
+      if(individualGroupLDIChoices.length === 0){//start 2nd if
+        nmf.getItemById(dllscv[0][i+7].toString()).asListItem().setChoiceValues([["N/A"]]);
+      }//end 2nd if
+      //members in group
+      else{nmf.getItemById(dllscv[0][i+7].toString()).asListItem().setChoiceValues(individualGroupLDIChoices);}
+    }//end 1st if
+  }//end 1st for
+  
+  
+  /* New Member Form
+  [22-03-17 18:06:57:584 EDT] [Code, TEXT, 1771394878]
+  [22-03-17 18:06:57:627 EDT] [Update form lists? (forms will turn off while they are updating), LIST, 364311102]
+  [22-03-17 18:06:57:679 EDT] [Gamertag (Capitalization matters and needs to be exact; include the number at the end if there are any; ex "SteveTheTree#4305" is put as "SteveTheTree#4305"), TEXT, 2076988939]
+  [22-03-17 18:06:57:718 EDT] [Current Discord Nickname (Capitalization matters and needs to be exact; EX: "Cadet1" in discord is put as "Cadet1" here, not "cadet1" or "1"), TEXT, 1518925953]
+  [22-03-17 18:06:57:763 EDT] [Position Code, LIST, 319867635]
+  [22-03-17 18:06:57:817 EDT] [Entry Group, LIST, 766060038]
+  [22-03-17 18:06:57:856 EDT] [Bootcamp Date, LIST, 643529612]
+  [22-03-17 18:06:57:903 EDT] [Additional Notes, PARAGRAPH_TEXT, 2130148511]
+  [22-03-17 18:06:57:946 EDT] [LDI's Group, MULTIPLE_CHOICE, 1345855348]
+  
+  [22-03-17 18:06:58:019 EDT] [Mora 1 LDI, PAGE_BREAK, 1772236559]
+  [22-03-17 18:06:58:066 EDT] [LDI in Question, LIST, 558794769]
+  
+  [22-03-17 18:06:58:111 EDT] [Mora 2 LDI, PAGE_BREAK, 1797263804]
+  [22-03-17 18:06:58:163 EDT] [LDI in Question, LIST, 227487055]
+  
+  [22-03-17 18:06:58:205 EDT] [Mora 3 LDI, PAGE_BREAK, 2095170713]
+  [22-03-17 18:06:58:246 EDT] [LDI in Question, LIST, 173101575]
+  
+  [22-03-17 18:06:58:285 EDT] [Phoenix S.W.A.L LDI, PAGE_BREAK, 1165449916]
+  [22-03-17 18:06:58:327 EDT] [LDI in Question, LIST, 874233668]
+  
+  [22-03-17 18:06:58:367 EDT] [Upper Echelon LDI, PAGE_BREAK, 270357526]
+  [22-03-17 18:06:58:411 EDT] [LDI in Question, LIST, 2023882644]
+  
+  [22-03-17 18:06:58:453 EDT] [Praetorian Guard LDI, PAGE_BREAK, 127605816]
+  [22-03-17 18:06:58:518 EDT] [LDI in Question, LIST, 1811142015]
+  
+  [22-03-17 18:06:58:558 EDT] [Seeker Intelligence LDI, PAGE_BREAK, 1533810064]
+  [22-03-17 18:06:58:598 EDT] [LDI in Question, LIST, 864504429]
+  
+  [22-03-17 18:06:58:638 EDT] [Vicarius Senate LDI, PAGE_BREAK, 2057138569]
+  [22-03-17 18:06:58:685 EDT] [LDI in Question, LIST, 1780944474]
+  
+  [22-03-17 18:06:58:726 EDT] [Special Group 04 LDI, PAGE_BREAK, 1807369107]
+  [22-03-17 18:06:58:766 EDT] [LDI in Question, LIST, 1610403456]
+  
+  [22-03-17 18:06:58:808 EDT] [Special Group 05 LDI, PAGE_BREAK, 1304745222]
+  [22-03-17 18:06:58:849 EDT] [LDI in Question, LIST, 1305654520]
+  
+  [22-03-17 18:06:58:897 EDT] [Special Group 06 LDI, PAGE_BREAK, 16473919]
+  [22-03-17 18:06:58:938 EDT] [LDI in Question, LIST, 1150355053]
+  
+  [22-03-17 18:06:58:979 EDT] [Special Group 07 LDI, PAGE_BREAK, 1610402656]
+  [22-03-17 18:06:59:023 EDT] [LDI in Question, LIST, 1691418329]
+  
+  [22-03-17 18:06:59:066 EDT] [Special Group 08 LDI, PAGE_BREAK, 322575364]
+  [22-03-17 18:06:59:107 EDT] [LDI in Question, LIST, 153570646]
+  
+  [22-03-17 18:06:59:148 EDT] [Recruiter Group Selection, PAGE_BREAK, 902051777]
+  [22-03-17 18:06:59:189 EDT] [Recruiter Group Selection, MULTIPLE_CHOICE, 1729024760]
+  
+  [22-03-17 18:06:59:229 EDT] [Mora 1 Recruiter, PAGE_BREAK, 1473601542]
+  [22-03-17 18:06:59:271 EDT] [Recruiter in Question, LIST, 1825012742]
+  
+  [22-03-17 18:06:59:312 EDT] [Mora 2 Recruiter, PAGE_BREAK, 1818865963]
+  [22-03-17 18:06:59:348 EDT] [Recruiter in Question, LIST, 1759021424]
+  
+  [22-03-17 18:06:59:392 EDT] [Mora 3 Recruiter, PAGE_BREAK, 1495728166]
+  [22-03-17 18:06:59:434 EDT] [Recruiter in Question, LIST, 918809601]
+  
+  [22-03-17 18:06:59:477 EDT] [Phoenix S.W.A.L Recruiter, PAGE_BREAK, 107179034]
+  [22-03-17 18:06:59:520 EDT] [Recruiter in Question, LIST, 675688262]
+  
+  [22-03-17 18:06:59:559 EDT] [Upper Echelon Recruiter, PAGE_BREAK, 2136099787]
+  [22-03-17 18:06:59:599 EDT] [Recruiter in Question, LIST, 322624698]
+  
+  [22-03-17 18:06:59:638 EDT] [Praetorian Guard Recruiter, PAGE_BREAK, 1069709997]
+  [22-03-17 18:06:59:680 EDT] [Recruiter in Question, LIST, 353372321]
+  
+  [22-03-17 18:06:59:721 EDT] [Seeker Intelligence Recruiter, PAGE_BREAK, 739488300]
+  [22-03-17 18:06:59:763 EDT] [Recruiter in Question, LIST, 1182786187]
+  
+  [22-03-17 18:06:59:805 EDT] [Vicarius Senate Recruiter, PAGE_BREAK, 2002917264]
+  [22-03-17 18:06:59:851 EDT] [Recruiter in Question, LIST, 729210955]
+  
+  [22-03-17 18:06:59:889 EDT] [Special Group 04 Recruiter, PAGE_BREAK, 1819156034]
+  [22-03-17 18:06:59:929 EDT] [Recruiter in Question, LIST, 198255656]
+  
+  [22-03-17 18:06:59:969 EDT] [Special Group 05 Recruiter, PAGE_BREAK, 1612534458]
+  [22-03-17 18:07:00:008 EDT] [Recruiter in Question, LIST, 448591299]
+  
+  [22-03-17 18:07:00:053 EDT] [Special Group 06 Recruiter, PAGE_BREAK, 981019564]
+  [22-03-17 18:07:00:091 EDT] [Recruiter in Question, LIST, 204899857]
+  
+  [22-03-17 18:07:00:133 EDT] [Special Group 07 Recruiter, PAGE_BREAK, 135667652]
+  [22-03-17 18:07:00:174 EDT] [Recruiter in Question, LIST, 220875545]
+  
+  [22-03-17 18:07:00:216 EDT] [Special Group 08 Recruiter, PAGE_BREAK, 1428644311]
+  [22-03-17 18:07:00:256 EDT] [Recruiter in Question, LIST, 1413502825]
+  */
+  
+  
+}//end formListUpdate

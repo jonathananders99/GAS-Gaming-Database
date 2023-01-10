@@ -1,0 +1,246 @@
+function fixerFormListUpdate(){
+  errorCheck("4:06",19,"fixerFormListUpdate","FixerFormListUpdate");
+}//end fixerFormListUpdate
+
+
+function errorCheck(time,col,functionName,projectName){
+  try{main();triggerCreator(time,col,functionName);}//end 1st try
+  catch(error){console.log(error);
+    if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+      try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 2nd try
+      catch(error){console.log(error);
+        if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+          try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 3rd try
+          catch(error){console.log(error);
+            FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 3rd catch
+        else{FunctionContainer.discErrorReport(error,functionName,projectName);}}}//end 2nd catch
+    else{FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 1st catch
+}//end errorCheck
+
+
+function triggerCreator(ct,tColNum,scriptName){
+  var datSheetOriginal=FunctionContainer.tripleTryOpenSheet("", "Dates");var cdd=datSheetOriginal.getRange(1,1,15,datSheetOriginal.getLastColumn()).getValues();var triggerChangesMade = [];var vals = [[],[],[],[],[],[],[],[],[],[],[]];
+  triggerChangesMade.push("Old Trigger Id's and Dates:\nTrigger ID: "+cdd[9][tColNum-1].toString()+" For Date: "+cdd[1][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[10][tColNum-1].toString()+" For Date: "+cdd[4][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[11][tColNum-1].toString()+" For Date: "+cdd[5][tColNum-1].toString());
+  if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[1][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())){
+    var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){if(t[i].getUniqueId()===cdd[9][tColNum-1].toString()){ScriptApp.deleteTrigger(t[i]);triggerChangesMade.push("\nTrigger Deleted ~ "+cdd[9][tColNum-1].toString()+" for date: "+cdd[1][tColNum-1].toString());}}
+    var bruhX3 = cdd[3][0].toString();for(var iii = 0;iii<4;iii++){cdd[iii][0]=cdd[iii][0].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    for(var m=0;m<months.length;m++){if(bruhX3.indexOf(months[m].toString())!==-1){m=m+1;triggerTime = bruhX3[11].toString()+bruhX3[12].toString()+bruhX3[13].toString()+bruhX3[14].toString()+"-"+m+"-"+bruhX3[8].toString()+bruhX3[9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[0] = [cdd[4][tColNum-1]];vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[3] = [cdd[5][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];
+    vals[8] = [cdd[10][tColNum-1]];vals[9] = [cdd[11][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}
+  else if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[3][0].toString())){triggerChangesMade.push("\nNo Trigger Changes Made");}
+  else{var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){triggerChangesMade.push("\nTrigger Deleted ~ "+t[i].getUniqueId());ScriptApp.deleteTrigger(t[i]);}var cd=datSheetOriginal.getRange(1,1,4).getValues();
+    for(var iii = 0;iii<4;iii++){cd[iii]=cd[iii].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[0].indexOf(months[m].toString())!==-1){
+    m=m+1;triggerTime = cd[0][11].toString()+cd[0][12].toString()+cd[0][13].toString()+cd[0][14].toString()+"-"+m+"-"+cd[0][8].toString()+cd[0][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(2,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();
+    var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[0] = [tt];vals[8] = [uniqueTriggerID];var triggerTime="";
+    var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[2].indexOf(months[m].toString())!==-1){m=m+1;triggerTime = cd[2][11].toString()+cd[2][12].toString()+cd[2][13].toString()+cd[2][14].toString()+"-"+m+"-"+cd[2][8].toString()+cd[2][9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(5,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[3] = [tt];vals[9] = [uniqueTriggerID];var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[3].indexOf(months[m].toString())!==-1){m=m+1;
+    triggerTime = cd[3][11].toString()+cd[3][12].toString()+cd[3][13].toString()+cd[3][14].toString()+"-"+m+"-"+cd[3][8].toString()+cd[3][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();
+    triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}console.log(triggerChangesMade);
+}//end triggerCreator
+
+
+function main(){
+  try{var lock = LockService.getScriptLock();lock.waitLock(150000);}catch(lockError){console.log(lockError)};
+  
+  
+  //PXE Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  formListUpdate(dllscv, pmdcmscv);
+  
+}//end main
+
+function formListUpdate(dllscv, pmdcmscv){
+  
+  
+  //Forge Hub Active Maps sheet
+  var curVals = FunctionContainer.getfhamscv("date", dllscv);
+  var fhams = curVals[0];
+  var fhamscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Expansion Form
+  var fxf = FormApp.openById(dllscv[85][5].toString());
+//  FunctionContainer.getDaFormIds(dllscv[85][5].toString());
+  
+  
+  //Which Discord Debrief Channel Do You Want to Include the Debriefing in?
+  var groupDebriefChoices = [["N/A"],["Main Channel"]];
+  for(var i=1; i<165; i+=13){
+    for(var x=0; x<10; x+=1){//start 2nd for
+      if(dllscv[x][i]==="Active"  &&  dllscv[66][dllscv[x][i+11]]==="Yes"){
+        groupDebriefChoices.push([dllscv[x][i-1].toString()]);
+      }//end 1st if
+    }//end 2nd for
+  }//end 2nd for
+  fxf.getItemById("455040968").asCheckboxItem().setChoiceValues(groupDebriefChoices);
+  
+  
+  //Map(s) Used
+  var mapChoices = [];
+  for(var i = 0; i<fhamscv.length; i+=1){
+    mapChoices.push([fhamscv[i][0]]);
+  }//end 1st for
+  mapChoices = FunctionContainer.arrayDuplicateFilter(mapChoices);
+  mapChoices.unshift(["N/A"]);
+  fxf.getItemById("1479222895").asCheckboxItem().setChoiceValues(mapChoices);
+  
+  
+  //Event Type(s)
+  var EventTypes = [];
+  for(var i = 1; i<100; i+=1){
+    if(dllscv[14][i].toString()!==""){
+      EventTypes.push([dllscv[14][i].toString()]);
+    }//end 1st if
+  }//end 1st for
+  EventTypes = FunctionContainer.specialSort(EventTypes);
+  fxf.getItemById("2067015534").asCheckboxItem().setChoiceValues(EventTypes);
+  
+  
+  //Participating Group(s)
+  var participatingGroups = [];
+  for(var i = 1; i<165; i+=13){
+    for(var x = 0; x<10; x+=1){
+      if(dllscv[x][i]==="Active"){
+        participatingGroups.push([dllscv[x][i-1].toString()]);
+      }//end 1st if
+    }//end 2nd for
+  }//end 1st for
+  //Participating Group(s)
+  fxf.getItemById("685254221").asCheckboxItem().setChoiceValues(participatingGroups);
+  
+  
+  //Members
+  var curMembers = [];
+  for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+    if(pmdcmscv[i][0].toString() !== ""){//start 1st if
+      curMembers.push([pmdcmscv[i][0].toString()]);
+    }//end 1st if
+  }//end 1st for
+  
+  
+  //Overall Leader Selection
+  //Member in Question
+  fxf.getItemById("2093434057").asListItem().setChoiceValues(curMembers);
+  
+  
+  //New Member Form Edit Selection
+  //LDI
+  fxf.getItemById("1659956298").asListItem().setChoiceValues(curMembers);
+  
+  
+  //adds N/A as option
+  curMembers.unshift(["N/A"]);
+  
+  
+  //Secondary Leader(s) Selection
+  //Member(s) in Question
+  fxf.getItemById("534716781").asCheckboxItem().setChoiceValues(curMembers);
+  
+  
+  //Attendees Selection
+  //Member(s) in Question Being Removed
+  fxf.getItemById("944732986").asCheckboxItem().setChoiceValues(curMembers);
+  //Member(s) in Question Being Added
+  fxf.getItemById("41031536").asCheckboxItem().setChoiceValues(curMembers);
+  
+  
+  //New Member Form Edit Selection
+  //Recruited By
+  fxf.getItemById("874699613").asListItem().setChoiceValues(curMembers);
+  
+  
+  //Entry Group
+  var allEntryGroups = [];
+  for(var i=0; i<57; i+=1){//start 1st for
+    if(dllscv[12][i].toString() !== ""){//start 1st if
+      allEntryGroups.push([dllscv[12][i].toString()]);
+    }//end 1st if
+  }//end 1st for
+  
+  //gets only active ones
+  for(var i=allEntryGroups.length-1; i>=0; i-=1){//start 1st for
+    for(var x=0; x<49; x+=1){//start 2nd for
+      if(dllscv[40][x].toString() === allEntryGroups[i].toString()  &&  dllscv[dllscv[51][x]][dllscv[52][x]+1].toString() === "Inactive"){//start 1st if
+        allEntryGroups.splice(i);
+        x = 50;
+      }//end 1st if
+    }//end 2nd for
+  }//end 1st for
+  
+  fxf.getItemById("2033013923").asListItem().setChoiceValues(allEntryGroups);
+  
+  
+  
+  
+  
+  /* Fixer Form
+  [22-05-12 11:10:14:572 EDT] [Code, TEXT, 1655405500]
+  [22-05-12 11:10:14:646 EDT] [Hub Row Number, TEXT, 1624566916]
+  [22-05-12 11:10:14:710 EDT] [Form Response Row Number, TEXT, 804583289]
+  [22-05-12 11:10:14:778 EDT] [Form in Question, MULTIPLE_CHOICE, 350164630]
+  
+  [22-05-12 11:10:14:847 EDT] [Debrief Form, PAGE_BREAK, 1721075177]
+  [22-05-12 11:10:14:913 EDT] [Operation, MULTIPLE_CHOICE, 1014420334]
+  
+  [22-05-12 11:10:14:976 EDT] [Debrief Form Edit Entry Selection, PAGE_BREAK, 962578014]
+  [22-05-12 11:10:15:040 EDT] [Which Discord Debrief Channel Do You Want to Include the Debriefing in?, CHECKBOX, 455040968]
+  [22-05-12 11:10:15:183 EDT] [Date of Event (ET), DATE, 987265502]
+  [22-05-12 11:10:15:331 EDT] [Start Time (ET), TIME, 919184937]
+  [22-05-12 11:10:15:393 EDT] [End Time (ET), TIME, 1323688814]
+  [22-05-12 11:10:15:543 EDT] [Map(s) Used, CHECKBOX, 1479222895]
+  [22-05-12 11:10:15:614 EDT] [Win/Loss, MULTIPLE_CHOICE, 1301302455]
+  [22-05-12 11:10:15:679 EDT] [Event Type(s), CHECKBOX, 2067015534]
+  [22-05-12 11:10:15:820 EDT] [Participating Group(s), CHECKBOX, 685254221]
+  [22-05-12 11:10:15:886 EDT] [Debrief, PARAGRAPH_TEXT, 199898039]
+  [22-05-12 11:10:15:947 EDT] [Additional Notes, PARAGRAPH_TEXT, 165895958]
+  [22-05-12 11:10:16:088 EDT] [Would you like to edit any of these options?, MULTIPLE_CHOICE, 911858037]
+  
+  [22-05-12 11:10:16:228 EDT] [Overall Leader Selection, PAGE_BREAK, 1854664653]
+  [22-05-12 11:10:16:303 EDT] [Member in Question, LIST, 2093434057]
+  [22-05-12 11:10:16:375 EDT] [Would you like to edit more?, MULTIPLE_CHOICE, 108359080]
+  
+  [22-05-12 11:10:16:443 EDT] [Secondary Leader(s) Selection, PAGE_BREAK, 1251432634]
+  [22-05-12 11:10:16:506 EDT] [Member(s) in Question, CHECKBOX, 534716781]
+  [22-05-12 11:10:16:570 EDT] [Would you like to edit more?, MULTIPLE_CHOICE, 2012098898]
+  
+  [22-05-12 11:10:16:633 EDT] [Attendees Selection, PAGE_BREAK, 101717637]
+  [22-05-12 11:10:16:692 EDT] [Member(s) in Question Being Removed, CHECKBOX, 944732986]
+  [22-05-12 11:10:16:756 EDT] [Member(s) in Question Being Added, CHECKBOX, 41031536]
+  [22-05-12 11:10:16:819 EDT] [Would you like to edit more?, MULTIPLE_CHOICE, 925288258]
+  
+  [22-05-12 11:10:16:882 EDT] [Member Update Form, PAGE_BREAK, 872639853]
+  [22-05-12 11:10:16:947 EDT] [Operation, MULTIPLE_CHOICE, 1551682981]
+  
+  [22-05-12 11:10:17:008 EDT] [Member Update Form Edit Selection, PAGE_BREAK, 1335356663]
+  [22-05-12 11:10:17:070 EDT] [Date of Entry, DATE, 363458878]
+  [22-05-12 11:10:17:133 EDT] [Reasoning, PARAGRAPH_TEXT, 303447633]
+  [22-05-12 11:10:17:193 EDT] [Report Title, PARAGRAPH_TEXT, 92069349]
+  [22-05-12 11:10:17:255 EDT] [Report Details, PARAGRAPH_TEXT, 2081002396]
+  
+  [22-05-12 11:10:17:318 EDT] [New Member Form, PAGE_BREAK, 1746131406]
+  [22-05-12 11:10:17:382 EDT] [Operation, MULTIPLE_CHOICE, 1817543262]
+  
+  [22-05-12 11:10:17:441 EDT] [New Member Form Edit Selection, PAGE_BREAK, 1666584773]
+  [22-05-12 11:10:17:506 EDT] [Entry Group, LIST, 2033013923]
+  [22-05-12 11:10:17:567 EDT] [Generation, TEXT, 388627981]
+  [22-05-12 11:10:17:629 EDT] [Bootcamp Date, DATE, 1674500938]
+  [22-05-12 11:10:17:692 EDT] [Additional Notes, PARAGRAPH_TEXT, 1368580518]
+  [22-05-12 11:10:17:750 EDT] [LDI, LIST, 1659956298]
+  [22-05-12 11:10:17:811 EDT] [Recruited By, LIST, 874699613]
+  */
+  
+  
+}//end formListUpdate

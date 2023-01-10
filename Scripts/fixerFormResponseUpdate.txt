@@ -1,0 +1,2299 @@
+function fixerFormResponseUpdate(){
+  errorCheck("fixerFormResponseUpdate","FixerFormResponseUpdate");
+}//end fixerFormResponseUpdate
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  //Fixer Form Response Sheet
+  var fxfrs = FunctionContainer.tripleTryOpenSheet("","FX Responses");
+  var fxfrslri = FunctionContainer.tripleTryGetLastRow(fxfrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  //vals
+  var fxfrscv = FunctionContainer.tripleTryGetValues(fxfrs, fxfrslri, 1, 1, 40)[0];
+//  FunctionContainer.positionsInsideArray(fxfrscv);
+  /*
+    [Timestamp[0], Email Address[1], Code[2], Hub Row Number[3], 
+    Form Response Row Number[4], Form in Question[5], Operation[6], 
+    Which Discord Debrief Channel Do You Want to Include the Debriefing in?[7], 
+    Date of Event (ET)[8], Start Time (ET)[9], End Time (ET)[10], 
+    Map(s) Used[11], Win/Loss[12], Event Type(s)[13], Participating Group(s)[14], 
+    Debrief[15], Additional Notes[16], Would you like to edit any of these options?[17], 
+    Member in Question[18], Would you like to edit more?[19], Member(s) in Question[20], 
+    Would you like to edit more?[21], Member(s) in Question Being Removed[22], 
+    Member(s) in Question Being Added[23], Would you like to edit more?[24], 
+    Operation[25], Date of Entry[26], Reasoning[27], Report Title[28], Report Details[29], 
+    Operation[30], Entry Group[31], Generation[32], Bootcamp Date[33], 
+    Additional Notes[34], LDI[35], Recruited By[36], [37], [38], [39]]
+  */
+  
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(fxfrscv[1].toString().trim(),pmdcmscv);
+  
+  var formInQuestion = fxfrscv[5].toString().trim();
+  
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "inputted an email not in the database in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+  }//end 2nd if
+
+  
+  //trims the necessary values
+  var formTrimList = [1, 2, 3, 4, 15, 16, 27, 28, 29, 32, 34];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    fxfrscv[formTrimList[i]] = fxfrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(fxfrscv[formTrimList[i]].indexOf("^")!==-1){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "included special character ^ (perp will not recieve pm with details because ^ interferes with the bot commands) in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  
+  
+  
+  
+  
+  
+  ///*** DATA GATHERING ***///
+  
+  
+  var formInQuestion = fxfrscv[5];
+  var formRow = parseInt(fxfrscv[4]);
+  var hubRow = parseInt(fxfrscv[3]);
+  var errorInfo = "\n\n • Form in Question: **" + formInQuestion + "**\n\n • Form Response Row Number: **"
+    + formRow + "**\n\n • Hub Row Number: **" + hubRow + "**";
+  var details = "";
+  var formRowError = false;
+  var hubRowError = false;
+  var formDeletedEntryError = false;
+  
+  
+  if(formInQuestion === "Debrief Form"){//start 1st if
+    
+    //Event Debrief Hub All Event Debriefs sheet
+    curVals = FunctionContainer.getedhaedscv("date", dllscv);
+    var edhaeds = curVals[0];
+    var edhaedscv = curVals[1];
+    var edhaedslri = curVals[2];
+    curVals = undefined;
+    
+    //Debrief Form Response Sheet
+    var dfrs = FunctionContainer.tripleTryOpenSheet(dllscv[86][0].toString(),"DF Responses");
+    var dfrslri = FunctionContainer.tripleTryGetLastRow(dfrs);
+    var dfrscv = FunctionContainer.tripleTryGetValues(dfrs,2,1,dfrslri-1,70);
+    
+    //if row number is not a row that is legal in debrief hub
+    if(hubRow < 3  ||  hubRow > edhaedslri){//start 3rd if
+      var oldEntryInfo = edhaedscv[0];
+      hubRowError = true;
+    }//end 3rd if
+    else{var oldEntryInfo = edhaedscv[hubRow-3]}
+    
+    //if row number is not a row that is legal in debrief hub
+    if(formRow < 2  ||  formRow > dfrslri){//start 3rd if
+      var oldDiscChannels = FunctionContainer.splitEmUp(dfrscv[dfrslri-2][3].toString());
+      formRowError = true;
+    }//end 3rd if
+    else{var oldDiscChannels = FunctionContainer.splitEmUp(dfrscv[formRow-2][3].toString())}
+    
+    //if row entry in form response sheet has been deleted already
+    if(dfrscv[formRow-2][66].toString() === "Deleted"){//start 3rd if
+      formDeletedEntryError = true;
+    }//end 3rd if
+    
+    oldEntryInfo[0] = FunctionContainer.dateReplace(oldEntryInfo[0]);
+    oldEntryInfo[1] = FunctionContainer.timeRetrieval12Cycle(oldEntryInfo[1]);
+    oldEntryInfo[2] = FunctionContainer.timeRetrieval12Cycle(oldEntryInfo[2]);
+    
+    var oldDiscordMessages = FunctionContainer.getDebriefDiscordMessages(oldEntryInfo, oldDiscChannels);
+    
+    var operation = fxfrscv[6];
+    
+    errorInfo = errorInfo + "\n\n • Operation: **" + operation + "**";
+    
+    if(operation === "Delete Entry"){//start 2nd if
+      details = details + "Debrief Entry Deletion ~ Original Submitter: " + edhaedscv[hubRow-3][12].toString() + " ~ Form Row: " + formRow + " ~ ";
+    }//end 2nd if
+    
+    else if(operation === "Edit Entry"){//start 2nd if/else
+      details = details + "Debrief Entry Edit ~ Original Submitter: " + edhaedscv[hubRow-3][12].toString() + " ~ Form Row: " + formRow + " ~ ";
+      var newChannels = fxfrscv[7];
+      var newChannelsList = FunctionContainer.splitEmUp(fxfrscv[7]);
+      var newDate = FunctionContainer.dateReplace(fxfrscv[8]);
+      var newStartTime = FunctionContainer.timeRetrieval12Cycle(fxfrscv[9]);
+      var newEndTime = FunctionContainer.timeRetrieval12Cycle(fxfrscv[10]);
+      var newMaps = fxfrscv[11];
+      var newMapsList = FunctionContainer.splitEmUp(fxfrscv[1]);
+      var newWinLoss = fxfrscv[12];
+      var newEventTypes = fxfrscv[13];
+      var newEventTypesList = FunctionContainer.splitEmUp(fxfrscv[13]);
+      var newPartGroups = fxfrscv[14];
+      var newPartGroupsList = FunctionContainer.splitEmUp(fxfrscv[14]);
+      var newDebrief = fxfrscv[15];
+      var newNotes = fxfrscv[16];
+      var newLeader = fxfrscv[18];
+      var new2ndLeaders = fxfrscv[20];
+      var new2ndLeadersList = FunctionContainer.splitEmUp(fxfrscv[20]);
+      var attendeesToRemove = fxfrscv[22];
+      var attendeesToRemoveList = FunctionContainer.splitEmUp(fxfrscv[22]);
+      var attendeesToAdd = fxfrscv[23];
+      var attendeesToAddList = FunctionContainer.splitEmUp(fxfrscv[23]);
+      
+      
+      var newEntryInfo = [];
+      /*
+        [Date[0], Start Time[1], End Time[2], Event Type[3], 
+        Participating Group(s)[4], Win/Loss[5], Leader of Event[6], 
+        Secondary Leader(s)[7], Attendees[8], Debrief[9], 
+        Additional Notes[10], Map(s) Used[11], Submission Personnel[12]]
+      */
+      
+      var allChanges = [];
+      if(newChannels.toString() !== ""){//start 3rd if
+        allChanges.push("Discord Channels");
+        errorInfo = errorInfo + "\n\n • Discord Channels: **" + newChannels + "**";
+        var discChannels = newChannelsList;
+      }//end 3rd if
+      else{var discChannels = [""]}
+      
+      //Date of Event (ET)
+      //if there is a changed in this category
+      if(newDate.toString() !== ""){//start 4th if
+        newEntryInfo.push(newDate);
+        allChanges.push("Date of Event");
+        errorInfo = errorInfo + "\n\n • Date of Event: **" + newDate + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[0]);
+      }//end 4th if/else
+      
+      
+      //Start Time (ET)
+      //if there is a changed in this category
+      if(newStartTime.toString() !== ""){//start 4th if
+        newEntryInfo.push(newStartTime);
+        allChanges.push("Start Time");
+        errorInfo = errorInfo + "\n\n • Start Time of Event: **" + newStartTime + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[1]);
+      }//end 4th if/else
+      
+      
+      //End Time (ET)
+      //if there is a changed in this category
+      if(newEndTime.toString() !== ""){//start 4th if
+        newEntryInfo.push(newEndTime);
+        allChanges.push("End Time");
+        errorInfo = errorInfo + "\n\n • End Time of Event: **" + newEndTime + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[2]);
+      }//end 4th if/else
+        
+      
+      //Event Type(s)
+      //if there is a changed in this category
+      if(newEventTypes.toString() !== ""){//start 4th if
+        newEntryInfo.push(newEventTypes);
+        allChanges.push("Event Type");
+        errorInfo = errorInfo + "\n\n • Event Type(s): **" + newEventTypes + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[3]);
+      }//end 4th if/else
+      
+      
+      //Participating Group(s)
+      //if there is a changed in this category
+      if(newPartGroups.toString() !== ""){//start 4th if
+        newEntryInfo.push(newPartGroups);
+        allChanges.push("Participating Groups");
+        errorInfo = errorInfo + "\n\n • Participating Groups: **" + newPartGroups + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[4]);
+      }//end 4th if/else
+      
+      
+      //Win/Loss
+      //if there is a changed in this category
+      if(newWinLoss.toString() !== ""){//start 4th if
+        newEntryInfo.push(newWinLoss);
+        allChanges.push("Win/Loss");
+        errorInfo = errorInfo + "\n\n • Win/Loss: **" + newWinLoss + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[5]);
+      }//end 4th if/else
+      
+      
+      //Leader of Event
+      //if there is a changed in this category
+      if(newLeader.toString() !== ""){//start 4th if
+        newEntryInfo.push(newLeader);
+        allChanges.push("Leader of Event");
+        errorInfo = errorInfo + "\n\n • Leader of Event: **" + newLeader + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[6]);
+      }//end 4th if/else
+      
+      
+      //Secondary Leader(s)
+      //if there is a changed in this category
+      if(new2ndLeaders.toString() !== ""){//start 4th if
+        newEntryInfo.push(new2ndLeaders);
+        allChanges.push("Secondary Leaders");
+        errorInfo = errorInfo + "\n\n • Secondary Leaders of Event: **" + new2ndLeaders + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[7]);
+      }//end 4th if/else
+      
+      
+      //Attendees removed
+      //if there is a changed in this category
+      if(attendeesToRemove.toString() !== ""  ||  attendeesToAdd.toString() !== ""){//start 3rd if
+        var curMembers = FunctionContainer.splitEmUp(oldEntryInfo[8]);
+        
+        if(attendeesToRemove.toString() !== ""){//start 4th if
+          for(var i=0; i<attendeesToRemoveList.length; i+=1){//start 1st for
+            //cycles thru old members but opposite way
+            for(var x=curMembers.length-1; x>=0; x-=1){//start 2nd for
+              //if names match splice oldMems
+              if(attendeesToRemoveList[i].toString() === curMembers[x].toString()){//start 5th if
+                curMembers.splice(x, 1);
+              }//end 5th if
+            }//end 2nd for
+          }//end 1st for
+          allChanges.push("Removed Attendees");
+          errorInfo = errorInfo + "\n\n • Removed Attendees: **" + attendeesToRemove + "**";
+        }//end 4th if
+
+        if(attendeesToAdd.toString() !== ""  &&  attendeesToAdd.toString() !== "N/A"){//start 4th if
+          for(var i=0; i<attendeesToAddList.length; i+=1){//start 1st for
+            curMembers.push([attendeesToAddList[i].toString()]);
+          }//end 1st for
+        
+          //duplicate filter
+          FunctionContainer.arrayDuplicateFilter(curMembers);
+          allChanges.push("Added Attendees");
+          errorInfo = errorInfo + "\n\n • Added Attendees: **" + attendeesToAdd + "**";
+        }//end 4th if
+
+        newEntryInfo.push(FunctionContainer.array1LevelIntoString(curMembers));
+      }//end 3rd if
+      
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[8]);
+      }//end 4th if/else
+      
+      
+      //Debrief
+      //if there is a changed in this category
+      if(newDebrief.toString() !== ""){//start 4th if
+        newEntryInfo.push(newDebrief);
+        allChanges.push("Debrief");
+        errorInfo = errorInfo + "\n\n • Debrief: **" + newDebrief + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[9]);
+      }//end 4th if/else
+      
+      
+      //Additional Notes
+      //if there is a changed in this category
+      if(newNotes.toString() !== ""){//start 4th if
+        newEntryInfo.push(newNotes);
+        allChanges.push("Additional Notes");
+        errorInfo = errorInfo + "\n\n • Additional Notes: **" + newNotes + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[10]);
+      }//end 4th if/else
+      
+      
+      //Map(s) Used
+      //if there is a changed in this category
+      if(newMaps.toString() !== ""){//start 4th if
+        newEntryInfo.push(newMaps);
+        allChanges.push("Map(s) Used");
+        errorInfo = errorInfo + "\n\n • Map(s) Used: **" + newMaps + "**";
+      }//end 4th if
+      //no change in this category
+      else{//start 4th if/else
+        newEntryInfo.push(oldEntryInfo[11]);
+      }//end 4th if/else
+      
+      
+      //adds submission personell
+      newEntryInfo.push(oldEntryInfo[12]);
+      
+      
+      details = details + "Changes Made: " + FunctionContainer.array1LevelIntoString(allChanges);
+      
+      
+      //gets new vals for dfrs
+      var dfrsnv = [[]];
+      //disc channels
+      if(newChannels.toString() !== ""){//start 3rd if
+        dfrsnv[0].push(newChannels);
+      }//end 3rd if
+      else{dfrsnv[0].push(dfrscv[formRow-2][3].toString())}
+      
+      //date of event
+      dfrsnv[0].push(newEntryInfo[0]);
+      
+      //start time
+      dfrsnv[0].push(newEntryInfo[1]);
+      
+      //end time
+      dfrsnv[0].push(newEntryInfo[2]);
+      
+      //maps used
+      dfrsnv[0].push(newEntryInfo[11]);
+      
+      //win/loss
+      dfrsnv[0].push(newEntryInfo[5]);
+      
+      //event type
+      dfrsnv[0].push(newEntryInfo[3]);
+      
+      //participating groups
+      dfrsnv[0].push(newEntryInfo[4]);
+      
+      //debrief
+      dfrsnv[0].push(newEntryInfo[9]);
+      
+      //aditional notes
+      dfrsnv[0].push(newEntryInfo[10]);
+      
+      //space
+      dfrsnv[0].push("");
+      
+      //leader
+      dfrsnv[0].push(newEntryInfo[6]);
+      
+      //2nd leader
+      dfrsnv[0].push(newEntryInfo[7]);
+      
+      //attendees
+      dfrsnv[0].push(newEntryInfo[8]);
+      
+      //adds 50 blank spaces
+      for(var i=0; i<50; i+=1){//start 1st for
+        dfrsnv[0].push("");
+      }//end 1st for
+    }//end 2nd if/else
+  }//end 1st if
+  
+  
+  
+  else if(formInQuestion === "Member Update Form"){//start 1st if/else
+    
+    //Member Update Hub all updates sheet
+    curVals = FunctionContainer.getmuhauscv("date", dllscv);
+    var muhaus = curVals[0];
+    var muhauscv = curVals[1];
+    var muhauslri = curVals[2];
+    curVals = undefined;
+    
+    //Member Update Form Response Sheet
+    var mufrs = FunctionContainer.tripleTryOpenSheet(dllscv[86][3].toString(),"MU Responses");
+    var mufrslri = FunctionContainer.tripleTryGetLastRow(mufrs);
+    var mufrscv = FunctionContainer.tripleTryGetValues(mufrs,2,1,mufrslri-1,80);
+  
+    //Lacedaemon Member Data Discharged Members Sheet
+    curVals = FunctionContainer.getpmddmscv("date");
+    var pmddms = curVals[0];
+    var pmddmscv = curVals[1];
+    curVals = undefined;
+    
+    //if row number is not a row that is legal in member update hub
+    if(hubRow < 3  ||  hubRow > muhauslri){//start 3rd if
+      var oldEntryInfo = muhauscv[0];
+      hubRowError = true;
+    }//end 3rd if
+    else{var oldEntryInfo = muhauscv[hubRow-3]}
+    
+    //if row number is not a row that is legal in member update form response sheet
+    if(formRow < 2  ||  formRow > mufrslri){//start 3rd if
+      formRowError = true;
+    }//end 3rd if
+    
+    //if row entry in form response sheet has been deleted already
+    else if(mufrscv[formRow-2][73].toString() === "Deleted"){//start 3rd if
+      formDeletedEntryError = true;
+    }//end 3rd if
+    
+    oldEntryInfo[3] = FunctionContainer.dateReplace(oldEntryInfo[3]);
+    
+    var typeOfUpdate = oldEntryInfo[0];
+    
+    var operation = fxfrscv[25];
+    
+    errorInfo = errorInfo + "\n\n • Operation: **" + operation + "**";
+    
+    
+    //finds member row in pmdcms
+    var memberRowNum = -1;
+    for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+      if(oldEntryInfo[1].toString() === pmdcmscv[i][0].toString()){//start 3rd if
+        var memberType = "Current";
+        var currentGt = oldEntryInfo[1].toString();
+        memberRowNum = i+2;
+        var currentRank = pmdcmscv[i][2].toString();
+        var currentGroups = FunctionContainer.splitEmUp(pmdcmscv[i][3].toString());
+        var currentCredentials = FunctionContainer.splitEmUp(pmdcmscv[i][4].toString());
+        var currentGeneration = pmdcmscv[i][5].toString();
+        var currentPermissions = FunctionContainer.splitEmUp(pmdcmscv[i][6].toString());
+        var currentPositionCode = pmdcmscv[i][7].toString();
+        var currentStatus = pmdcmscv[i][8].toString();
+        var currentEmail = pmdcmscv[i][9].toString();
+        var currentProfileIds = FunctionContainer.splitEmUp(pmdcmscv[i][10].toString());
+        var currentProfileUrls = FunctionContainer.splitEmUp(pmdcmscv[i][11].toString());
+        var currentProfileFolderIds = FunctionContainer.splitEmUp(pmdcmscv[i][12].toString());
+        var currentFullDiscordNickname = FunctionContainer.getDiscordNicknameWithRow(i, dllscv, pmdcmscv);
+        var currentMemberDiscRoles = FunctionContainer.getMemberDiscordInfo(dllscv, pmdcmscv, pmdcmscv[i][0].toString())[1];
+        var currentPermFileIds = FunctionContainer.splitEmUp(pmdcmscv[i][29].toString());
+      }//end 3rd if
+    }//end 1st for
+    
+    //discharged member
+    if(memberType !== "Current"){//start 1st if
+      //goes thru pmddmscv
+      for(var i=0; i<pmddmscv.length; i+=1){//start 1st for
+        if(oldEntryInfo[1].toString() === pmddmscv[i][0].toString()){//start 3rd if
+          var memberType = "Discharged";
+          var currentGt = oldEntryInfo[1].toString();
+          memberRowNum = i+2;
+          var currentRank = pmddmscv[i][2].toString();
+          var currentGroups = FunctionContainer.splitEmUp(pmddmscv[i][3].toString());
+          var currentCredentials = FunctionContainer.splitEmUp(pmddmscv[i][4].toString());
+          var currentGeneration = pmddmscv[i][5].toString();
+          var currentPermissions = FunctionContainer.splitEmUp(pmddmscv[i][6].toString());
+          var currentPositionCode = pmddmscv[i][7].toString();
+          var currentStatus = pmddmscv[i][8].toString();
+          var currentEmail = pmddmscv[i][9].toString();
+          var currentProfileIds = FunctionContainer.splitEmUp(pmddmscv[i][10].toString());
+          var currentProfileUrls = FunctionContainer.splitEmUp(pmddmscv[i][11].toString());
+          var currentProfileFolderIds = FunctionContainer.splitEmUp(pmddmscv[i][12].toString());
+          var currentFullDiscordNickname = FunctionContainer.getDiscordNicknameWithRow(i, dllscv, pmddmscv);
+          var currentMemberDiscRoles = FunctionContainer.getMemberDiscordInfo(dllscv, pmddmscv, pmddmscv[i][0].toString())[1];
+          var currentPermFileIds = FunctionContainer.splitEmUp(pmddmscv[i][29].toString());
+        }//end 3rd if
+      }//end 1st for
+    }//end 1st if
+    
+    
+    //finds member in question of form response row
+    var memberQNums = [[60], [61], [62], [63], [64], [65], [66], [67], [68], [69], [70], [71], [72]];
+    var curFormEntryMember = "";
+    for(var i=0; i<memberQNums.length; i+=1){//start 1st for
+      if(formRow >= 2  &&  formRow <= mufrslri  &&  mufrscv[formRow-2][memberQNums[i]].toString() !== ""){//start 1st if
+        curFormEntryMember = mufrscv[formRow-2][memberQNums[i]].toString();
+        i = 15;
+      }//end 1st if
+    }//end 1st for
+    
+    
+    
+    if(operation === "Delete Entry"){//start 2nd if
+      details = "Member Update Entry Deletion ~ Original Submitter: " + oldEntryInfo[5].toString() + " ~ Form Row: " + formRow + " ~ Member Update Type: " + oldEntryInfo[0].toString() + " ~ Member in Question: " + currentGt;
+    }//end 2nd if
+    
+    
+    else if(operation === "Edit Entry"){//start 2nd if/else
+      details = "Member Update Entry Edit ~ Original Submitter: " + oldEntryInfo[5].toString() + " ~ Form Row: " + formRow + " ~ Member Update Type: " + oldEntryInfo[0].toString() + " ~ Member in Question: " + currentGt;
+      var newUpdateDate = FunctionContainer.dateReplace(fxfrscv[26]);
+      var newUpdateReasoning = fxfrscv[27];
+      var newReportTitle = fxfrscv[28];
+      var newReportDetails = fxfrscv[29];
+      var changesMade = [];
+      errorInfo = errorInfo + "\n\n • Update Date: **" + newUpdateDate + "**";
+      errorInfo = errorInfo + "\n\n • Update Reasoning: **" + newUpdateReasoning + "**";
+      errorInfo = errorInfo + "\n\n • Report Title: **" + newReportTitle + "**";
+      errorInfo = errorInfo + "\n\n • Report Details: **" + newReportDetails + "**";
+    }//end 2nd if/else
+    
+    
+    if(typeOfUpdate === "Rank Change"){//start 2nd if
+      var curVals = FunctionContainer.splitUpRankChangeDetails(oldEntryInfo[2].toString());
+      var oldRank = curVals[0].toString();
+      var newRank = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Rank: __" + oldRank
+        + "__ ~ New Rank: __" + newRank + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Rank: __" + oldRank
+          + "__ ~ New Rank: __" + newRank + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curCol = 8;
+        var curReasoningCol = 9;
+      }//end 3rd if
+      
+    }//end 2nd if
+    
+    
+    else if(typeOfUpdate === "Credential Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpCredChangeDetails(oldEntryInfo[2].toString());
+      var oldCred = curVals[0].toString();
+      var newCred = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+      + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Credential: __" + oldCred
+      + "__ ~ New Credential: __" + newCred + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Credential: __" + oldCred
+          + "__ ~ New Credential: __" + newCred + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 14;
+        var curReasoningCol = 15;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Group Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpGroupChangeDetails(oldEntryInfo[2].toString());
+      var oldGroup = curVals[0].toString();
+      var newGroup = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+      + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Group: __" + oldGroup
+      + "__ ~ New Group: __" + newGroup + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Group: __" + oldGroup
+        + "__ ~ New Group: __" + newGroup + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 18;
+        var curReasoningCol = 19;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Member Report"){//start 2nd if/else
+      var oldTitle = oldEntryInfo[2].toString().replace("Report Title: ","");
+      var oldDetails = oldEntryInfo[4].toString().replace("Report Details: ","");
+      var ogTitle = "**Member Report**";
+      var ogDescription = "Date of Report: **" + oldEntryInfo[3] 
+        + "**\n\nReport Title: **" + oldTitle + "**\n\nReport Details: **" + oldDetails + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Report Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nReport Title: **";
+        
+        if(newReportTitle.toString() !== ""){//start 4th if
+          newDescription = newDescription + newReportTitle;
+          changesMade.push("New Report Title");
+        }//end 4th if
+        else{newDescription = newDescription + oldTitle}
+        
+        newDescription = newDescription + "**\n\nReport Details: **";
+        
+        if(newReportDetails.toString() !== ""){//start 4th if
+          newDescription = newDescription + newReportDetails;
+          changesMade.push("New Report Details");
+        }//end 4th if
+        else{newDescription = newDescription + oldDetails}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 20;
+        var curTitleCol = 21;
+        var curDetailsCol = 22;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Member Discharge"){//start 2nd if/else
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **" + oldEntryInfo[2].toString()
+        + "**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **" + oldEntryInfo[2].toString() 
+          + "**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 23;
+        var curReasoningCol = 24;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Gamertag Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpGTChangeDetails(oldEntryInfo[2].toString());
+      var oldGt = curVals[0].toString();
+      var newGt = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Gamertag: __" + oldGt
+        + "__ ~ New Gamertag: __" + newGt + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Gamertag: __" + oldGt
+          + "__ ~ New Gamertag: __" + newGt + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 26;
+        var curReasoningCol = 27;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Discord Nickname Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpNicknameChangeDetails(oldEntryInfo[2].toString());
+      var oldNick = curVals[0].toString();
+      var newNick = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Nickname: __" + oldNick
+        + "__ ~ New Nickname: __" + newNick + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Nickname: __" + oldNick
+          + "__ ~ New Nickname: __" + newNick + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 29;
+        var curReasoningCol = 30;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Availability Change"){//start 2nd if/else
+      //cycles thru muhaus
+      for(var i=0; i<muhauscv.length; i+=1){//start 1st for
+        //name matches and is GA change
+        if(muhauscv[i][0].toString() === "Availability Change"  &&  muhauscv[i][1].toString() === currentGt  &&  hubRow-3 !== i){//start 5th if
+          //cycle thru mufrs
+          for(var x=mufrscv.length-1; x>=0; x-=1){//start 2nd for
+            //match found for entry date and type (dont have to check for type because date position is only for GA change)
+            if(mufrscv[x][37].toString() !== ""
+              &&  x !== formRow-2
+              &&  mufrscv[x][73].toString() !== "Deleted"
+              &&  FunctionContainer.dateReplace(muhauscv[i][3].toString()) === FunctionContainer.dateRetrieval(mufrscv[x][37].toString())
+              &&  muhauscv[i][4].toString() === mufrscv[x][38].toString()){//start 6th if
+              var memberInQuestionLocs = [[60], [61], [62], [63], [64], [65], [66], [67], [68], [69], [70], [71], [72]];
+              for(var y=0; y<memberInQuestionLocs.length; y+=1){//start 3rd for
+                //if names match
+                if(mufrscv[x][memberInQuestionLocs[y]].toString() === currentGt){//start 1st if
+                  var oldGA = [[mufrscv[x][30].toString(), mufrscv[x][31].toString(), mufrscv[x][32].toString(), mufrscv[x][33].toString(),
+                                mufrscv[x][34].toString(), mufrscv[x][35].toString(), mufrscv[x][36].toString()]];
+                  x = -1;
+                  y = memberInQuestionLocs.length + 1;
+                  i = muhauscv.length + 1;
+                }//end 1st if
+              }//end 3rd for
+            }//end 6th if
+          }//end 2nd for
+        }//end 5th if
+        
+        //no match found
+        if(oldGA === undefined  &&  muhauscv[i][0].toString() !== "Availability Change"  &&  muhauscv[i][1].toString() !== currentGt  &&  i === muhauscv.length-1){//start 5th if
+          var oldGA = [["", "", "", "", "", "", ""]];
+        }//end 5th if
+        
+      }//end 1st for
+
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **" 
+        + oldEntryInfo[2].toString() + "**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **" + oldEntryInfo[2].toString() 
+          + "**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 38;
+        var curReasoningCol = 39;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "LOA"){//start 2nd if/else
+      
+      //leaving
+      if(oldEntryInfo[2].toString().indexOf("Leaving on LOA Starting on:") !== -1){//start 3rd if
+        var curVals = FunctionContainer.splitUpLOALeaveDetails(oldEntryInfo[2].toString());
+        var leaveDate = curVals[0].toString();
+        var returnDate = curVals[1].toString();
+        curVals = undefined;
+        var ogTitle = "**Member Update Alert**";
+        var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+          + oldEntryInfo[3] + "**\n\nUpdate Details: **Leaving on LOA Starting on: __" 
+          + leaveDate + "__ ~ Expected Return Date: __" + returnDate + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+        if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+          var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+          //new date
+          if(newUpdateDate.toString() !== ""){//start 4th if
+            newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+            changesMade.push("New Update Date");
+          }//end 4th if
+          else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+          
+          newDescription = newDescription + "**\n\nUpdate Details: **Leaving on LOA Starting on: __" + leaveDate
+          + "__ ~ Expected Return Date: __" + returnDate + "__**\n\nReasoning: **";
+          
+          if(newUpdateReasoning.toString() !== ""){//start 4th if
+            newDescription = newDescription + newUpdateReasoning;
+            changesMade.push("New Reasoning");
+          }//end 4th if
+          else{newDescription = newDescription + oldEntryInfo[4]}
+          
+          newDescription = newDescription + "**";
+        
+          var curDateCol = 41;
+          var curReasoningCol = 43;
+        }//end 3rd if
+      }//end 3rd if
+      
+      //returning
+      else if(oldEntryInfo[2].toString().indexOf("Returned from LOA as of:") !== -1){//start 3rd if/else
+        var returnDate = FunctionContainer.splitUpLOAReturnDetails(oldEntryInfo[2].toString());
+        var ogTitle = "**Member Update Alert**";
+        var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+          + oldEntryInfo[3] + "**\n\nUpdate Details: **Returned from LOA as of: __" + returnDate
+          + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+        if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+          var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+          //new date
+          if(newUpdateDate.toString() !== ""){//start 4th if
+            newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+            changesMade.push("New Update Date");
+          }//end 4th if
+          else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+          
+          newDescription = newDescription + "**\n\nUpdate Details: **Returned from LOA as of: __" + returnDate
+          + "__**\n\nReasoning: **";
+          
+          if(newUpdateReasoning.toString() !== ""){//start 4th if
+            newDescription = newDescription + newUpdateReasoning;
+            changesMade.push("New Reasoning");
+          }//end 4th if
+          else{newDescription = newDescription + oldEntryInfo[4]}
+          
+          newDescription = newDescription + "**";
+          
+          var curDateCol = 44;
+          var curReasoningCol = 45;
+        }//end 3rd if
+      }//end 3rd if/else
+      
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Birthday Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpBirthdayChangeDetails(oldEntryInfo[2].toString());
+      var oldBday = curVals[0].toString();
+      var newBday = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Birthday: __" + oldBday
+        + "__ ~ New Birthday: __" + newBday + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Birthday: __" + oldBday
+          + "__ ~ New Birthday: __" + newBday + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 46;
+        var curReasoningCol = 49;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Mentor Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpMentorChangeDetails(oldEntryInfo[2].toString());
+      var oldMentor = curVals[0].toString();
+      var newMentor = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Mentor: __" + oldMentor
+        + "__ ~ New Mentor: __" + newMentor + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      var newMentorNickname = FunctionContainer.getDiscordNickname(newMentor, dllscv, pmdcmscv);
+      var oldMentorNickname = FunctionContainer.getDiscordNickname(oldMentor, dllscv, pmdcmscv);
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Mentor: __" + oldMentor
+          + "__ ~ New Mentor: __" + newMentor + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 50;
+        var curReasoningCol = 53;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Position Code Change"){//start 2nd if/else
+      var curVals = FunctionContainer.splitUpPositionCodeChangeDetails(oldEntryInfo[2].toString());
+      var oldPC = curVals[0].toString();
+      var newPC = curVals[1].toString();
+      curVals = undefined;
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Previous Position Code: __" + oldPC
+        + "__ ~ New Position Code: __" + newPC + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Previous Position Code: __" + oldPC
+          + "__ ~ New Position Code: __" + newPC + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 55;
+        var curReasoningCol = 56;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    else if(typeOfUpdate === "Reprimand"){//start 2nd if/else
+      var repNum = FunctionContainer.splitUpReprimandDetails(oldEntryInfo[2].toString());
+      var ogTitle = "**Member Update Alert**";
+      var ogDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **" 
+        + oldEntryInfo[3] + "**\n\nUpdate Details: **Severity of Reprimand(1-5): __" + repNum
+        + "__**\n\nReasoning: **" + oldEntryInfo[4].toString() + "**";
+      
+      if(operation === "Edit Entry"){//start 3rd if
+        var newTitle = ogTitle;
+        var newDescription = "Type of Update: **" + oldEntryInfo[0].toString() + "**\n\nDate of Update: **";
+        //new date
+        if(newUpdateDate.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateDate; var curUpdateDate = newUpdateDate;
+          changesMade.push("New Update Date");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[3]; var curUpdateDate = oldEntryInfo[3]}
+        
+        newDescription = newDescription + "**\n\nUpdate Details: **Severity of Reprimand(1-5): __" + repNum
+          + "__**\n\nReasoning: **";
+        
+        if(newUpdateReasoning.toString() !== ""){//start 4th if
+          newDescription = newDescription + newUpdateReasoning;
+          changesMade.push("New Reasoning");
+        }//end 4th if
+        else{newDescription = newDescription + oldEntryInfo[4]}
+        
+        newDescription = newDescription + "**";
+        
+        var curDateCol = 57;
+        var curReasoningCol = 59;
+      }//end 3rd if
+    }//end 2nd if/else
+    
+  }//end 1st if/else
+  
+  
+  
+  else if(formInQuestion === "New Member Form"){//start 1st if/else
+    
+    //Member Update Hub New Member updates sheet
+    curVals = FunctionContainer.getmuhnmuscv("date", dllscv);
+    var muhnmus = curVals[0];
+    var muhnmuscv = curVals[1];
+    var muhnmuslri = curVals[2];
+    curVals = undefined;
+    
+    //Member Update Form Response Sheet
+    var nmfrs = FunctionContainer.tripleTryOpenSheet(dllscv[86][2].toString(),"NMF Responses");
+    var nmfrslri = FunctionContainer.tripleTryGetLastRow(nmfrs);
+    var nmfrscv = FunctionContainer.tripleTryGetValues(nmfrs,2,1,nmfrslri-1,40);
+  
+    //Lacedaemon Member Data Discharged Members Sheet
+    curVals = FunctionContainer.getpmddmscv("date");
+    var pmddms = curVals[0];
+    var pmddmscv = curVals[1];
+    curVals = undefined;
+    
+    //if row number is not a row that is legal in member update hub
+    if(hubRow < 3  ||  hubRow > muhnmuslri){//start 2nd if
+      var oldEntryInfo = muhnmuscv[0];
+      hubRowError = true;
+    }//end 2nd if
+    else{var oldEntryInfo = muhnmuscv[hubRow-3]}
+    
+    //if row number is not a row that is legal in member update form response sheet
+    if(formRow < 2  ||  formRow > nmfrslri){//start 2nd if
+      formRowError = true;
+    }//end 2nd if
+    
+    //if row entry in form response sheet has been deleted already
+    else if(nmfrscv[formRow-2][37].toString() === "Deleted"){//start 2nd if
+      formDeletedEntryError = true;
+    }//end 2nd if
+    
+    oldEntryInfo[3] = FunctionContainer.dateReplace(oldEntryInfo[3]);
+    
+    var operation = fxfrscv[30];
+    errorInfo = errorInfo + "\n\n • Operation: **" + operation + "**";
+    
+    
+    //finds member row in pmdcms
+    var memberRowNum = -1;
+    for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+      if(oldEntryInfo[0].toString() === pmdcmscv[i][0].toString()){//start 2nd if
+        var memberType = "Current";
+        var currentGt = oldEntryInfo[0].toString();
+        memberRowNum = i+2;
+        var currentRank = pmdcmscv[i][2].toString();
+        var currentGroups = FunctionContainer.splitEmUp(pmdcmscv[i][3].toString());
+        var currentCredentials = FunctionContainer.splitEmUp(pmdcmscv[i][4].toString());
+        var currentGeneration = pmdcmscv[i][5].toString();
+        var currentPermissions = FunctionContainer.splitEmUp(pmdcmscv[i][6].toString());
+        var currentPositionCode = pmdcmscv[i][7].toString();
+        var currentStatus = pmdcmscv[i][8].toString();
+        var currentEmail = pmdcmscv[i][9].toString();
+        var currentProfileIds = FunctionContainer.splitEmUp(pmdcmscv[i][10].toString());
+        var currentProfileUrls = FunctionContainer.splitEmUp(pmdcmscv[i][11].toString());
+        var currentProfileFolderIds = FunctionContainer.splitEmUp(pmdcmscv[i][12].toString());
+        var currentFullDiscordNickname = FunctionContainer.getDiscordNicknameWithRow(i, dllscv, pmdcmscv);
+        var currentMemberDiscRoles = FunctionContainer.getMemberDiscordInfo(dllscv, pmdcmscv, pmdcmscv[i][0].toString())[1];
+        var currentPermFileIds = FunctionContainer.splitEmUp(pmdcmscv[i][29].toString());
+        var currentDiscInfo = FunctionContainer.getMemberDiscordInfo(dllscv,pmdcmscv,currentGt);
+      }//end 2nd if
+    }//end 1st for
+    
+    
+    //finds member in question of form response row
+    var memberQNums = [[4]];
+    var curFormEntryMember = "";
+    for(var i=0; i<memberQNums.length; i+=1){//start 1st for
+      if(formRow >= 2  &&  formRow <= nmfrslri  &&  nmfrscv[formRow-2][memberQNums[i]].toString() !== ""){//start 2nd if
+        curFormEntryMember = nmfrscv[formRow-2][memberQNums[i]].toString();
+        i = 15;
+      }//end 2nd if
+    }//end 1st for
+    
+    
+    if(operation === "Delete Entry"){//start 2nd if
+      details = "New Member Entry Deletion ~ Original Submitter: " + oldEntryInfo[5].toString() + " ~ Form Row: " + formRow + " ~ Member Update Type: " + oldEntryInfo[0].toString() + " ~ Member in Question: " + currentGt;
+    }//end 2nd if
+    
+    
+    else if(operation === "Edit Entry"){//start 2nd if/else
+      details = "New Member Entry Edit ~ Original Submitter: " + oldEntryInfo[5].toString() + " ~ Form Row: " + formRow + " ~ Member Update Type: " + oldEntryInfo[0].toString() + " ~ Member in Question: " + currentGt;
+      var changesMade = [];
+      
+      //Entry Group
+      if(fxfrscv[31].toString() !== ""){//start 3rd if
+        changesMade.push("Entry Group");
+        var newEntryGroup = fxfrscv[31].toString();
+        errorInfo = errorInfo + "\n\n • Entry Group: **" + newEntryGroup + "**";
+      }//end 3rd if
+      else{var newEntryGroup = oldEntryInfo[2].toString();}
+      
+      //Generation
+      if(fxfrscv[32].toString() !== ""){//start 3rd if
+        changesMade.push("Generation");
+        var newGeneration = fxfrscv[32].toString();
+        errorInfo = errorInfo + "\n\n • Generation: **" + newGeneration + "**";
+      }//end 3rd if
+      else{var newGeneration = oldEntryInfo[1].toString();}
+      
+      //Bootcamp Date
+      if(fxfrscv[33].toString() !== ""){//start 3rd if
+        changesMade.push("Bootcamp Date");
+        var newBootcampDate = FunctionContainer.dateReplace(fxfrscv[33].toString());
+        errorInfo = errorInfo + "\n\n • Bootcamp Date: **" + newBootcampDate + "**";
+      }//end 3rd if
+      else{var newBootcampDate = oldEntryInfo[3].toString();}
+      
+      //Additional Notes
+      if(fxfrscv[34].toString() !== ""){//start 3rd if
+        changesMade.push("Additional Notes");
+        var newAdditionalNotes = fxfrscv[34].toString();
+        errorInfo = errorInfo + "\n\n • Additional Notes: **" + newAdditionalNotes + "**";
+      }//end 3rd if
+      else{var newAdditionalNotes = oldEntryInfo[6].toString();}
+      
+      //LDI
+      if(fxfrscv[35].toString() !== ""){//start 3rd if
+        changesMade.push("LDI");
+        var newLDI = fxfrscv[35].toString();
+        errorInfo = errorInfo + "\n\n • LDI: **" + newLDI + "**";
+      }//end 3rd if
+      else{var newLDI = oldEntryInfo[4].toString();}
+      
+      //Recruited By
+      if(fxfrscv[36].toString() !== ""){//start 3rd if
+        changesMade.push("Recruited By");
+        var newRecruitedBy = fxfrscv[36].toString();
+        errorInfo = errorInfo + "\n\n • Recruited By: **" + newRecruitedBy + "**";
+      }//end 3rd if
+      else{var newRecruitedBy = oldEntryInfo[5].toString();}
+      
+      details = details + "Changes Made: " + FunctionContainer.array1LevelIntoString(changesMade);
+      
+    }//end 2nd if/else
+    
+    
+  }//end 1st if/else
+
+
+
+
+
+
+  
+  
+  //** CHECKS AND DATA CHANGING **//
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "fxf", fxfrscv[2].toString())){//start 1st if
+    
+    
+    
+    //if row is out of bounds
+    if(formRowError){//start 2nd if
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "inputted an out of bounds row for the form response row in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+    }//end 2nd if
+    if(hubRowError){//start 2nd if
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "inputted an out of bounds row for the hub row in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+    }//end 2nd if
+    
+    //if form entry has been deleted already
+    if(formDeletedEntryError){//start 2nd if
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "inputted a form response row that has already been deleted using the fixer form in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+    }//end 2nd if
+    
+    
+    
+    if(formInQuestion === "Debrief Form"){//start 2nd if
+      
+      //form repsonse row doesn't match hub info
+      if(dfrscv[formRow-2][11].toString().trim() !== oldEntryInfo[9].toString().trim()){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "inputted a row for the form response row that doesn't match the hub row details in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+      }//end 3rd if
+      
+      
+      //turns off forms
+      FunctionContainer.formTurnOff(["all"], dllscv);
+      
+      //waits 15 seconds for scripts running to complete
+      Utilities.sleep(15000);
+      
+      
+      if(operation === "Delete Entry"){//start 2nd if
+        //deletes messages from discord
+        for(var i=0; i<oldDiscordMessages.length; i+=1){//start 1st for
+          FunctionContainer.discordFixerFormSend("d$e$^" + oldDiscordMessages[i][0] + "^" + oldDiscordMessages[i][1] 
+            + "^" + oldDiscordMessages[i][3]);
+        }//end 1st for
+        
+        //deletes entry from debrief hub
+        FunctionContainer.tripleTryDeleteRows(edhaeds,hubRow,1);
+        
+        //pastes that it has been deleted in the form responses
+        FunctionContainer.tripleTrySetSSValuesSingleString(dfrs, formRow, 67, 1, 1, "Deleted");
+      }//end 2nd if
+      
+      
+      
+      if(operation === "Edit Entry"){//start 2nd if
+        //discord message edit/add/delete
+        var newDiscordMessages = FunctionContainer.getDebriefDiscordMessages(newEntryInfo, discChannels);
+        if(newDiscordMessages.toString() === ""){//start 1st if
+          newDiscordMessages = [["","","","N/A"]];
+        }//end 1st if
+        
+        //if there is only messages to be deleted
+        if(newDiscordMessages[0][3].toString() === "N/A"){//start 4th if
+          //delete any disc messages
+          //cycles thru old disc messages and deltes them
+          for(var i=0; i<oldDiscordMessages.length; i+=1){//start 1st for
+            if(oldDiscordMessages[i][3].toString() !== "N/A"){//start 5th if
+              FunctionContainer.discordFixerFormSend("d$e$^" + oldDiscordMessages[i][0] + "^" + oldDiscordMessages[i][1] 
+                + "^" + oldDiscordMessages[i][3]);
+            }//end 5th if
+          }//end 1st for
+        }//end 4th if
+        
+        //if there is only messages to be sent not deleted or edited
+        else if(oldDiscordMessages[0][3].toString() === "N/A"){//start 4th if/else
+          //sends all disc messages
+          for(var i=0; i<newChannelsList.length; i+=1){//start 1st for
+            //s$e$^Title^Description^Author^Author Avatar^Image^Footer^Channel Name
+            FunctionContainer.discordFixerFormSend("s$e$^" + newDiscordMessages[i][0] + "^" 
+              + newDiscordMessages[i][1] + "^^^^" + newDiscordMessages[i][2] + "^" + newDiscordMessages[i][3]);
+          }//end 1st for
+        }//end 4th if/else
+        
+        //if there is no change in disc channels and there are disc mesages to be edited
+        else if(newDiscordMessages[0][3].toString() === ""){//start 4th if/else
+          //cycles thru old disc messages and deltes them
+          for(var i=0; i<oldDiscordMessages.length; i+=1){//start 1st for
+            //s$e$^Title^Description^Author^Author Avatar^Image^Footer^Channel Name
+            FunctionContainer.discordFixerFormSend(
+              "e$e$^" + oldDiscordMessages[i][0] + "^" + oldDiscordMessages[i][1] + "^" + newDiscordMessages[0][0]
+              + "^" + newDiscordMessages[0][1] + "^^^^" + newDiscordMessages[0][2] + "^" + oldDiscordMessages[i][3]);
+          }//end 1st for
+        }//end 4th if/else
+        
+        //if there is messages in discord to be edited, added, and/or deleted
+        else{//start 4th if/else
+          //cycles thru new disc messages
+          for(var i=0; i<newDiscordMessages.length; i+=1){//start 1st for
+            //cycles thru old disc messages
+            for(var x=0; x<oldDiscordMessages.length; x+=1){//start 2nd for
+              //edit message
+              if(oldDiscordMessages[x][3].toString() === newDiscordMessages[i][3].toString()){//start 5th if
+                //e$e$^Old Title^Old Description^New Title^New Description^New Author^New Author Avatar^New Image^New Footer^Channel Name
+                FunctionContainer.discordFixerFormSend(
+                  "e$e$^" + oldDiscordMessages[x][0] + "^" + oldDiscordMessages[x][1] + "^" + newDiscordMessages[i][0] 
+                  + "^" + newDiscordMessages[i][1] + "^^^^" + newDiscordMessages[i][2] + "^" + newDiscordMessages[i][3]);
+                x = oldDiscordMessages.length+1;
+              }//end 5th if
+              //add message
+              else if(oldDiscordMessages[x][3].toString() !== newDiscordMessages[i][3].toString()  &&  x === oldDiscordMessages.length-1){//start 5th if/else
+                FunctionContainer.discordFixerFormSend("s$e$^" + newDiscordMessages[i][0] + "^" 
+                  + newDiscordMessages[i][1] + "^^^^" + newDiscordMessages[i][2] + "^" + newDiscordMessages[i][3]);
+              }//end 5th if/else
+            }//end 2nd for
+          }//end 1st for
+          
+          
+          //cycles thru old disc messages
+          for(var i=0; i<oldDiscordMessages.length; i+=1){//start 1st for
+            //cycles thru new disc messages
+            for(var x=0; x<newDiscordMessages.length; x+=1){//start 2nd for
+              //dont delete message
+              if(oldDiscordMessages[i][3].toString() === newDiscordMessages[x][3].toString()){//start 5th if
+                x = newChannels.length + 2;
+              }//end 5th if
+              
+              //delete message
+              else if(oldDiscordMessages[i][3].toString() !== newDiscordMessages[x][3].toString()  &&  x === newDiscordMessages.length-1){//start 5th if/else
+                FunctionContainer.discordFixerFormSend("d$e$^" + oldDiscordMessages[i][0] + "^" + oldDiscordMessages[i][1] 
+                  + "^" + oldDiscordMessages[i][3]);
+              }//end 5th if/else
+            }//end 2nd for
+          }//end 1st for
+          
+        }//end 4th if/else
+        
+        //pastes vals in dfrs
+        FunctionContainer.tripleTrySetSSValues(dfrs, formRow, 4, dfrsnv.length, dfrsnv[0].length, dfrsnv);
+        
+        
+        //pastes vals in hub
+        FunctionContainer.tripleTrySetSSValues(edhaeds, hubRow, 1, 1, newEntryInfo.length, [newEntryInfo]);
+    
+        
+        //reorganize hub
+        
+        //Event Debrief Hub All Event Debriefs sheet
+        curVals = FunctionContainer.getedhaedscv("num", dllscv);
+        var edhaeds = curVals[0];
+        var edhaedscvn = curVals[1];
+        var edhaedslri = curVals[2];
+        curVals = undefined;
+        
+        //organizes data
+        edhaedscvn = FunctionContainer.specialSortDesc(edhaedscvn);
+        
+        //pastes new data
+        FunctionContainer.tripleTrySetSSValues(edhaeds, 3, 1, edhaedscvn.length, edhaedscvn[0].length, edhaedscvn);
+        
+        
+        
+      }//end 3rd if
+      
+      
+      
+      
+      
+    }//end 2nd if
+    
+    
+    
+    
+    else if(formInQuestion === "Member Update Form"){//start 2nd if/else
+      
+      //form repsonse row doesn't match hub info
+      if(curFormEntryMember.toString() !== currentGt.toString()  ||  mufrscv[formRow-2][4].toString() !== oldEntryInfo[0].toString()){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "inputted a row for the form response row that doesn't match the hub row entry in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+      }//end 3rd if
+      
+      //member not found
+      if(memberRowNum === -1){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "could not find member in current or discharged members (could've had gamertag change that didn't correctly change everywhere) in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+      }//end 3rd if
+      
+      //if member is discharged and the type of update isnt member discharge
+      if(memberType === "Discharged"  &&  typeOfUpdate !== "Member Discharge"){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "tried to put an entry that is for a member that isn't a current member and didn't choose a discharge member update entry in the hub/form response in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+      }//end 3rd if
+      
+      //if member is current and the type of update is member discharge
+      if(memberType === "Current"  &&  typeOfUpdate === "Member Discharge"){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "tried to put an entry that is for a current member and choose a discharge member update entry in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+      }//end 3rd if
+      
+      if(operation === "Delete Entry"){//start 3rd if
+        
+        //turns off forms
+        FunctionContainer.formTurnOff(["all"], dllscv);
+        
+        //waits 15 seconds for scripts running to complete
+        Utilities.sleep(15000);
+        
+        
+        if(typeOfUpdate === "Rank Change"){//start 4th if
+          
+          //replace old rank in pmdcmscv
+          pmdcmscv[memberRowNum-2][2] = oldRank;
+          
+          //gets new nickname
+          var newNickname = FunctionContainer.getDiscordNicknameWithRow(memberRowNum-2, dllscv, pmdcmscv);
+
+          //paste old rank in pmdcms
+          FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 3, 1, 1, oldRank);
+          
+          //give old rank back role
+          FunctionContainer.discordFixerFormSend("a^r," + currentFullDiscordNickname + "," + oldRank);
+          
+          //take away new rank role
+          FunctionContainer.discordFixerFormSend("r^r," + currentFullDiscordNickname + "," + newRank);
+          
+          //change nickname
+          FunctionContainer.discordFixerFormSend("c^n," + currentFullDiscordNickname + "," + newNickname);
+          
+        }//end 4th if
+        
+        
+        else if(typeOfUpdate === "Credential Change"){//start 4th if/else
+          
+          //changes the old creds according to cred change
+          //member has no creds
+          if(currentCredentials.length === 0){//start 5th if
+            pmdcms[memberRowNum-2][4] = oldCred;
+            FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 5, 1, 1, oldCred);
+          }//end 5th if
+          
+          //member has creds
+          else if(currentCredentials.length>0){//start 5th if/else
+            FunctionContainer.arrayLVL1MultiReplace(currentCredentials, [[newCred, oldCred]]);
+            pmdcms[memberRowNum-2][4] = currentCredentials;
+            FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 5, 1, 1, FunctionContainer.array1LevelIntoString(currentCredentials));
+          }//end 5th if/else
+          
+          //give old cred back role
+          if(oldCred.indexOf("U/I") === -1  &&  oldCred !== "N/A"){//start 5th if
+            FunctionContainer.discordFixerFormSend("a^r," + currentFullDiscordNickname + "," + oldCred);
+          }//end 5th if
+            
+          //take away new cred role
+          if(newCred.indexOf("U/I") === -1  &&  newCred !== "N/A"){//start 5th if
+            FunctionContainer.discordFixerFormSend("r^r," + currentFullDiscordNickname + "," + newCred);
+          }//end 5th if
+        }//end 4th if/else
+        
+        
+        else if(typeOfUpdate === "Group Change"){//start 4th if/else
+          
+          //changes the old groups according to cred change
+          if(currentGroups.length > 0){//start 5th if/else
+            FunctionContainer.arrayLVL1MultiReplace(currentGroups, [[newGroup, oldGroup]]);
+            var curVal = FunctionContainer.array1LevelIntoString(currentGroups);
+            pmdcmscv[memberRowNum-2][3] = curVal;
+            var newMemberDiscRoles = FunctionContainer.getMemberDiscordInfo(dllscv, pmdcmscv, currentGt)[1];
+          }//end 5th if/else
+          
+          //gets rid of " leadership" if it has it
+          //newGroup
+          if(newGroup.toString().indexOf(" Leadership") !== -1){//start 5th if
+            newGroup = newGroup.replace(" Leadership","");
+          }//end 5th if
+          
+          //oldGroup
+          if(oldGroup.toString().indexOf(" Leadership") !== -1){//start 5th if
+            oldGroup = oldGroup.replace(" Leadership","");
+          }//end 5th if
+          
+          
+          //makes sure the previous group's parent group is included in their roles and new one is added if not already
+          var groupsToRemove = FunctionContainer.arrayLVL1ExclusiveOrLeft(currentMemberDiscRoles, newMemberDiscRoles);
+          var groupsToAdd = FunctionContainer.arrayLVL1ExclusiveOrRight(currentMemberDiscRoles, newMemberDiscRoles);
+          
+          for(var i=0; i<Math.max(groupsToRemove.length, groupsToAdd.length); i+=1){//start 1st for
+            
+            if(groupsToRemove.length>i){//start 1st if
+              var removeR = groupsToRemove[i].toString();
+            }//end 1st if
+            else if(groupsToRemove.length<=i){//start 1st if
+              var removeR = "N/A";
+            }//end 1st if
+            
+            if(groupsToAdd.length>i){//start 1st if
+              var addR = groupsToAdd[i].toString();
+            }//end 1st if
+            else if(groupsToAdd.length<=i){//start 1st if
+              var addR = "N/A";
+            }//end 1st if
+            
+            FunctionContainer.fixerFormDiscordRoles(addR,removeR,currentFullDiscordNickname);
+            
+          }//end 1st for
+          
+          //transfer of profile folder to correct place
+          //if its a group to group transfer
+          if(newGroup !== "N/A"  &&  oldGroup !== "N/A"){//start 5th if
+            
+            //finds correct group profileid
+            for(var i=0; i<currentProfileFolderIds.length; i+=1){//start 1st for
+              if(currentProfileFolderIds[i].toString().indexOf(newGroup) !== -1){//start 6th if
+                var oldFolderId = FunctionContainer.pmdcmsIdRetrieval(currentProfileFolderIds[i].toString());
+                //finds new parent folder id
+                for(var x=0; x<49; x+=1){//start 2nd for
+                  if(dllscv[40][x].toString() === oldGroup){//start 7th if
+                    var newFolderId = dllscv[42][x].toString();
+                  }//end 7th if
+                }//end 2nd for
+                //moves folder
+                FunctionContainer.moveFile(oldFolderId, DriveApp.getFolderById(newFolderId));
+                //updates currentProfileFolderIds with new location
+                currentProfileFolderIds[i] = oldGroup+" ~ "+oldFolderId;
+              }//end 6th if
+            }//end 1st for
+            
+            //finds the profile urls
+            for(var i=0; i<currentProfileUrls.length; i+=1){//start 1st for
+              if(currentProfileUrls[i].toString().indexOf(newGroup) !== -1){//start 6th if
+                currentProfileUrls[i] = currentProfileUrls[i].toString().replace(newGroup,oldGroup);
+              }//end 6th if
+            }//end 1st for
+            
+            //finds old profile file id
+            for(var i=0; i<currentProfileIds.length; i+=1){//start 1st for
+              if(currentProfileIds[i].toString().indexOf(newGroup) !== -1){//start 6th if
+                currentProfileIds[i] = currentProfileIds[i].toString().replace(newGroup,oldGroup);
+              }//end 6th if
+            }//end 1st for
+          }//end 5th if
+          
+          
+          //if its a group to nothing transfer
+          else if(newGroup !== "N/A"  &&  oldGroup === "N/A"){//start 5th if
+            //deletes old group element in their own arrays and puts them in different variables for deletion
+            //profile folder
+            for(var i=0; i<currentProfileFolderIds.length; i+=1){//start 1st for
+              if(currentProfileFolderIds[i].toString().indexOf(newGroup) !== -1){//start 6th if
+                var curFolderId = FunctionContainer.pmdcmsIdRetrieval(currentProfileFolderIds[i].toString());
+                currentProfileFolderIds.splice(i,1);
+              }//end 6th if
+            }//end 1st for
+            
+            //profile url
+            for(var i=0; i<currentProfileUrls.length; i+=1){//start 1st for
+              if(currentProfileUrls[i].toString().indexOf(newGroup) !== -1){//start 6th if
+                currentProfileUrls.splice(i,1);
+              }//end 6th if
+            }//end 1st for
+            
+            //profileId
+            for(var i=0; i<currentProfileIds.length; i+=1){//start 1st for
+              if(currentProfileIds[i].toString().indexOf(newGroup) !== -1){//start 6th if
+                var curFileId = FunctionContainer.pmdcmsIdRetrieval(currentProfileIds[i].toString());
+                currentProfileIds.splice(i,1);
+              }//end 6th if
+            }//end 1st for
+            
+            //deletes files and folders
+            DriveApp.getFileById(curFileId).setTrashed(true);
+            DriveApp.getFolderById(curFolderId).setTrashed(true);
+          }//end 5th if
+          
+          
+          //if its a nothing to group transfer
+          else if(newGroup === "N/A"  &&  oldGroup !== "N/A"){//start 5th if
+            //finds group folder id
+            for(var i=0; i<49; i+=1){//start 1st for
+              if(dllscv[40][i].toString() === oldGroup){//start 6th if
+                var newFolderId = dllscv[42][i].toString();
+              }//end 6th if
+            }//end 1st for
+            
+            //creates folder and file and gets url
+            var memberProfileFolderID = DriveApp.getFolderById(newFolderId).createFolder(currentGt).getId();
+            var newMemberProfileFileId = DriveApp.getFileById("1-b5hri1atfFz03WcnNRi3s-Tl8NUFoTaCpIoj5Hw74I").makeCopy(currentGt, DriveApp.getFolderById(memberProfileFolderID)).getId();
+            var newMemberProfileFileUrl = DriveApp.getFileById(newMemberProfileFileId).getUrl();
+            
+            //fixes profile's <gt>
+            SpreadsheetApp.openById(newMemberProfileFileId).createTextFinder("<GT>").replaceAllWith(currentGt);
+            
+            //update currentmember arrays
+            //profile folder
+            currentProfileFolderIds.push([oldGroup+" ~ "+memberProfileFolderID]);
+            //profile url
+            currentProfileUrls.push([oldGroup+" ~ "+newMemberProfileFileUrl]);
+            //profileId
+            currentProfileIds.push([oldGroup+" ~ "+newMemberProfileFileId]);
+            
+            //shares folder if email isnt N/A
+            if(currentEmail !== ""){//start 6th if
+              DriveApp.getFolderById(memberProfileFolderID).addViewer(currentEmail);
+            }//end 6th if
+            
+          }//end 5th if
+          
+          //changes data in pmdcms
+          pmdcmscv[memberRowNum-2][10] = FunctionContainer.array1LevelIntoString(currentProfileIds);
+          pmdcmscv[memberRowNum-2][11] = FunctionContainer.array1LevelIntoString(currentProfileUrls);
+          pmdcmscv[memberRowNum-2][12] = FunctionContainer.array1LevelIntoString(currentProfileFolderIds);
+          FunctionContainer.tripleTrySetSSValues(pmdcms, memberRowNum, 1, 1, pmdcmscv[0].length, [pmdcmscv[memberRowNum-2]]);
+          
+        }//end 4th if/else
+        
+        
+        else if(typeOfUpdate === "Member Report"){//start 4th if/else
+          //nothing
+        }//end 4th if/else
+        
+        
+        else if(typeOfUpdate === "Member Discharge"){//start 4th if/else
+          //removes kick message from formal
+          //d$m$^Message^Channel Name
+          FunctionContainer.discordFixerFormSend("d$m$^" + currentFullDiscordNickname + " has left the server and has been purged from my database.^member-log");
+          FunctionContainer.discordFixerFormSend("d$m$^" + currentFullDiscordNickname + " has been kicked from the server.^member-log");
+          
+          //change nickname
+          FunctionContainer.discordFixerFormSend("c^n,Cadet," + currentFullDiscordNickname);
+          
+          //gets all disc roles and gives it to the person
+          var curDiscRoles = FunctionContainer.getMemberDiscordInfo(dllscv, pmddmscv, currentGt);
+          for(var i=0; i<curDiscRoles[1].length; i+=1){//start 1st for
+            //give old rank back role
+            FunctionContainer.discordFixerFormSend("a^r," + currentFullDiscordNickname + "," + curDiscRoles[1][i]);
+          }//end 1st for
+          
+          
+          
+          //move pmddmscv member info to pmdcmscv
+          pmdcmscv.push(pmddmscv[memberRowNum-2]);
+          //sorts pmdcmscv
+          pmdcmscv = FunctionContainer.specialSort(pmdcmscv);
+          //paste pmdcmscv
+          FunctionContainer.tripleTrySetSSValues(pmdcms,2,1,pmdcmscv.length,pmdcmscv[0].length,pmdcmscv);
+          
+          //remove row from pmddcmscv
+          FunctionContainer.tripleTryDeleteRows(pmddms, memberRowNum, 1);
+          
+          
+          //moves member profiles to correct group member profile folders
+          for(var i=0; i<currentProfileFolderIds.length; i+=1){//start 1st for
+            for(var x=0; x<49; x+=1){//start 2nd for
+              if(currentProfileFolderIds[i].toString().indexOf(dllscv[40][x].toString()) !== -1){//start 5th if
+                DriveApp.getFolderById(FunctionContainer.pmdcmsIdRetrieval(currentProfileFolderIds[i])).moveTo(DriveApp.getFolderById(dllscv[42][x].toString()));
+                Utilities.sleep(500);
+              }//end 5th if
+            }//end 2nd for
+          }//end 1st for
+          
+        }//end 4th if/else
+        
+        
+        else if(typeOfUpdate === "Gamertag Change"){//start 4th if/else
+          
+          //changes name in pmdcmscv
+          pmdcmscv[memberRowNum-2][0] = oldGt;
+          
+          //sorts data regardless of capitalizations
+          pmdcmscv = FunctionContainer.specialSort(pmdcmscv);
+          
+          //Pastes pmdcmscv
+          FunctionContainer.tripleTrySetSSValues(pmdcms, 2, 1, pmdcmscv.length, pmdcmscv[0].length, pmdcmscv);
+          
+          //cycle thru perm docs and change name there
+          for(var i=0; i<currentPermFileIds.length; i+=1){//start 1st for
+            var curFile = DriveApp.getFileById(currentPermFileIds[i]);
+            var curFileName = curFile.getName().replace(newGt, oldGt);
+            curFile.setName(curFileName);
+          }//end 1st for
+          
+          //cycles thru like url update and changes old names in specified rows
+          var allFileIds = [["Forge Hub","Forge Entries",dllscv[82][1].toString(),[4,5,6]],
+            ["Forge Hub","Active Maps",dllscv[82][1].toString(),[6,7,8,10,15]],
+            ["Forge Hub","Inactive Maps",dllscv[82][1].toString(),[6,7,8,10,15]],
+            ["Member Update Hub","All Updates",dllscv[82][3].toString(),[2,6]],
+            ["Member Update Hub","New Member Updates",dllscv[82][3].toString(),[1,5,6,8]],
+            ["Event Debrief Hub","All Event Debriefs",dllscv[82][0].toString(),[7,8,9,13]],
+            ["Miscellaneous Form Hub","All Entries",dllscv[82][4].toString(),[4,5]]
+          ];
+          
+          for(var i=0; i<allFileIds.length; i+=1){//start 1st for
+            for(var x=0; x<allFileIds[i][3].length; x+=1){//start 2nd for
+              
+              //gets current sheet vals
+              var currentSheet = FunctionContainer.tripleTryOpenSheet(allFileIds[i][2], allFileIds[i][1]);
+              var currentSheetlri = FunctionContainer.tripleTryGetLastRow(currentSheet);
+              var currentSheetcv = FunctionContainer.tripleTryGetValues(currentSheet, 1, allFileIds[i][3][x], currentSheetlri, 1);
+              
+              //cycles through cv and replaces old gt with new gt
+              for(var y=0; y<currentSheetlri; y+=1){//start 3rd for
+                while(currentSheetcv[y][0].toString().indexOf(newGt)!==-1){//start 1st while
+                  currentSheetcv[y][0] = currentSheetcv[y][0].toString().replace(newGt,oldGt);
+                }//end 1st while
+              }//end 3rd for
+              
+              //pastes new data
+              FunctionContainer.tripleTrySetSSValues(currentSheet, 1, allFileIds[i][3][x], currentSheetcv.length, 1, currentSheetcv);
+              
+            }//end 2nd for
+            Utilities.sleep(250);
+          }//end 1st for
+          
+          //replaces gt in response sheets
+          for(var i=0; i<11; i+=1){//start 1st for
+            if(dllscv[86][i].toString() !== ""){//start 3rd if
+              FunctionContainer.tripleTrySheetTextReplacer(dllscv[86][i].toString(), newGt, oldGt);
+              Utilities.sleep(250);
+            }//end 3rd if
+          }//end 1st for
+          
+          //member profile folders
+          for(var i=0; i<currentProfileFolderIds.length; i+=1){//start 1st for
+            var curFolderId = FunctionContainer.pmdcmsIdRetrieval(currentProfileFolderIds[i]);
+            DriveApp.getFolderById(curFolderId).setName(oldGt);
+            Utilities.sleep(250);
+          }//end 1st for
+          
+          //member profile files
+          for(var i=0; i<currentProfileIds.length; i+=1){//start 1st for
+            var curFileId = FunctionContainer.pmdcmsIdRetrieval(currentProfileIds[i]);
+            DriveApp.getFileById(curFileId).setName(oldGt);
+            Utilities.sleep(250);
+          }//end 1st for
+          
+        }//end 4th if/else
+        
+        
+        else if(typeOfUpdate === "Discord Nickname Change"){//start 4th if/else
+          
+          //paste vals into pmdcms
+          FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 2, 1, 1, oldNick);
+          
+          //changes nickname to old nickname in pmdcmscv
+          pmdcmscv[memberRowNum-2][1] = oldNick;
+          
+          //gets full new nickname
+          var newFullNickname = FunctionContainer.getDiscordNicknameWithRow(memberRowNum-2, dllscv, pmdcmscv);
+          
+          //changes nickname to old nickname in discord
+          FunctionContainer.discordFixerFormSend("c^n," + currentFullDiscordNickname + "," + newFullNickname);
+          
+          //change current disc name to new nickname
+          currentFullDiscordNickname = newFullNickname;
+          
+        }//end 4th if/else
+        
+        
+        else if(typeOfUpdate === "Availability Change"){//start 4th if/else
+          FunctionContainer.tripleTrySetSSValues(pmdcms, memberRowNum, 14, 1, 7, oldGA);
+        }//end 4th if/else
+        
+        
+        else if(typeOfUpdate === "LOA"){//start 4th if/else
+          
+          //leaving
+          if(oldEntryInfo[2].toString().indexOf("Leaving on LOA Starting on:") !== -1){//start 5th if
+            //removes loa disc role
+            FunctionContainer.discordFixerFormSend("r^r," + currentFullDiscordNickname + ",LOA");
+            //status
+            FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 9, 1, 1, "Active");
+          }//end 5th if
+          
+          //returning
+          else if(oldEntryInfo[2].toString().indexOf("Returned from LOA as of:") !== -1){//start 5th if/else
+            //adds loa disc role
+            FunctionContainer.discordFixerFormSend("a^r," + currentFullDiscordNickname + ",LOA");
+            //status
+            FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 9, 1, 1, "LOA");
+          }//end 5th if/else
+          
+        }//end 4th if/else
+        
+        
+        else if(typeOfUpdate === "Birthday Change"){//start 4th if/else
+          if(oldBday === "N/A"){//start 1st if
+            oldBday = "";
+          }//end 1st if
+          FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 27, 1, 1, oldBday);
+        }//end 4th if/else
+        
+        
+        else if(typeOfUpdate === "Mentor Change"){//start 4th if/else
+          if(oldMentor === "N/A"){//start 1st if
+            oldMentor = "";
+          }//end 1st if
+          FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 26, 1, 1, oldMentor);
+          
+          //sends a edit pm message to disc for the mentor
+          if(mufrscv[formRow-2][50].toString() === "Add Mentor"){//start 3rd if
+            //send message to mentor saying they now officially mentor the member in question
+            FunctionContainer.discordFixerFormSend("e$edm$^**Mentee Update**^You have been __added__ as a mentor to **__" + currentGt
+              + "__**\n\nDate of Update: **" + oldEntryInfo[3]
+              + "**^This Entry Has Been Deleted^Sorry for any inconvenience this may cause. If you think this is a mistake please contact a leader through the proper chain of command.^^^^Phoenix Era Member Updates^" 
+              + newMentorNickname);
+          }//end 3rd if
+          
+          else if(mufrscv[formRow-2][50].toString() === "Remove Mentor"){//start 3rd if/else
+            //send message to mentor saying they now officially mentor the member in question
+            FunctionContainer.discordFixerFormSend("e$edm$^**Mentee Update**^You have been __removed__ as a mentor to **__" + currentGt
+              + "__**\n\nDate of Update: **" + oldEntryInfo[3]
+              + "**^This Entry Has Been Deleted^Sorry for any inconvenience this may cause. If you think this is a mistake please contact a leader through the proper chain of command.^^^^Phoenix Era Member Updates^" 
+              + oldMentorNickname);
+          }//end 3rd if/else
+          
+          
+        }//end 4th if/else
+        
+        
+        else if(typeOfUpdate === "Position Code Change"){//start 4th if/else
+          //pmdcms PC change
+          FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberRowNum, 8, 1, 1, oldPC);
+          
+          //pmdcmscv change
+          pmdcmscv[memberRowNum-2][7] = oldPC;
+          
+          //new disc nickname
+          var newFullNickname = FunctionContainer.getDiscordNicknameWithRow(memberRowNum-2, dllscv, pmdcmscv);
+          
+          //changes nickname to old nickname in discord
+          FunctionContainer.discordFixerFormSend("c^n," + currentFullDiscordNickname + "," + newFullNickname);
+          
+          //changes to old nickname in current nickname
+          currentFullDiscordNickname = newFullNickname;
+        }//end 4th if/else
+        
+        
+        else if(typeOfUpdate === "Reprimand"){//start 4th if/else
+          //nothing
+        }//end 4th if/else
+        
+        
+        //deletes row in muhaus
+        FunctionContainer.tripleTryDeleteRows(muhaus, hubRow, 1);
+        
+        FunctionContainer.tripleTrySetSSValuesSingleString(mufrs, formRow, 74, 1, 1, "Deleted");
+        
+        Utilities.sleep(1500);
+          
+        FunctionContainer.discordFixerFormSend("e$edm$^" + ogTitle + "^" + ogDescription
+          + "^This Entry Has Been Deleted^Sorry for any inconvenience this may cause. If you think this is a mistake please contact a leader through the proper chain of command.^^^^Phoenix Era Member Updates^" 
+          + currentFullDiscordNickname);
+        
+      }//end 3rd if
+      
+      
+      
+      else if(operation === "Edit Entry"){//start 3rd if
+      
+        //no edits actually made
+        if(changesMade.toString() === ""){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "did not fill out any options when editing in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+        }//end 3rd if
+      
+        //date is the same
+        if(oldEntryInfo[3] === newUpdateDate){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "tried to edit the entry to the date it already has when editing in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+        }//end 3rd if
+        
+        //turns off forms
+        FunctionContainer.formTurnOff(["all"], dllscv);
+        
+        //waits 15 seconds for scripts running to complete
+        Utilities.sleep(15000);
+        
+        FunctionContainer.discordFixerFormSend("e$edm$^" + ogTitle + "^" + ogDescription
+          + "^" + newTitle + "^" + newDescription + "^^^^Phoenix Era Member Updates^" 
+          + currentFullDiscordNickname);
+        
+        //fixes date in mufrscv
+        mufrscv[formRow-2][curDateCol-1] = newUpdateDate;
+        
+        //fixes date in muhauscv
+        muhauscv[hubRow-3][3] = curUpdateDate;
+        
+        //fix details and title in mufrscv and fixes update details and reasoning in muhauscv
+        if(typeOfUpdate === "Member Report"){//start 1st if
+          mufrscv[formRow-2][curTitleCol-1] = newReportTitle;
+          mufrscv[formRow-2][curDetailsCol-1] = newReportDetails;
+          muhauscv[hubRow-3][2] = "Report Title: " + newReportTitle;
+          muhauscv[hubRow-3][4] = "Report Details: " + newReportDetails;
+        }//end 1st if
+        
+        //fix reasoning in mufrscv and fixes update reasoning in muhauscv
+        else if(typeOfUpdate !== "Member Report"){//start 1st if/else
+          mufrscv[formRow-2][curReasoningCol-1] = newUpdateReasoning;
+          muhauscv[hubRow-3][4] = newUpdateReasoning;
+        }//end 1st if/else
+        
+        //pastes new mufrscv row
+        FunctionContainer.tripleTrySetSSValues(mufrs, formRow, 1, 1, mufrscv[formRow-2].length, [mufrscv[formRow-2]]);
+        
+        //paste new row to muhuas
+        FunctionContainer.tripleTrySetSSValues(muhaus, hubRow, 1, 1, muhauscv[hubRow-3].length, [muhauscv[hubRow-3]]);
+        
+        //Reorganizes by date desc
+        //Member Update Hub all updates sheet
+        curVals = FunctionContainer.getmuhauscv("num", dllscv);
+        var muhaus = curVals[0];
+        var muhauscvn = curVals[1];
+        curVals = undefined;
+        
+        for(var i=0; i<muhauscvn.length; i+=1){//start 1st for
+          muhauscvn[i] = [muhauscvn[i][3], muhauscvn[i][1], muhauscvn[i][2], muhauscvn[i][0], muhauscvn[i][4], muhauscvn[i][5]];
+        }//end 1st for
+        
+        muhauscvn = FunctionContainer.specialSortDesc(muhauscvn);
+        
+        for(var i=0; i<muhauscvn.length; i+=1){//start 1st for
+          muhauscvn[i] = [muhauscvn[i][3], muhauscvn[i][1], muhauscvn[i][2], muhauscvn[i][0], muhauscvn[i][4], muhauscvn[i][5]];
+        }//end 1st for
+        
+        //pastes new data
+        FunctionContainer.tripleTrySetSSValues(muhaus, 3, 1, muhauscv.length, muhauscv[0].length, muhauscvn);
+        
+      }//end 3rd if
+      
+      details = details + " ~ Changes Made: " + FunctionContainer.array1LevelIntoString(changesMade);
+      
+    }//end 2nd if
+    
+    
+    
+    
+    else if(formInQuestion === "New Member Form"){//start 2nd if/else
+      
+      //form repsonse row doesn't match hub info
+      if(curFormEntryMember.toString() !== currentGt.toString()){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "inputted a row for the form response row that doesn't match the hub row entry in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+      }//end 3rd if
+      
+      //member not found
+      if(memberRowNum === -1){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "could not find member (could've had gamertag change that didn't correctly change everywhere) in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+      }//end 3rd if
+      
+      
+      if(operation === "Delete Entry"){//start 3rd if
+        
+        //turns off forms
+        FunctionContainer.formTurnOff(["all"], dllscv);
+        
+        //waits 15 seconds for scripts running to complete
+        Utilities.sleep(15000);
+        
+        
+        //trash profile folder
+        for(var i=0; i<currentProfileFolderIds.length; i+=1){//start 1st for
+          var curId = FunctionContainer.pmdcmsIdRetrieval(currentProfileFolderIds[i]);
+          DriveApp.getFolderById(curId).setTrashed(true);
+          Utilities.sleep(250);
+        }//end 1st for
+        
+        
+        //trash profile file
+        for(var i=0; i<currentProfileIds.length; i+=1){//start 1st for
+          var curId = FunctionContainer.pmdcmsIdRetrieval(currentProfileIds[i]);
+          DriveApp.getFolderById(curId).setTrashed(true);
+          Utilities.sleep(250);
+        }//end 1st for
+        
+        
+        //remove all roles
+        //currentDiscInfo
+        //[currentFullDiscordNickname, discRoles, discRolesText]
+        for(var i=0; i<currentDiscInfo[1].length; i+=1){//start 1st for
+          FunctionContainer.discordFixerFormSend("r^r," + currentDiscInfo[0] + "," + currentDiscInfo[1][i]);
+        }//end 1st for
+        
+        
+        //change nickname to Helot random number
+        FunctionContainer.discordFixerFormSend("c^n," + currentDiscInfo[0] + ",Cadet" + Math.floor(Math.random()*90+10));
+        
+        
+        //remove from pmdcms
+        if(memberType === "Current"){//start 4th if
+          FunctionContainer.tripleTryDeleteRows(pmdcms, memberRowNum, 1);
+        }//end 4th if
+        //remove from pmddms
+        else if(memberType === "Discharged"){//start 4th if
+          FunctionContainer.tripleTryDeleteRows(pmddms, memberRowNum, 1);
+        }//end 4th if
+        
+        
+        //remove from muhnmus
+        FunctionContainer.tripleTryDeleteRows(muhnmus, hubRow, 1);
+        
+        //adds deleted to row in nmfrs
+        FunctionContainer.tripleTrySetSSValuesSingleString(nmfrs, formRow, 38, 1, 1, "Deleted");
+        
+      }//end 3rd if
+      
+      
+      
+      else if(operation === "Edit Entry"){//start 3rd if/else
+        
+        //turns off forms
+        FunctionContainer.formTurnOff(["all"], dllscv);
+        
+        //waits 15 seconds for scripts running to complete
+        Utilities.sleep(15000);
+        
+        //Entry Group
+        if(fxfrscv[31].toString() !== ""){//start 4th if
+          //finds correct group profileid
+          for(var i=0; i<currentProfileFolderIds.length; i+=1){//start 1st for
+            if(currentProfileFolderIds[i].toString().indexOf(oldEntryInfo[2].toString()) !== -1){//start 5th if
+              var oldFolderId = FunctionContainer.pmdcmsIdRetrieval(currentProfileFolderIds[i].toString());
+              //finds new parent folder id
+              for(var x=0; x<49; x+=1){//start 2nd for
+                if(dllscv[40][x].toString() === newEntryGroup){//start 6th if
+                  var newFolderId = dllscv[42][x].toString();
+                }//end 6th if
+              }//end 2nd for
+              //moves folder
+              FunctionContainer.moveFile(oldFolderId, DriveApp.getFolderById(newFolderId));
+              //updates currentProfileFolderIds with new location
+              currentProfileFolderIds[i] = newEntryGroup+" ~ "+oldFolderId;
+            }//end 5th if
+          }//end 1st for
+          
+          //finds the profile urls
+          for(var i=0; i<currentProfileUrls.length; i+=1){//start 1st for
+            if(currentProfileUrls[i].toString().indexOf(oldEntryInfo[2].toString()) !== -1){//start 5th if
+              currentProfileUrls[i] = currentProfileUrls[i].toString().replace(oldEntryInfo[2].toString(),newEntryGroup);
+            }//end 5th if
+          }//end 1st for
+          
+          //finds old profile file id
+          for(var i=0; i<currentProfileIds.length; i+=1){//start 1st for
+            if(currentProfileIds[i].toString().indexOf(oldEntryInfo[2].toString()) !== -1){//start 5th if
+              currentProfileIds[i] = currentProfileIds[i].toString().replace(oldEntryInfo[2].toString(),newEntryGroup);
+            }//end 5th if
+          }//end 1st for
+          
+          //changes data in pmdcmscv
+          pmdcmscv[memberRowNum-2][10] = FunctionContainer.array1LevelIntoString(currentProfileIds);
+          pmdcmscv[memberRowNum-2][11] = FunctionContainer.array1LevelIntoString(currentProfileUrls);
+          pmdcmscv[memberRowNum-2][12] = FunctionContainer.array1LevelIntoString(currentProfileFolderIds);
+          pmdcmscv[memberRowNum-2][3] = newEntryGroup;
+          
+          //changes hub column value
+          muhnmuscv[hubRow-3][2] = newEntryGroup;
+          
+          //gets new disc roles
+          var newMemberDiscRoles = FunctionContainer.getMemberDiscordInfo(dllscv, pmdcmscv, currentGt)[1];
+          
+          //changes necessary discord roles
+          var groupsToRemove = FunctionContainer.arrayLVL1ExclusiveOrLeft(currentMemberDiscRoles, newMemberDiscRoles);
+          var groupsToAdd = FunctionContainer.arrayLVL1ExclusiveOrRight(currentMemberDiscRoles, newMemberDiscRoles);
+          
+          for(var i=0; i<Math.max(groupsToRemove.length, groupsToAdd.length); i+=1){//start 1st for
+            
+            if(groupsToRemove.length>i){//start 1st if
+              var removeR = groupsToRemove[i].toString();
+            }//end 1st if
+            else if(groupsToRemove.length<=i){//start 1st if
+              var removeR = "N/A";
+            }//end 1st if
+            
+            if(groupsToAdd.length>i){//start 1st if
+              var addR = groupsToAdd[i].toString();
+            }//end 1st if
+            else if(groupsToAdd.length<=i){//start 1st if
+              var addR = "N/A";
+            }//end 1st if
+            
+            FunctionContainer.fixerFormDiscordRoles(addR,removeR,currentFullDiscordNickname);
+            
+          }//end 1st for
+          
+          //changes nmfrscv
+          nmfrscv[formRow-2][6] = newEntryGroup;
+          
+        }//end 4th if
+        
+        
+        //Generation
+        if(fxfrscv[32].toString() !== ""){//start 4th if
+          //changes data in pmdcmscv
+          pmdcmscv[memberRowNum-2][5] = newGeneration;
+
+          ///changes hub column value
+          muhnmuscv[hubRow-3][1] = newGeneration;
+        }//end 4th if
+        
+        
+        //Bootcamp Date
+        if(fxfrscv[33].toString() !== ""){//start 4th if
+          //changes data in pmdcmscv
+          pmdcmscv[memberRowNum-2][20] = FunctionContainer.dateReplace(newBootcampDate);
+          pmdcmscv[memberRowNum-2][27] = FunctionContainer.dateReplace(newBootcampDate);
+
+          ///changes hub column value
+          muhnmuscv[hubRow-3][3] = newBootcampDate;
+          
+          //changes nmfrscv
+          nmfrscv[formRow-2][7] = newBootcampDate;
+        }//end 4th if
+        
+        
+        //Additional Notes
+        if(fxfrscv[34].toString() !== ""){//start 4th if
+
+          ///changes hub column value
+          muhnmuscv[hubRow-3][6] = newAdditionalNotes;
+          
+          //changes nmfrscv
+          nmfrscv[formRow-2][8] = newAdditionalNotes;
+          
+        }//end 4th if
+        
+        
+        //LDI
+        if(fxfrscv[35].toString() !== ""){//start 4th if
+
+          ///changes hub column value
+          muhnmuscv[hubRow-3][4] = newLDI;
+          
+          //changes nmfrscv
+          nmfrscv[formRow-2][9] = "Changed";
+          nmfrscv[formRow-2][10] = newLDI;
+          
+          for(var i=11; i<23; i+=1){//start 1st for
+            nmfrscv[formRow-2][i] = "";
+          }//end 1st for
+        }//end 4th if
+        
+        
+        //Recruited By
+        if(fxfrscv[36].toString() !== ""){//start 4th if
+
+          ///changes hub column value
+          muhnmuscv[hubRow-3][5] = newRecruitedBy;
+          
+          //changes nmfrscv
+          nmfrscv[formRow-2][23] = "Changed";
+          nmfrscv[formRow-2][24] = newRecruitedBy;
+          
+          for(var i=25; i<37; i+=1){//start 1st for
+            nmfrscv[formRow-2][i] = "";
+          }//end 1st for
+          
+        }//end 4th if
+        
+        //pastes new mhnmus
+        FunctionContainer.tripleTrySetSSValues(muhnmus, hubRow, 1, 1, muhnmuscv[0].length, [muhnmuscv[hubRow-3]]);
+        
+        //pastes new mhnmus
+        FunctionContainer.tripleTrySetSSValues(nmfrs, formRow, 1, 1, nmfrscv[0].length, [nmfrscv[formRow-2]]);
+        
+        
+        //Reorganizes muhnmus
+        //Member Update Hub new member updates sheet
+        curVals = FunctionContainer.getmuhnmuscv("num", dllscv);
+        var muhnmus = curVals[0];
+        var muhnmuscvn = curVals[1];
+        curVals = undefined;
+        
+        var muhnmustvn = [];
+        for(var i=0; i<muhnmuscvn.length; i+=1){//start 1st for
+          muhnmustvn.push([muhnmuscvn[i][3], muhnmuscvn[i][1], muhnmuscvn[i][2], muhnmuscvn[i][0], muhnmuscvn[i][4], muhnmuscvn[i][5], muhnmuscvn[i][6], muhnmuscvn[i][7]]);
+        }//end 1st for
+        
+        muhnmustvn = FunctionContainer.specialSortDesc(muhnmustvn);
+        
+        for(var i=0; i<muhnmustvn.length; i+=1){//start 1st for
+          muhnmuscvn[i] = [muhnmustvn[i][3], muhnmustvn[i][1], muhnmustvn[i][2], muhnmustvn[i][0], muhnmustvn[i][4], muhnmustvn[i][5], muhnmustvn[i][6], muhnmustvn[i][7]];
+        }//end 1st for
+        
+        //pastes new data
+        FunctionContainer.tripleTrySetSSValues(muhnmus, 3, 1, muhnmuscvn.length, muhnmuscvn[0].length, muhnmuscvn);
+        
+        
+        //pastes new pmdcmscv vals
+        FunctionContainer.tripleTrySetSSValues(pmdcms, memberRowNum, 1, 1, pmdcmscv[0].length, [pmdcmscv[memberRowNum-2]]);
+    
+        //fixes enlistment date number
+        FunctionContainer.tripleTrySetNumberFormat(pmdcms, 2, 28, pmdcmscv.length, 2, "#,##0.00");
+      }//end 3rd if/else
+      
+    }//end 2nd if/else
+    
+    
+    //pastes vals into miscellaneous Form Hub Entries Sheet
+    FunctionContainer.miscFormHubEntry("Fixer Form", FunctionContainer.dateReplace(fxfrscv[0].toString()), 
+      FunctionContainer.timeRetrieval12Cycle(fxfrscv[0]), details, perpitraitor, dllscv);
+    
+    
+    //gets current data
+    //Phoenix Member Data Current Members Sheet
+    var curVals = FunctionContainer.getpmdcmscv();
+    var pmdcms = curVals[0];
+    var pmdcmscv = curVals[1];
+    curVals = undefined;
+    
+    // Data Lists Lists Sheet
+    curVals = FunctionContainer.getdllscv();
+    var dlls = curVals[0];
+    var dllscv = curVals[1];
+    curVals = undefined;
+    
+    //updates forms
+    FunctionContainer.updateAllFormLists1(dllscv, pmdcmscv);
+    
+    //turns on form 
+    FunctionContainer.formTurnOn(["all"], dllscv);
+    
+  }//end 1st if
+  
+  
+  //if code is wrong
+  else{
+    FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Fixer Form Errors", dllscv);
+    FunctionContainer.indFormErrorReport(perpitraitor, "fixer form", "inputted an incorrect code in a __" + formInQuestion + "__ fixer form entry", fxfrslri, dllscv[88][5].toString());
+  }//end 1st else
+  
+  
+}//end main

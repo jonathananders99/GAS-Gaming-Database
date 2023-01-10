@@ -1,0 +1,180 @@
+function permissionFormListUpdate(){
+  errorCheck("4:06",24,"permissionFormListUpdate","PermissionFormListUpdate");
+}//end permissionFormListUpdate
+
+
+function errorCheck(time,col,functionName,projectName){
+  try{main();triggerCreator(time,col,functionName);}//end 1st try
+  catch(error){console.log(error);
+    if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+      try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 2nd try
+      catch(error){console.log(error);
+        if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+          try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 3rd try
+          catch(error){console.log(error);
+            FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 3rd catch
+        else{FunctionContainer.discErrorReport(error,functionName,projectName);}}}//end 2nd catch
+    else{FunctionContainer.discErrorReport(error,functionName,projectName);}}//end 1st catch
+}//end errorCheck
+
+
+function triggerCreator(ct,tColNum,scriptName){
+  var datSheetOriginal=FunctionContainer.tripleTryOpenSheet("", "Dates");var cdd=datSheetOriginal.getRange(1,1,15,datSheetOriginal.getLastColumn()).getValues();var triggerChangesMade = [];var vals = [[],[],[],[],[],[],[],[],[],[],[]];
+  triggerChangesMade.push("Old Trigger Id's and Dates:\nTrigger ID: "+cdd[9][tColNum-1].toString()+" For Date: "+cdd[1][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[10][tColNum-1].toString()+" For Date: "+cdd[4][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[11][tColNum-1].toString()+" For Date: "+cdd[5][tColNum-1].toString());
+  if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[1][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())){
+    var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){if(t[i].getUniqueId()===cdd[9][tColNum-1].toString()){ScriptApp.deleteTrigger(t[i]);triggerChangesMade.push("\nTrigger Deleted ~ "+cdd[9][tColNum-1].toString()+" for date: "+cdd[1][tColNum-1].toString());}}
+    var bruhX3 = cdd[3][0].toString();for(var iii = 0;iii<4;iii++){cdd[iii][0]=cdd[iii][0].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    for(var m=0;m<months.length;m++){if(bruhX3.indexOf(months[m].toString())!==-1){m=m+1;triggerTime = bruhX3[11].toString()+bruhX3[12].toString()+bruhX3[13].toString()+bruhX3[14].toString()+"-"+m+"-"+bruhX3[8].toString()+bruhX3[9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[0] = [cdd[4][tColNum-1]];vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[3] = [cdd[5][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];
+    vals[8] = [cdd[10][tColNum-1]];vals[9] = [cdd[11][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}
+  else if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[3][0].toString())){triggerChangesMade.push("\nNo Trigger Changes Made");}
+  else{var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){triggerChangesMade.push("\nTrigger Deleted ~ "+t[i].getUniqueId());ScriptApp.deleteTrigger(t[i]);}var cd=datSheetOriginal.getRange(1,1,4).getValues();
+    for(var iii = 0;iii<4;iii++){cd[iii]=cd[iii].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[0].indexOf(months[m].toString())!==-1){
+    m=m+1;triggerTime = cd[0][11].toString()+cd[0][12].toString()+cd[0][13].toString()+cd[0][14].toString()+"-"+m+"-"+cd[0][8].toString()+cd[0][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(2,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();
+    var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[0] = [tt];vals[8] = [uniqueTriggerID];var triggerTime="";
+    var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[2].indexOf(months[m].toString())!==-1){m=m+1;triggerTime = cd[2][11].toString()+cd[2][12].toString()+cd[2][13].toString()+cd[2][14].toString()+"-"+m+"-"+cd[2][8].toString()+cd[2][9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(5,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[3] = [tt];vals[9] = [uniqueTriggerID];var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[3].indexOf(months[m].toString())!==-1){m=m+1;
+    triggerTime = cd[3][11].toString()+cd[3][12].toString()+cd[3][13].toString()+cd[3][14].toString()+"-"+m+"-"+cd[3][8].toString()+cd[3][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();
+    triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}console.log(triggerChangesMade);
+}//end triggerCreator
+
+
+function main(){
+  try{var lock = LockService.getScriptLock();lock.waitLock(150000);}catch(lockError){console.log(lockError)};
+  
+  
+  //PXE Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  formListUpdate(dllscv, pmdcmscv);
+  
+}//end main
+
+function formListUpdate(dllscv, pmdcmscv){
+  
+  
+  //Permission Form
+  var pf = FormApp.openById(dllscv[85][9].toString());
+//  FunctionContainer.getDaFormIds(dllscv[85][9].toString());
+  
+  
+  //Phoenix Member Data Discharged Members Sheet
+  var curVals = FunctionContainer.getpmddmscv();
+  var pmddmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Member in Question (Current Members)
+  var allCMembers = [["N/A"]];
+  for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+    if(pmdcmscv[i][0].toString() !== ""){//start 1st if
+      allCMembers.push([pmdcmscv[i][0].toString()]);
+    }//end 1st if
+  }//end 1st for
+  pf.getItemById("278324565").asListItem().setChoiceValues(allCMembers);
+  
+  
+  //Member in Question (Discharged Members)
+  var allDMembers = [];
+  for(var i=0; i<pmddmscv.length; i+=1){//start 1st for
+    if(pmddmscv[i][0].toString() !== ""){//start 1st if
+      allDMembers.push([pmddmscv[i][0].toString()]);
+    }//end 1st if
+  }//end 1st for
+  allDMembers = FunctionContainer.arrayDuplicateFilter(FunctionContainer.specialSort(allDMembers));
+  allDMembers.unshift(["N/A"]);
+  pf.getItemById("1146475327").asListItem().setChoiceValues(allDMembers);
+  
+  
+  //Miscellaneous
+  var miscFolders = [["All Miscellaneous Folders"]];
+  for(var i=0; i<10; i+=1){//start 1st for
+    miscFolders.push([dllscv[99][i].toString()]);
+  }//end 1st for
+  pf.getItemById("1107730313").asCheckboxItem().setChoiceValues(miscFolders);
+  
+  /* Permission Form
+  [22-05-08 19:48:40:630 EDT] [Code, TEXT, 506478076]
+  [22-05-08 19:48:40:735 EDT] [Operation, MULTIPLE_CHOICE, 818671172]
+  [22-05-08 19:48:40:792 EDT] [Email Input, PAGE_BREAK, 316994044]
+  [22-05-08 19:48:40:894 EDT] [New Email, TEXT, 1806315198]
+  [22-05-08 19:48:40:997 EDT] [Permissions, PAGE_BREAK, 1796059221]
+  [22-05-08 19:48:41:058 EDT] [Being Granted Permissions or Taking Away Permissions?, MULTIPLE_CHOICE, 356945818]
+  [22-05-08 19:48:41:166 EDT] [Mora 1, CHECKBOX, 1178218512]
+  [22-05-08 19:48:41:229 EDT] [Camp 01, CHECKBOX, 2013696632]
+  [22-05-08 19:48:41:290 EDT] [Camp 02, CHECKBOX, 2072635165]
+  [22-05-08 19:48:41:388 EDT] [Camp 03, CHECKBOX, 200186963]
+  [22-05-08 19:48:41:492 EDT] [Lochos 01, CHECKBOX, 565808711]
+  [22-05-08 19:48:41:597 EDT] [Lochos 02, CHECKBOX, 320239145]
+  [22-05-08 19:48:41:704 EDT] [Lochos 03, CHECKBOX, 1955359202]
+  [22-05-08 19:48:41:754 EDT] [Lochos 04, CHECKBOX, 974648959]
+  [22-05-08 19:48:41:858 EDT] [Extra Group 01, CHECKBOX, 760277359]
+  [22-05-08 19:48:41:916 EDT] [Extra Other Group 01, CHECKBOX, 1211645635]
+  [22-05-08 19:48:41:972 EDT] [Mora 2, CHECKBOX, 1667706970]
+  [22-05-08 19:48:42:073 EDT] [Camp 04, CHECKBOX, 1476946136]
+  [22-05-08 19:48:42:129 EDT] [Camp 05, CHECKBOX, 1900115403]
+  [22-05-08 19:48:42:185 EDT] [Camp 06, CHECKBOX, 1268816551]
+  [22-05-08 19:48:42:249 EDT] [Lochos 05, CHECKBOX, 1971185707]
+  [22-05-08 19:48:42:308 EDT] [Lochos 06, CHECKBOX, 1913855218]
+  [22-05-08 19:48:42:366 EDT] [Lochos 07, CHECKBOX, 1268739699]
+  [22-05-08 19:48:42:424 EDT] [Lochos 08, CHECKBOX, 1088327657]
+  [22-05-08 19:48:42:484 EDT] [Extra Group 02, CHECKBOX, 1655948877]
+  [22-05-08 19:48:42:547 EDT] [Extra Other Group 02, CHECKBOX, 1814452019]
+  [22-05-08 19:48:42:608 EDT] [Mora 3, CHECKBOX, 2071570167]
+  [22-05-08 19:48:42:667 EDT] [Camp 07, CHECKBOX, 2021409877]
+  [22-05-08 19:48:42:727 EDT] [Camp 08, CHECKBOX, 1980839098]
+  [22-05-08 19:48:42:837 EDT] [Camp 09, CHECKBOX, 580099326]
+  [22-05-08 19:48:42:894 EDT] [Lochos 09, CHECKBOX, 1074338306]
+  [22-05-08 19:48:42:952 EDT] [Lochos 10, CHECKBOX, 1895942335]
+  [22-05-08 19:48:43:015 EDT] [Lochos 11, CHECKBOX, 1421196313]
+  [22-05-08 19:48:43:076 EDT] [Lochos 12, CHECKBOX, 1074185883]
+  [22-05-08 19:48:43:134 EDT] [Extra Group 03, CHECKBOX, 726988275]
+  [22-05-08 19:48:43:192 EDT] [Extra Other Group 03, CHECKBOX, 965038611]
+  [22-05-08 19:48:43:253 EDT] [Phoenix S.W.A.L, CHECKBOX, 1805852208]
+  [22-05-08 19:48:43:314 EDT] [Lochos 13, CHECKBOX, 556290491]
+  [22-05-08 19:48:43:370 EDT] [Lochos 14, CHECKBOX, 1062520975]
+  [22-05-08 19:48:43:429 EDT] [Lochos 15, CHECKBOX, 1528439191]
+  [22-05-08 19:48:43:490 EDT] [Praetorian Guard, CHECKBOX, 882212551]
+  [22-05-08 19:48:43:551 EDT] [Seeker Intelligence, CHECKBOX, 1789855798]
+  [22-05-08 19:48:43:611 EDT] [Vicarius Senate, CHECKBOX, 213033773]
+  [22-05-08 19:48:43:669 EDT] [Special Group 04, CHECKBOX, 1222100754]
+  [22-05-08 19:48:43:728 EDT] [Special Group 05, CHECKBOX, 1874452827]
+  [22-05-08 19:48:43:787 EDT] [Special Group 06, CHECKBOX, 1349246470]
+  [22-05-08 19:48:43:843 EDT] [Special Group 07, CHECKBOX, 1430536142]
+  [22-05-08 19:48:43:903 EDT] [Special Group 08, CHECKBOX, 1412602634]
+  [22-05-08 19:48:43:962 EDT] [Special Sub-Group 01, CHECKBOX, 1428903891]
+  [22-05-08 19:48:44:022 EDT] [Special Sub-Sub-Group 01, CHECKBOX, 721849988]
+  [22-05-08 19:48:44:085 EDT] [Special Sub-Sub-Group 02, CHECKBOX, 1464911551]
+  [22-05-08 19:48:44:157 EDT] [Special Sub-Group 02, CHECKBOX, 1697171503]
+  [22-05-08 19:48:44:219 EDT] [Special Sub-Sub-Group 03, CHECKBOX, 949704280]
+  [22-05-08 19:48:44:275 EDT] [Special Sub-Sub-Group 04, CHECKBOX, 625136204]
+  [22-05-08 19:48:44:332 EDT] [Upper Echelon, CHECKBOX, 959010]
+  [22-05-08 19:48:44:394 EDT] [High Council, CHECKBOX, 277085238]
+  [22-05-08 19:48:44:445 EDT] [Council 02, CHECKBOX, 386901572]
+  [22-05-08 19:48:44:505 EDT] [Council 03, CHECKBOX, 1674360541]
+  [22-05-08 19:48:44:561 EDT] [Council 04, CHECKBOX, 1785699200]
+  [22-05-08 19:48:44:620 EDT] [Council 05, CHECKBOX, 1685477163]
+  [22-05-08 19:48:44:682 EDT] [Council 06, CHECKBOX, 1344236778]
+  [22-05-08 19:48:44:739 EDT] [Council 07, CHECKBOX, 1926917082]
+  [22-05-08 19:48:44:795 EDT] [Council 08, CHECKBOX, 916884996]
+  [22-05-08 19:48:44:852 EDT] [Hubs, CHECKBOX, 1136106466]
+  [22-05-08 19:48:44:910 EDT] [Data Centers, CHECKBOX, 2063941515]
+  [22-05-08 19:48:44:969 EDT] [Miscellaneous, CHECKBOX, 1107730313]
+  [22-05-08 19:48:45:025 EDT] [Member Selection, PAGE_BREAK, 1117844056]
+  [22-05-08 19:48:45:082 EDT] [Member in Question (Current Members), LIST, 278324565]
+  [22-05-08 19:48:45:140 EDT] [Member in Question (Discharged Members), LIST, 1146475327]
+  */
+  
+  
+}//end formListUpdate

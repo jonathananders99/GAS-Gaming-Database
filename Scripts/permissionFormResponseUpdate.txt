@@ -1,0 +1,2168 @@
+function permissionFormResponseUpdate(){
+  errorCheck("permissionFormResponseUpdate","PermissionFormResponseUpdate");
+}//end permissionFormResponseUpdate
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  //Expansion Form Response Sheet
+  var pfrs = FunctionContainer.tripleTryOpenSheet("","PF Responses");
+  var pfrslri = FunctionContainer.tripleTryGetLastRow(pfrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  //vals
+  var pfrscv = FunctionContainer.tripleTryGetValues(pfrs, pfrslri, 1, 1, 75)[0];
+//  FunctionContainer.positionsInsideArray(pfrscv);
+  /*
+    [Timestamp[0], Email Address[1], Code[2], Operation[3], New Email[4], 
+    Being Granted Permissions or Taking Away Permissions?[5], Mora 1[6],
+    Camp 01[7], Camp 02[8], Camp 03[9], Lochos 01[10], Lochos 02[11], 
+    Lochos 03[12], Lochos 04[13], Extra Group 01[14], Extra Other Group 01[15], 
+    Mora 2[16], Camp 04[17], Camp 05[18], Camp 06[19], Lochos 05[20], 
+    Lochos 06[21], Lochos 07[22], Lochos 08[23], Extra Group 02[24], 
+    Extra Other Group 02[25], Mora 3[26], Camp 07[27], Camp 08[28], 
+    Camp 09[29], Lochos 09[30], Lochos 10[31], Lochos 11[32], Lochos 12[33],
+    Extra Group 03[34], Extra Other Group 03[35], Phoenix S.W.A.L[36], 
+    Lochos 13[37], Lochos 14[38], Lochos 15[39], Praetorian Guard[40], 
+    Seeker Intelligence[41], Vicarius Senate[42], Special Group 04[43], 
+    Special Group 05[44], Special Group 06[45], Special Group 07[46], 
+    Special Group 08[47], Special Sub-Group 01[48], Special Sub-Sub-Group 01[49], 
+    Special Sub-Sub-Group 02[50], Special Sub-Group 02[51], Special Sub-Sub-Group 03[52], 
+    Special Sub-Sub-Group 04[53], Upper Echelon[54], High Council[55], 
+    Council 02[56], Council 03[57], Council 04[58], Council 05[59], 
+    Council 06[60], Council 07[61], Council 08[62], Hubs[63], Data Centers[64], 
+    Miscellaneous[65], Member in Question (Current Members)[66], 
+    Member in Question (Discharged Members)[67], [68], [69], [70], [71], 
+    [72], [73], [74]]
+  */
+  
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Phoenix Member Data Discharged Members Sheet
+  var curVals = FunctionContainer.getpmddmscv();
+  var pmddms = curVals[0];
+  var pmddmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(pfrscv[1].toString().trim(),pmdcmscv);
+  
+  //trims the necessary values
+  var formTrimList = [1, 2, 4];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    pfrscv[formTrimList[i]] = pfrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters or its just a space that cannot be used it sends an error message
+    if(pfrscv[formTrimList[i]].indexOf("^") !== -1  ||  pfrscv[formTrimList[i]] === "|"  ||  pfrscv[formTrimList[i]] === "~"){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "included special character ^, |, or ~ (perp will not recieve pm with details because they interfere with the bot commands)", pfrslri, dllscv[88][9].toString());
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  
+  
+  
+  
+  ///*** DATA GATHERING ***///
+  var errorInfo = "";
+  var operation = pfrscv[3];
+  var curMember = pfrscv[66].toString();
+  var disMember = pfrscv[67].toString();
+  var memberNotFound = true;
+  var dateOfEntry = FunctionContainer.dateReplace(pfrscv[0].toString());
+  var details = undefined;
+  
+  //member info
+  var memberInfo = [];
+  /*
+  ["discharged or current"0, "gt"1, "full disc nickname"2, "email"3, 
+  [permissions]4, [ProfileIDs]5, memberRowNumber6, [ProfileURLs]7, 
+  [Previous Emails]8, [Permission Doc IDs]9, "oldperms"10]
+  */
+  //current member
+  if(curMember !== "N/A"){//start 1st if
+    //cycles thru pmdcmscv
+    for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+      //if gt matches
+      if(pmdcmscv[i][0].toString() === curMember){//start 2nd if
+        memberInfo = ["Current", curMember, 
+          FunctionContainer.getDiscordNicknameWithRow(i, dllscv, pmdcmscv), 
+          pmdcmscv[i][9].toString(), 
+          FunctionContainer.permissionDecipher(pmdcmscv[i][6].toString()),
+          FunctionContainer.splitEmUp(pmdcmscv[i][10].toString()),
+          i+2, FunctionContainer.splitEmUp(pmdcmscv[i][11].toString()), 
+          FunctionContainer.splitEmUp(pmdcmscv[i][24].toString()),
+          FunctionContainer.splitEmUp(pmdcmscv[i][29].toString()),
+          pmdcmscv[i][6].toString()];
+        memberNotFound = false;
+        i = pmdcmscv.length;
+      }//end 2nd if
+    }//end 1st for
+  }//end 1st if
+  
+  //discharged member
+  else if(disMember !== "N/A"){//start 1st if/else
+    //cycles thru pmddmscv
+    for(var i=0; i<pmddmscv.length; i+=1){//start 1st for
+      //if gt matches
+      if(pmddmscv[i][0].toString() === disMember){//start 2nd if
+        memberInfo = ["Discharged", disMember, 
+          FunctionContainer.getDiscordNicknameWithRow(i, dllscv, pmddmscv), 
+          pmddmscv[i][9].toString(),
+          FunctionContainer.permissionDecipher(pmddmscv[i][6].toString()),
+          FunctionContainer.splitEmUp(pmddmscv[i][10].toString()),
+          i+2, FunctionContainer.splitEmUp(pmddmscv[i][11].toString()), 
+          FunctionContainer.splitEmUp(pmddmscv[i][24].toString()),
+          FunctionContainer.splitEmUp(pmddmscv[i][29].toString()),
+          pmddmscv[i][6].toString()];
+        memberNotFound = false;
+        i = pmddmscv.length;
+      }//end 2nd if
+    }//end 1st for
+  }//end 1st if/else
+  
+  
+  if(operation === "Add Email"){//start 1st if
+    var newEmail = pfrscv[4].toString();
+    var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • New Email:** " 
+      + newEmail + "**\n\n • Current Member in Question:** " + curMember
+      + "**\n\n • Discharged Member in Question:** " + disMember + "**";
+      details = "Adding Email to Database ~ " + memberInfo[0] + " Member in Question: " + memberInfo[1];
+  }//end 1st if
+  
+  
+  if(operation === "Change Email"){//start 1st if
+    var newEmail = pfrscv[4].toString();
+    var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • New Email:** " 
+      + newEmail + "**\n\n • Current Member in Question:** " + curMember
+      + "**\n\n • Discharged Member in Question:** " + disMember + "**";
+      details = "Changing Email in Database ~ " + memberInfo[0] + " Member in Question: " + memberInfo[1];
+  }//end 1st if
+  
+  
+  else if(operation === "Change Permissions for an Individual (if email is already in system)"){//start 1st if/else
+    var addOrDeletePerms = pfrscv[5];
+    var errorInfo = "\n\n • Form Operation:** " + operation 
+      + "**\n\n • Granting Permissions or Taking Permissions?:** " + addOrDeletePerms
+      + "**\n\n • Current Member in Question:** " + curMember
+      + "**\n\n • Discharged Member in Question:** " + disMember + "**\n\n • Group Permissions Chosen:";
+    
+    var docPermList = "";
+    var permListForDetails = [];
+    
+    var newGroupPerms = [];
+    for(var i=0; i<57; i+=1){//start 1st for
+      if(pfrscv[i+6].toString() !== ""){//start 2nd if
+        var curIndPerms = FunctionContainer.splitEmUp(pfrscv[i]);
+        newGroupPerms.push([dllscv[40][i].toString(), FunctionContainer.splitEmUp(pfrscv[i+6].toString())]);
+        errorInfo = errorInfo + "\n ~ **" + dllscv[40][i].toString() + "**: __" + pfrscv[i+6].toString() + "__";
+      }//end 2nd if
+    }//end 1st for
+    //makes it N/A if its empty
+    if(newGroupPerms.toString() === ""){//start 2nd if
+      newGroupPerms.push("N/A");
+      errorInfo = errorInfo + "\n ~ **__N/A__**";
+    }//end 2nd if
+    
+    var newHubPerms = FunctionContainer.splitEmUp(pfrscv[63].toString());
+    //makes it N/A if its empty
+    if(newHubPerms.toString() === ""){//start 2nd if
+      newHubPerms.push("N/A");
+      errorInfo = errorInfo + "\n\n • Hub Permissions Chosen: **N/A**";
+    }//end 2nd if
+    else{errorInfo = errorInfo + "\n\n • Hub Permissions Chosen: **" + pfrscv[63].toString() + "**";}
+    
+    var newDataCenterPerms = FunctionContainer.splitEmUp(pfrscv[64].toString());
+    //makes it N/A if its empty
+    if(newDataCenterPerms.toString() === ""){//start 2nd if
+      newDataCenterPerms.push("N/A");
+      errorInfo = errorInfo + "\n\n • Data Center Permissions Chosen: **N/A**";
+    }//end 2nd if
+    else{errorInfo = errorInfo + "\n\n • Data Center Permissions Chosen: **" + pfrscv[64].toString() + "**";}
+    
+    var newMiscPerms = FunctionContainer.splitEmUp(pfrscv[65].toString());
+    //makes it N/A if its empty
+    if(newMiscPerms.toString() === ""){//start 2nd if
+      newMiscPerms.push("N/A");
+      errorInfo = errorInfo + "\n\n • Miscellaneous Permissions Chosen: **N/A**";
+    }//end 2nd if
+    else{errorInfo = errorInfo + "\n\n • Miscellaneous Permissions Chosen: **" + pfrscv[65].toString() + "**";}
+  }//end 1st if
+  
+  
+  else if(operation === "Remove All Permissions"){//start 1st if/else
+    var errorInfo = "\n\n • Form Operation:** " + operation 
+      + "**\n\n • Current Member in Question:** " + curMember
+      + "**\n\n • Discharged Member in Question:** " + disMember + "**";
+    details = "Removing All of a Member's Permissions From the Database ~ " + memberInfo[0] + " Member in Question: " + memberInfo[1];
+  }//end 1st if
+  
+  
+  else if(operation === "Send Current Permissions to Member"){//start 1st if/else
+    var errorInfo = "\n\n • Form Operation:** " + operation 
+      + "**\n\n • Current Member in Question:** " + curMember
+      + "**\n\n • Discharged Member in Question:** " + disMember + "**";
+    details = "Sending Current Permissions to Member From Database Through Discord ~ " + memberInfo[0] + " Member in Question: " + memberInfo[1];
+  }//end 1st if
+  
+  
+  
+  
+  
+  
+  
+  //** CHECKS AND DATA CHANGING **//
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted an email not in the database in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+  }//end 2nd if
+  
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "pf", pfrscv[2].toString())){//start 1st if
+    
+    //put N/A as both
+    if(disMember === "N/A"  &&  curMember === "N/A"){//start 2nd if/else
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted both member selections as __N/A__ in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+    }//end 2nd if/else
+    
+    //couldnt find member
+    if(memberNotFound){//start 2nd if/else
+      FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+      FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted an unrecognized member in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+    }//end 2nd if/else
+    
+    
+    //Add Email
+    if(operation === "Add Email"){//start 2nd if/else
+      
+      //checks if email is already in system throw error if so
+      if(memberInfo[3].toString() !== ""){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted a member with an email already in the database in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+      }//end 3rd if
+      
+      //checks if member is discharged
+      if(memberInfo[0].toString() === "Discharged"){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted a discharged member and tried to add an email in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+      }//end 3rd if
+      
+      for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+        if(pmdcmscv[i][9].toString() === newEmail){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted a email already held by another current member in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+        }//end 3rd if
+      }//end 1st for
+      
+      //turns off forms
+      FunctionContainer.formTurnOff(["all"], dllscv);
+      
+      //waits 15 seconds for scripts running to complete
+      Utilities.sleep(15000);
+      
+      //share all profile files
+      for(var i=0; i<memberInfo[5].length; i+=1){//start 1st for
+        FunctionContainer.tripleTryShareEmailForFileViewer(newEmail, FunctionContainer.pmdcmsIdRetrieval(memberInfo[5][i]));
+      }//end 1st for
+      
+      //add email to pmdcms
+      FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberInfo[6], 10, 1, 1, newEmail);
+      
+      //send discord dm
+      FunctionContainer.discordPermissionFormSend("dm$e$^" + memberInfo[2] 
+        + "^Your Email Has Been Added To The Database^Your [**member profile**](" + FunctionContainer.pmdcmsIdRetrieval(memberInfo[7][0]) 
+        + ") has been shared with you. Sorry for any excess emails, there isn't a way to share something without having an email be sent out about having anything shared with you when you don't manually share them.^^^^PXE Database Permission Updates");
+      
+    }//end 2nd if/else
+    
+    
+    
+    
+    //Change Email
+    else if(operation === "Change Email"){//start 2nd if/else
+      
+      //make sure it unshares and reshares from perm docs in pmdscv
+      //checks if email is already in system throw error otherwise
+      if(memberInfo[3].toString() === ""){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted a member with no email in the database while trying to change the member's email in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+      }//end 3rd if
+      
+      //make sure it unshares and reshares from perm docs in pmdscv
+      //checks if email is already in system throw error otherwise
+      if(memberInfo[3].toString() === newEmail){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted a the same email the member in question already had while trying to change the member's email in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+      }//end 3rd if
+      
+      //checks if member is discharged
+      if(memberInfo[0].toString() === "Discharged"){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted a discharged member and tried to change the member's email in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+      }//end 3rd if
+      
+      //turns off forms
+      FunctionContainer.formTurnOff(["all"], dllscv);
+      
+      //waits 15 seconds for scripts running to complete
+      Utilities.sleep(15000);
+      
+      //if they have none
+      //[[N/A], [N/A], [N/A], [N/A]]
+      //[[misc perms], [hub perms], [data center perms], [group perms]]
+      //if they have perms example
+      /*
+        [
+          [[Data Centers], [Map Callouts]], 
+          [[Event Debrief Hub], [Forge Hub], [Member Update Hub], [Tech Form Hub]], 
+          [[Misc 01], [Misc 02], [Misc 10]], 
+          [[Mora 1, [[Everything]]], [Mora 2, [[Everything]]], [Mora 4, [[General Documents], [Reports]]]]
+        ]
+      */
+      
+      //unshares with old email
+      //shares with new email
+      //replaces email in all response sheets
+      //replaces in pmdcms
+      //sends disc update pm
+      
+      //unshares with old email and shares with new one
+      //first it goes thru misc perms
+      if(memberInfo[4][0].toString() !== "N/A"){//start 3rd if
+        for(var i=0; i<memberInfo[4][0].length; i+=1){//start 1st for
+          
+          if(memberInfo[4][0][i].toString() === "All Miscellaneous Folders"){//start 4th if
+            //removes old email
+            FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[98][0].toString());
+            //adds new email
+            FunctionContainer.tripleTryShareEmailForFolderViewer(newEmail, dllscv[98][0].toString());
+            for(var x=0; x<10; x+=1){//start 2nd for
+              //removes old email
+              FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[100][x].toString());
+              //adds new email
+              FunctionContainer.tripleTryShareEmailForFolderEditor(newEmail, dllscv[100][x].toString());
+            }//end 2nd for
+            i = 100;
+          }//end 4th if
+          
+          else{//start 4th if/else
+            for(var x=0; x<10; x+=1){//start 2nd for
+              if(dllscv[101][x].toString() === memberInfo[4][0][i].toString()){//start 4th if
+                //removes old email
+                FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[100][x].toString());
+                //adds new email
+                FunctionContainer.tripleTryShareEmailForFolderEditor(newEmail, dllscv[100][x].toString());
+                x = 100;
+              }//end 4th if
+            }//end 2nd for
+          }//end 4th if/else
+          
+        }//end 1st for
+      }//end 3rd if
+      
+      
+      //next is hubs
+      //if they have any perms for hubs
+      if(memberInfo[4][1].toString() !== "N/A"){//start 3rd if
+        for(var i=0; i<memberInfo[4][1].length; i+=1){//start 1st for
+          
+          if(memberInfo[4][1][i].toString() === "All Hubs"){//start 4th if
+            //removes old email
+            FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[97][0].toString());
+            //adds new email
+            FunctionContainer.tripleTryShareEmailForFolderViewer(newEmail, dllscv[97][0].toString());
+            
+            //cycles thru dllscv find matching hub name to get id
+            for(var x=0; x<5; x+=1){//start 2nd for
+              //removes old email
+              FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], dllscv[82][x].toString());
+              
+              //adds new email
+              FunctionContainer.tripleTryShareEmailForFileViewer(newEmail, dllscv[82][x].toString());
+            }//end 2nd for
+            
+            i = 100;
+          }//end 4th if
+          
+          else{//start 4th if/else
+            //cycles thru dllscv find matching hub name to get id
+            for(var x=0; x<5; x+=1){//start 2nd for
+              if(dllscv[81][x].toString() === memberInfo[4][1][i].toString()){//start 5th if
+                //removes old email
+                FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], dllscv[82][x].toString());
+                
+                //adds new email
+                FunctionContainer.tripleTryShareEmailForFileViewer(newEmail, dllscv[82][x].toString());
+                x = 100;
+              }//end 5th if
+            }//end 2nd for
+          }//end 4th if/else
+          
+        }//end 1st for
+      }//end 3rd if
+
+      
+      //next is data centers
+      //if they have any perms for data centers
+      if(memberInfo[4][2].toString() !== "N/A"){//start 3rd if
+        for(var i=0; i<memberInfo[4][2].length; i+=1){//start 1st for
+          
+          if(memberInfo[4][2][i].toString() === "All Data Centers"){//start 4th if
+            //removes old email
+            FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[105][0].toString());
+            //adds new email
+            FunctionContainer.tripleTryShareEmailForFolderViewer(newEmail, dllscv[105][0].toString());
+            
+            //goes thru each data centerto remove them all
+            for(var x=0; x<5; x+=1){//start 2nd for
+              //file
+              if(dllscv[108][x].toString() === "File"){//start 1st if
+                //removes old email
+                FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], dllscv[107][x].toString());
+                //adds new email
+                FunctionContainer.tripleTryShareEmailForFileViewer(newEmail, dllscv[107][x].toString());
+              }//end 1st if
+              
+              //folder
+              else if(dllscv[108][x].toString() === "Folder"){//start 1st if/else
+                //removes old email
+                FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[107][x].toString());
+                //adds new email
+                FunctionContainer.tripleTryShareEmailForFolderViewer(newEmail, dllscv[107][x].toString());
+              }//end 1st if/else
+            }//end 2nd for
+            
+            i = 100;
+          }//end 4th if
+          
+          else{//start 4th if/else
+            //cycles thru dllscv find matching hub name to get id
+            for(var x=0; x<5; x+=1){//start 2nd for
+              if(dllscv[106][x].toString() === memberInfo[4][2][i].toString()){//start 5th if
+                
+                //file
+                if(dllscv[108][x].toString() === "File"){//start 1st if
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], dllscv[107][x].toString());
+                  //adds new email
+                  FunctionContainer.tripleTryShareEmailForFileViewer(newEmail, dllscv[107][x].toString());
+                }//end 1st if
+                
+                //folder
+                else if(dllscv[108][x].toString() === "Folder"){//start 1st if/else
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[107][x].toString());
+                  //adds new email
+                  FunctionContainer.tripleTryShareEmailForFolderViewer(newEmail, dllscv[107][x].toString());
+                }//end 1st if/else
+                
+                x = 100;
+              }//end 5th if
+            }//end 2nd for
+          }//end 4th if/else
+          
+        }//end 1st for
+      }//end 3rd if
+      
+      
+      //next is groups
+      //if they have any perms for groups
+      if(memberInfo[4][3].toString() !== "N/A"){//start 3rd if
+        for(var i=0; i<memberInfo[4][3].length; i+=1){//start 1st for
+          //cycles thru dllscv find matching group name to then look for what perms they have
+          for(var x=0; x<57; x+=1){//start 2nd for
+            
+            //if group names match
+            if(dllscv[40][x].toString() === memberInfo[4][3][i][0].toString()){//start 4th if
+              
+              //cycles thru each individual group perm the member has
+              for(var y=0; y<memberInfo[4][3][i][1].length; y+=1){//start 3rd for
+                
+                //Everything
+                if(memberInfo[4][3][i][1][y].toString() === "Everything"){//start 5th if
+                  //main folder
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[41][x].toString());  
+                  //adds new email
+                  FunctionContainer.tripleTryShareEmailForFolderViewer(newEmail, dllscv[41][x].toString());
+                  //general docs
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[45][x].toString());
+                  //adds new email
+                  FunctionContainer.tripleTryShareEmailForFolderEditor(newEmail, dllscv[45][x].toString());
+                  //important docs
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[46][x].toString());
+                  //adds new email
+                  FunctionContainer.tripleTryShareEmailForFolderEditor(newEmail, dllscv[46][x].toString());
+                  
+                  //loops thru all subgroups
+                  var curSubGroups = FunctionContainer.splitEmUp(dllscv[67][x]);
+                  for(var w=0; w<curSubGroups.length; w+=1){//start 4th for
+                    
+                    var curSubSubGroups = FunctionContainer.splitEmUp(dllscv[67][curSubGroups[w]]);
+                    //loops thru all subgroups
+                    for(var r=0; r<curSubSubGroups.length; r+=1){//start 5th for
+                      //unshare from both docs
+                      //general docs
+                      //removes old email
+                      FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[45][curSubSubGroups[r]].toString());
+                      //adds new email
+                      FunctionContainer.tripleTryShareEmailForFolderEditor(newEmail, dllscv[45][curSubSubGroups[r]].toString());
+                      //important docs
+                      //removes old email
+                      FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[46][curSubSubGroups[r]].toString());
+                      //adds new email
+                      FunctionContainer.tripleTryShareEmailForFolderEditor(newEmail, dllscv[46][curSubSubGroups[r]].toString());
+                    }//end 5th for
+                    
+                    //unshare from both docs
+                    //general docs
+                    //removes old email
+                    FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[45][curSubGroups[w]].toString());
+                    //adds new email
+                    FunctionContainer.tripleTryShareEmailForFolderEditor(newEmail, dllscv[45][curSubGroups[w]].toString());
+                    //important docs
+                    //removes old email
+                    FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[46][curSubGroups[w]].toString());
+                    //adds new email
+                    FunctionContainer.tripleTryShareEmailForFolderEditor(newEmail, dllscv[46][curSubGroups[w]].toString());
+                    
+                  }//end 4th for
+                  
+                }//end 5th if
+                
+                //Member Profiles
+                else if(memberInfo[4][3][i][1][y].toString() === "Member Profiles"){//start 5th if/else
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[42][x].toString());
+                  //adds new email
+                  FunctionContainer.tripleTryShareEmailForFolderViewer(newEmail, dllscv[42][x].toString());
+                }//end 5th if/else
+                
+                //Group Profile
+                else if(memberInfo[4][3][i][1][y].toString() === "Group Profile"){//start 5th if/else
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[43][x].toString());
+                  //adds new email
+                  FunctionContainer.tripleTryShareEmailForFolderViewer(newEmail, dllscv[43][x].toString());
+                }//end 5th if/else
+                
+                //Reports
+                else if(memberInfo[4][3][i][1][y].toString() === "Reports"){//start 5th if/else
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[44][x].toString());
+                  //adds new email
+                  FunctionContainer.tripleTryShareEmailForFolderViewer(newEmail, dllscv[44][x].toString());
+                }//end 5th if/else
+                
+                //General Documents
+                else if(memberInfo[4][3][i][1][y].toString() === "General Documents"){//start 5th if/else
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[45][x].toString());
+                  //adds new email
+                  FunctionContainer.tripleTryShareEmailForFolderEditor(newEmail, dllscv[45][x].toString());
+                }//end 5th if/else
+                
+                //Important Documents
+                else if(memberInfo[4][3][i][1][y].toString() === "Important Documents"){//start 5th if/else
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[46][x].toString());
+                  //adds new email
+                  FunctionContainer.tripleTryShareEmailForFolderEditor(newEmail, dllscv[46][x].toString());
+                }//end 5th if/else
+              }//end 3rd for
+              
+            }//end 4th if
+          }//end 2nd for
+          
+        }//end 1st for
+      }//end 3rd if
+      
+      
+      //next is member profiles
+      for(var i=0; i<memberInfo[5].length; i+=1){//start 1st for
+        //removes old email
+        FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], FunctionContainer.pmdcmsIdRetrieval(memberInfo[5][i]));
+        //adds new email
+        FunctionContainer.tripleTryShareEmailForFileViewer(newEmail, FunctionContainer.pmdcmsIdRetrieval(memberInfo[5][i]));
+      }//end 1st for
+      
+      
+      //next is perm docs
+      for(var i=0; i<memberInfo[9].length; i+=1){//start 1st for
+        //removes old email
+        FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], memberInfo[9][i]);
+        //adds new email
+        FunctionContainer.tripleTryShareEmailForFileViewer(newEmail, memberInfo[9][i]);
+      }//end 1st for
+      
+
+      //replaces email in all response sheets
+      for(var i=0; i<9; i+=1){//start 1st for
+        //doesnt replace emails in perm form as that would also mess with other cells like the new email cell
+        FunctionContainer.tripleTrySheetTextReplacer(dllscv[86][i].toString(), memberInfo[3], newEmail);
+        Utilities.sleep(500);
+      }//end 1st for
+      
+      
+      //replaces current email in pmdcms
+      FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberInfo[6], 10, 1, 1, newEmail);
+      
+      //adds old email to previous emails
+      memberInfo[8].push([memberInfo[3]]);
+      memberInfo[8] = FunctionContainer.arrayDuplicateFilter(memberInfo[8]);
+      FunctionContainer.tripleTrySetSSValuesSingleString(pmdcms, memberInfo[6], 25, 1, 1, FunctionContainer.array1LevelIntoString(memberInfo[8]));
+      
+      
+      //sends disc update pm
+      FunctionContainer.discordPermissionFormSend("dm$e$^" + memberInfo[2]
+        + "^Your Email Has Been Changed^Your old email has been changed from: __**" + memberInfo[3] + "**__ to: __**" + newEmail
+        + "**__. Sorry for any excess emails, there isn't a way to share something without having an email be sent out about having anything shared with you when you don't manually share them.^^^^PXE Database Permission Updates");
+      
+    }//end 2nd if/else
+    
+    
+    
+    
+    
+    
+    
+    //Change Permissions
+    else if(operation === "Change Permissions for an Individual (if email is already in system)"){//start 2nd if/else
+      
+      //checks if email is already in system throw error otherwise
+      if(memberInfo[3].toString() === ""){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted a member with no email in the database while trying to change the member's permissions in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+      }//end 3rd if
+      
+      //checks if they have no perms and they are trying to get rid of perms
+      if(memberInfo[4].toString() === "N/A,N/A,N/A,N/A"  &&  addOrDeletePerms === "Taken"){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted a member with no permissions in the database while trying to remove permissions from the member in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+      }//end 3rd if
+      
+      
+      //newMiscPerms
+      //newHubPerms
+      //newDataCenterPerms
+      //newGroupPerms
+      //addOrDeletePerms
+      //permListForDetails
+      //docPermList
+      
+      
+      //giving perms
+      if(addOrDeletePerms === "Granted"){//start 3rd if
+      
+        //checks if member is discharged
+        if(memberInfo[0].toString() === "Discharged"){//start 4th if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "tried to grant permissions to a discharged member in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+        }//end 4th if
+        
+        //turns off forms
+        // FunctionContainer.formTurnOff(["all"], dllscv);
+        
+        // //waits 15 seconds for scripts running to complete
+        // Utilities.sleep(15000);
+        
+        
+        //misc first
+        if(newMiscPerms.toString() !== "N/A"){//start 3rd if
+        
+          for(var i=0; i<newMiscPerms.length; i+=1){//start 1st for
+            
+            if(newMiscPerms[i].toString() === "All Miscellaneous Folders"){//start 4th if
+              //adds email to folder/file
+              FunctionContainer.tripleTryShareEmailForFolderViewer(memberInfo[3], dllscv[98][0].toString());
+              for(var x=0; x<10; x+=1){//start 2nd for
+                //adds email to folder/file
+                FunctionContainer.tripleTryShareEmailForFolderEditor(memberInfo[3], dllscv[100][x].toString());
+              }//end 2nd for
+              docPermList = docPermList + ("\n • All Miscellaneous Folders ~ " + dllscv[98][1].toString());
+              permListForDetails.push("All Miscellaneous Folders");
+              i = 100;
+            }//end 4th if
+            
+            else{//start 4th if/else
+              for(var x=0; x<10; x+=1){//start 2nd for
+                if(dllscv[99][x].toString() === newMiscPerms[i].toString()){//start 4th if
+                  //adds email to folder/file
+                  // FunctionContainer.tripleTryShareEmailForFolderEditor(memberInfo[3], dllscv[100][x].toString());
+                  docPermList = docPermList + ("\n • " + newMiscPerms[i].toString() + " ~ " + dllscv[102][x].toString());
+                  permListForDetails.push(newMiscPerms[i].toString());
+                  x = 100;
+                }//end 4th if
+              }//end 2nd for
+            }//end 4th if/else
+            
+          }//end 1st for
+        }//end 3rd if
+        console.log(permListForDetails)
+        console.log(ree)
+              
+        //hubs next
+        if(newHubPerms.toString() !== "N/A"){//start 3rd if
+          for(var i=0; i<newHubPerms.length; i+=1){//start 1st for
+            
+            if(newHubPerms[i].toString() === "All Hubs"){//start 4th if
+              //adds email to folder/file
+              FunctionContainer.tripleTryShareEmailForFolderViewer(memberInfo[3], dllscv[97][0].toString());
+              docPermList = docPermList + ("\n • All Hubs ~ " + dllscv[97][1].toString());
+              permListForDetails.push("All Hubs");
+              i = 100;
+            }//end 4th if
+            
+            else{//start 4th if/else
+              for(var x=0; x<5; x+=1){//start 2nd for
+                if(dllscv[81][x].toString() === newHubPerms[i].toString()){//start 4th if
+                  //adds email to folder/file
+                  FunctionContainer.tripleTryShareEmailForFileViewer(memberInfo[3], dllscv[82][x].toString());
+                  docPermList = docPermList + ("\n • " + newHubPerms[i].toString() + " ~ " + dllscv[83][x].toString());
+                  permListForDetails.push(newHubPerms[i].toString());
+                  x = 100;
+                }//end 4th if
+              }//end 2nd for
+            }//end 4th if/else
+            
+          }//end 1st for
+        }//end 3rd if
+        
+        
+        //data center next
+        if(newDataCenterPerms.toString() !== "N/A"){//start 3rd if
+          for(var i=0; i<newDataCenterPerms.length; i+=1){//start 1st for
+            
+            if(newDataCenterPerms[i].toString() === "All Data Centers"){//start 4th if
+              //adds email to folder/file
+              FunctionContainer.tripleTryShareEmailForFolderViewer(memberInfo[3], dllscv[105][0].toString());
+              docPermList = docPermList + ("\n • All Data Centers ~ " + dllscv[105][1].toString());
+              permListForDetails.push("All Data Centers");
+              i = 100;
+            }//end 4th if
+            
+            else{//start 4th if/else
+              for(var x=0; x<7; x+=1){//start 2nd for
+                if(dllscv[106][x].toString() === newDataCenterPerms[i].toString()){//start 4th if
+                  
+                  //file
+                  if(dllscv[108][x].toString() === "File"){//start 1st if
+                    //adds email to folder/file
+                    FunctionContainer.tripleTryShareEmailForFileViewer(memberInfo[3], dllscv[107][x].toString());
+                  }//end 1st if
+                  
+                  //folder
+                  else if(dllscv[108][x].toString() === "Folder"){//start 1st if/else
+                    //adds email to folder/file
+                    FunctionContainer.tripleTryShareEmailForFolderViewer(memberInfo[3], dllscv[107][x].toString());
+                  }//end 1st if/else
+                  
+                  docPermList = docPermList + ("\n • " + newDataCenterPerms[i].toString() + " ~ " + dllscv[109][x].toString());
+                  permListForDetails.push(newDataCenterPerms[i].toString());
+                  x = 100;
+                  
+                }//end 4th if
+              }//end 2nd for
+            }//end 4th if/else
+            
+          }//end 1st for
+        }//end 3rd if
+      
+      
+        //next is groups
+        //if they have any perms for groups
+        if(newGroupPerms.toString() !== "N/A"){//start 3rd if
+          for(var i=0; i<newGroupPerms.length; i+=1){//start 1st for
+            //cycles thru dllscv find matching group name to then look for what perms they have
+            for(var x=0; x<57; x+=1){//start 2nd for
+              
+              //if group names match
+              if(dllscv[40][x].toString() === newGroupPerms[i][0].toString()){//start 4th if
+                
+                //cycles thru each individual group perm the member has
+                for(var y=0; y<newGroupPerms[i][1].length; y+=1){//start 3rd for
+                  
+                  //Everything
+                  if(newGroupPerms[i][1][y].toString() === "Everything"){//start 5th if
+                    Logger.log(dllscv[45][x].toString());
+                    //main folder
+                    //adds email to folder/file
+                    FunctionContainer.tripleTryShareEmailForFolderViewer(memberInfo[3], dllscv[41][x].toString());
+                    //general docs
+                    //adds email to folder/file
+                    FunctionContainer.tripleTryShareEmailForFolderEditor(memberInfo[3], dllscv[45][x].toString());
+                    //important docs
+                    //adds email to folder/file
+                    FunctionContainer.tripleTryShareEmailForFolderEditor(memberInfo[3], dllscv[46][x].toString());
+                    
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Everything ~ "+dllscv[49][x].toString());
+                    permListForDetails.push(dllscv[40][x].toString() + " ~ Everything");
+                    
+                    //loops thru all subgroups
+                    var curSubGroups = FunctionContainer.splitEmUp(dllscv[67][x]);
+                    for(var w=0; w<curSubGroups.length; w+=1){//start 4th for
+                      
+                      var curSubSubGroups = FunctionContainer.splitEmUp(dllscv[67][curSubGroups[w]]);
+                      //loops thru all subgroups
+                      for(var r=0; r<curSubSubGroups.length; r+=1){//start 5th for
+                        //unshare from both docs
+                        //general docs
+                        //adds email to folder/file
+                        FunctionContainer.tripleTryShareEmailForFolderEditor(memberInfo[3], dllscv[45][curSubSubGroups[r]].toString());
+                        //important docs
+                        //adds email to folder/file
+                        FunctionContainer.tripleTryShareEmailForFolderEditor(memberInfo[3], dllscv[46][curSubSubGroups[r]].toString());
+                      }//end 5th for
+                      
+                      //unshare from both docs
+                      //general docs
+                      //adds email to folder/file
+                      FunctionContainer.tripleTryShareEmailForFolderEditor(memberInfo[3], dllscv[45][curSubGroups[w]].toString());
+                      //important docs
+                      //adds email to folder/file
+                      FunctionContainer.tripleTryShareEmailForFolderEditor(memberInfo[3], dllscv[46][curSubGroups[w]].toString());
+                      
+                    }//end 4th for
+                    
+                  }//end 5th if
+                  
+                  //Member Profiles
+                  else if(newGroupPerms[i][1][y].toString() === "Member Profiles"){//start 5th if/else
+                    //adds email to folder/file
+                    FunctionContainer.tripleTryShareEmailForFolderViewer(memberInfo[3], dllscv[42][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Member Profiles ~ "+dllscv[56][x].toString());
+                    permListForDetails.push(dllscv[40][x].toString() + " ~ Member Profiles");
+                  }//end 5th if/else
+                  
+                  //Group Profile
+                  else if(newGroupPerms[i][1][y].toString() === "Group Profile"){//start 5th if/else
+                    //adds email to folder/file
+                    FunctionContainer.tripleTryShareEmailForFolderViewer(memberInfo[3], dllscv[43][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Group Profile ~ "+dllscv[48][x].toString());
+                    permListForDetails.push(dllscv[40][x].toString() + " ~ Group Profile");
+                  }//end 5th if/else
+                  
+                  //Reports
+                  else if(newGroupPerms[i][1][y].toString() === "Reports"){//start 5th if/else
+                    //adds email to folder/file
+                    FunctionContainer.tripleTryShareEmailForFolderViewer(memberInfo[3], dllscv[44][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Reports ~ "+dllscv[57][x].toString());
+                    permListForDetails.push(dllscv[40][x].toString() + " ~ Reports");
+                  }//end 5th if/else
+                  
+                  //General Documents
+                  else if(newGroupPerms[i][1][y].toString() === "General Documents"){//start 5th if/else
+                    //adds email to folder/file
+                    FunctionContainer.tripleTryShareEmailForFolderEditor(memberInfo[3], dllscv[45][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": General Documents ~ "+dllscv[58][x].toString());
+                    permListForDetails.push(dllscv[40][x].toString() + " ~ General Documents");
+                  }//end 5th if/else
+                  
+                  //Important Documents
+                  else if(newGroupPerms[i][1][y].toString() === "Important Documents"){//start 5th if/else
+                    //adds email to folder/file
+                    FunctionContainer.tripleTryShareEmailForFolderEditor(memberInfo[3], dllscv[46][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Important Documents ~ "+dllscv[59][x].toString());
+                    permListForDetails.push(dllscv[40][x].toString() + " ~ Important Documents");
+                  }//end 5th if/else
+                }//end 3rd for
+                
+              }//end 4th if
+            }//end 2nd for
+            
+          }//end 1st for
+        }//end 3rd if
+        
+        
+        
+        
+        //compare old perms and new perms to add to them and get new perm string for pmdcms
+        var newPerms = [[], [], [], []];
+        
+        
+        //compare misc first
+        if(memberInfo[4][0].toString() === "N/A"){//start 4th if
+          //cycles thru new perms and adds as it goes
+          for(var i=0; i<newMiscPerms.length; i+=1){//start 1st for
+            newPerms[0].push([newMiscPerms[i].toString()]);
+          }//end 1st for
+        }//end 4th if
+        
+        //if they did have perms beforehand
+        else if(memberInfo[4][0].toString() !== "N/A"){//start 4th if/else
+          //adds old perms first
+          for(var i=0; i<memberInfo[4][0].length; i+=1){//start 1st for
+            newPerms[0].push([memberInfo[4][0][i].toString()]);
+          }//end 1st for
+          //adds new perms next if it isnt N/A
+          if(newMiscPerms.toString() !== "N/A"){//start 5th if
+            for(var i=0; i<newMiscPerms.length; i+=1){//start 1st for
+              newPerms[0].push([newMiscPerms[i].toString()]);
+            }//end 1st for
+          }//end 5th if
+          newPerms[0] = FunctionContainer.arrayDuplicateFilter(newPerms[0]);
+        }//end 4th if/else
+        //filter for all inclusion
+        for(var i=0; i<newPerms[0].length; i+=1){//start 1st for
+          if(newPerms[0][i].toString() === "All Miscellaneous Folders"){//start 4th if
+            newPerms[0] = [["All Miscellaneous Folders"]];
+          }//end 4th if
+        }//end 1st for
+        
+        //hubs
+        if(memberInfo[4][1].toString() === "N/A"){//start 4th if
+          //cycles thru new perms and adds as it goes
+          for(var i=0; i<newHubPerms.length; i+=1){//start 1st for
+            newPerms[1].push([newHubPerms[i].toString()]);
+          }//end 1st for
+        }//end 4th if
+        
+        //if they did have perms beforehand
+        else if(memberInfo[4][1].toString() !== "N/A"){//start 4th if/else
+          //adds old perms first
+          for(var i=0; i<memberInfo[4][1].length; i+=1){//start 1st for
+            newPerms[1].push([memberInfo[4][1][i].toString()]);
+          }//end 1st for
+          //adds new perms next if it isnt N/A
+          if(newHubPerms.toString() !== "N/A"){//start 5th if
+            for(var i=0; i<newHubPerms.length; i+=1){//start 1st for
+              newPerms[1].push([newHubPerms[i].toString()]);
+            }//end 1st for
+          }//end 5th if
+          newPerms[1] = FunctionContainer.arrayDuplicateFilter(newPerms[1]);
+        }//end 4th if/else
+        //filter for all inclusion
+        for(var i=0; i<newPerms[1].length; i+=1){//start 1st for
+          if(newPerms[1][i].toString() === "All Hubs"){//start 4th if
+            newPerms[1] = [["All Hubs"]];
+          }//end 4th if
+        }//end 1st for
+        
+        
+        //data centers
+        if(memberInfo[4][2].toString() === "N/A"){//start 4th if
+          //cycles thru new perms and adds as it goes
+          for(var i=0; i<newDataCenterPerms.length; i+=1){//start 1st for
+            newPerms[2].push([newDataCenterPerms[i].toString()]);
+          }//end 1st for
+        }//end 4th if
+        
+        //if they did have perms beforehand
+        else if(memberInfo[4][2].toString() !== "N/A"){//start 4th if/else
+          //adds old perms first
+          for(var i=0; i<memberInfo[4][2].length; i+=1){//start 1st for
+            newPerms[2].push([memberInfo[4][2][i].toString()]);
+          }//end 1st for
+          //adds new perms next if it isnt N/A
+          if(newDataCenterPerms.toString() !== "N/A"){//start 5th if
+            for(var i=0; i<newDataCenterPerms.length; i+=1){//start 1st for
+              newPerms[2].push([newDataCenterPerms[i].toString()]);
+            }//end 1st for
+          }//end 5th if
+          newPerms[2] = FunctionContainer.arrayDuplicateFilter(newPerms[2]);
+        }//end 4th if/else
+        //filter for all inclusion
+        for(var i=0; i<newPerms[2].length; i+=1){//start 1st for
+          if(newPerms[2][i].toString() === "All Data Centers"){//start 4th if
+            newPerms[2] = [["All Data Centers"]];
+          }//end 4th if
+        }//end 1st for
+        
+        
+        //groups
+        if(memberInfo[4][3].toString() === "N/A"){//start 4th if
+          //cycles thru new perms and adds as it goes
+          for(var i=0; i<newGroupPerms.length; i+=1){//start 1st for
+            newPerms[3].push(newGroupPerms[i]);
+          }//end 1st for
+        }//end 4th if
+        
+        
+        //if they did have perms beforehand
+        else if(memberInfo[4][3].toString() !== "N/A"){//start 4th if/else
+          //cycles thru new perms first
+          for(var i=0; i<newGroupPerms.length; i+=1){//start 1st for
+            //cycles thru old perms
+            for(var x=0; x<memberInfo[4][3].length; x+=1){//start 2nd for
+              //if names match
+              if(memberInfo[4][3][x][0].toString() === newGroupPerms[i][0].toString()){//start 5th if
+                var tempPerms = [];
+                
+                //adds all old perms
+                for(var y=0; y<memberInfo[4][3][x][1].length; y+=1){//start 3rd for
+                  tempPerms.push(memberInfo[4][3][x][1][y]);
+                }//end 3rd for
+                
+                //adds all new perms
+                for(var y=0; y<newGroupPerms[i][1].length; y+=1){//start 3rd for
+                  tempPerms.push(newGroupPerms[i][1][y]);
+                }//end 3rd for
+                
+                //put thru duplicate function
+                tempPerms = FunctionContainer.arrayDuplicateFilter(tempPerms);
+                
+                //if any of the options are 'Everything' just put everything as the only option
+                for(var y=0; y<tempPerms.length; y+=1){//start 3rd for
+                  if(tempPerms[y].toString() === "Everything"){//start 6th if
+                    tempPerms = [["Everything"]];
+                    y = tempPerms.length+1;
+                  }//end 6th if
+                }//end 3rd for
+                
+                x = memberInfo[4][3].length;
+                
+                newPerms[3].push([newGroupPerms[i][0].toString(), tempPerms]);
+              }//end 5th if
+              
+              //if names dont match and its the end of the loop
+              else if(memberInfo[4][3][x][0].toString() !== newGroupPerms[i][0].toString()  &&  x === memberInfo[4][3].length-1){//start 5th if/else
+                
+                //if any of the options are 'Everything' just put everything as the only option
+                for(var y=0; y<newGroupPerms[i][1].length; y+=1){//start 3rd for
+                  if(newGroupPerms[i][1][y].toString() === "Everything"){//start 6th if
+                    newGroupPerms[i][1] = [["Everything"]];
+                    y = newGroupPerms[i][1].length+1;
+                  }//end 6th if
+                }//end 3rd for
+                
+                newPerms[3].push(newGroupPerms[i]);
+              }//end 5th if/else
+              
+            }//end 2nd for
+          }//end 1st for
+          
+          //cycle thru old perms to see if any groups are missing
+          for(var i=0; i<memberInfo[4][3].length; i+=1){//start 1st for
+            //cycle thru new perms
+            for(var x=0; x<newGroupPerms.length; x+=1){//start 2nd for
+              //if names match
+              if(memberInfo[4][3][i][0].toString() === newGroupPerms[x][0].toString()){//start 5th if
+                x = newGroupPerms.length;
+              }//end 5th if
+              
+              //if names dont match and its the end of the loop
+              else if(memberInfo[4][3][i][0].toString() !== newGroupPerms[x][0].toString()  &&  x === newGroupPerms.length-1){//start 5th if/else
+                newPerms[3].push(memberInfo[4][3][i]);
+              }//end 5th if/else
+            }//end 2nd for
+          }//end 1st for
+        }//end 4th if/else
+        
+        //sorts array in order of groups if its not [N/A]
+        if(newPerms[3].toString() !== "N/A"){//start 4th if
+          newPerms[3] = FunctionContainer.permissionArraySort(dllscv, newPerms[3]);
+        }//end 4th if
+        
+        
+        //creates text file to send thru discord
+        var detailsFileID = DriveApp.getFolderById(dllscv[107][4].toString())
+          .createFile("Permission Change for " + memberInfo[1] + " on " + FunctionContainer.dateReplace(pfrscv[0].toString()) + " at " + FunctionContainer.timeRetrieval12Cycle(pfrscv[0]),
+            "You now have access to the following folders and files in the database: (if you did or didn't already)"
+            + docPermList, MimeType.PLAIN_TEXT)
+          .addViewer(memberInfo[3]).getId();
+        
+        
+        //adds file id to perm docs
+        if(memberInfo[9].toString() === ""){//start 1st if
+          memberInfo[9] = [[detailsFileID]];
+        }//end 1st if
+        else{memberInfo[9].push([detailsFileID])}
+        
+        //paste new perm string in pmdcms
+        pmdcmscv[memberInfo[6]-2][6] = FunctionContainer.permissionEncoder(newPerms);
+        pmdcmscv[memberInfo[6]-2][29] = FunctionContainer.array1LevelIntoString(memberInfo[9]);
+        FunctionContainer.tripleTrySetSSValues(pmdcms, memberInfo[6], 1, 1, pmdcmscv[memberInfo[6]-2].length, [pmdcmscv[memberInfo[6]-2]]);
+        
+        
+        
+        //sends discord pm with url to text file for perms that were changed
+        FunctionContainer.discordPermissionFormSend("dm$e$^" + memberInfo[2]
+          + "^Your Permissions Have Changed^This [text document](" + DriveApp.getFolderById(detailsFileID).getUrl()
+          + ") has the information about what has been shared with you from the database. Sorry for any excess emails, there isn't a way to share something without having an email be sent out about having anything shared with you when you don't manually share them.^^^^PXE Database Permission Updates");
+        
+        
+        //adds info to details var for tech form entry
+        details = "Granting Permissions in Database ~ Member in Question: " + memberInfo[1] 
+          + "\n• Permissions Granted: " + FunctionContainer.array1LevelIntoString(permListForDetails) 
+          + "\n• Old Permissions: " + memberInfo[10] + "\n• New Permissions: " + pmdcmscv[memberInfo[6]-2][6];
+        
+      }//end 3rd if
+      
+      
+      
+      
+      
+      
+      
+      
+      //taking away perms
+      else if(addOrDeletePerms === "Taken"){//start 3rd if/else
+      
+        //turns off forms
+        FunctionContainer.formTurnOff(["all"], dllscv);
+        
+        //waits 15 seconds for scripts running to complete
+        Utilities.sleep(15000);
+        
+        
+        //misc first
+        if(newMiscPerms.toString() !== "N/A"){//start 3rd if
+          for(var i=0; i<newMiscPerms.length; i+=1){//start 1st for
+            
+            if(newMiscPerms[i].toString() === "All Miscellaneous Folders"){//start 4th if
+              //removes email from folder/file
+              FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[98][0].toString());
+              for(var x=0; x<10; x+=1){//start 2nd for
+                //removes email from folder/file
+                FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[100][x].toString());
+                x = 100;
+              }//end 2nd for
+              docPermList = docPermList + ("\n • All Miscellaneous Folders");
+              permListForDetails.push("All Miscellaneous Folders");
+              i = 100;
+            }//end 4th if
+            
+            else{//start 4th if/else
+              for(var x=0; x<10; x+=1){//start 2nd for
+                if(dllscv[99][x].toString() === newMiscPerms[i].toString()){//start 4th if
+                  //removes email from folder/file
+                  FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[100][x].toString());
+                  docPermList = docPermList + ("\n • " + newMiscPerms[i].toString());
+                  permListForDetails.push(newMiscPerms[i].toString());
+                  x = 100;
+                }//end 4th if
+              }//end 2nd for
+            }//end 4th if/else
+            
+          }//end 1st for
+        }//end 3rd if
+        
+              
+        //hubs next
+        if(newHubPerms.toString() !== "N/A"){//start 3rd if
+          for(var i=0; i<newHubPerms.length; i+=1){//start 1st for
+            
+            if(newHubPerms[i].toString() === "All Hubs"){//start 4th if
+              //removes email from folder/file
+              FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[97][0].toString());
+              docPermList = docPermList + ("\n • All Hubs");
+              permListForDetails.push("All Hubs");
+              //unshares all hubs
+              for(var x=0; x<5; x+=1){//start 2nd for
+                //removes email from folder/file
+                FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], dllscv[82][x].toString());
+              }//end 2nd for
+              i = 100;
+            }//end 4th if
+            
+            else{//start 4th if/else
+              for(var x=0; x<5; x+=1){//start 2nd for
+                if(dllscv[81][x].toString() === newHubPerms[i].toString()){//start 4th if
+                  //removes email from folder/file
+                  FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], dllscv[82][x].toString());
+                  docPermList = docPermList + ("\n • " + newHubPerms[i].toString());
+                  permListForDetails.push(newHubPerms[i].toString());
+                  x = 100;
+                }//end 4th if
+              }//end 2nd for
+            }//end 4th if/else
+            
+          }//end 1st for
+        }//end 3rd if
+        
+        
+        //data center next
+        if(newDataCenterPerms.toString() !== "N/A"){//start 3rd if
+          for(var i=0; i<newDataCenterPerms.length; i+=1){//start 1st for
+            
+            if(newDataCenterPerms[i].toString() === "All Data Centers"){//start 4th if
+              //removes email from folder/file
+              FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[105][0].toString());
+              docPermList = docPermList + ("\n • All Data Centers");
+              permListForDetails.push("All Data Centers");
+              //unshares all under it
+              for(var x=0; x<7; x+=1){//start 2nd for
+                //file
+                if(dllscv[108][x].toString() === "File"){//start 1st if
+                  //removes email from folder/file
+                  FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], dllscv[107][x].toString());
+                }//end 1st if
+                
+                //folder
+                else if(dllscv[108][x].toString() === "Folder"){//start 1st if/else
+                  //removes email from folder/file
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[107][x].toString());
+                }//end 1st if/else
+              }//end 2nd for
+              i = 100;
+            }//end 4th if
+            
+            else{//start 4th if/else
+              for(var x=0; x<7; x+=1){//start 2nd for
+                if(dllscv[106][x].toString() === newDataCenterPerms[i].toString()){//start 4th if
+                  
+                  //file
+                  if(dllscv[108][x].toString() === "File"){//start 1st if
+                    //removes email from folder/file
+                    FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], dllscv[107][x].toString());
+                  }//end 1st if
+                  
+                  //folder
+                  else if(dllscv[108][x].toString() === "Folder"){//start 1st if/else
+                    //removes email from folder/file
+                    FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[107][x].toString());
+                  }//end 1st if/else
+                  
+                  docPermList = docPermList + ("\n • " + newDataCenterPerms[i].toString());
+                  permListForDetails.push(newDataCenterPerms[i].toString());
+                  x = 100;
+                  
+                }//end 4th if
+              }//end 2nd for
+            }//end 4th if/else
+            
+          }//end 1st for
+        }//end 3rd if
+      
+      
+        //next is groups
+        //if they have any perms for groups
+        if(newGroupPerms.toString() !== "N/A"){//start 3rd if
+          for(var i=0; i<newGroupPerms.length; i+=1){//start 1st for
+            //cycles thru dllscv find matching group name to then look for what perms they have
+            for(var x=0; x<57; x+=1){//start 2nd for
+              
+              //if group names match
+              if(dllscv[40][x].toString() === newGroupPerms[i][0].toString()){//start 4th if
+                
+                //cycles thru each individual group perm the member has
+                for(var y=0; y<newGroupPerms[i][1].length; y+=1){//start 3rd for
+                  
+                  //Everything
+                  if(newGroupPerms[i][1][y].toString() === "Everything"){//start 5th if
+                    //main folder
+                    //removes email from folder/file
+                    FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[41][x].toString());
+                    //general docs
+                    //removes email from folder/file
+                    FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[45][x].toString());
+                    //important docs
+                    //removes email from folder/file
+                    FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[46][x].toString());
+                    
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Everything");
+                    permListForDetails.push(dllscv[40][x].toString() + " ~ Everything");
+                    
+                    //loops thru all subgroups
+                    var curSubGroups = FunctionContainer.splitEmUp(dllscv[67][x]);
+                    for(var w=0; w<curSubGroups.length; w+=1){//start 4th for
+                      
+                      var curSubSubGroups = FunctionContainer.splitEmUp(dllscv[67][curSubGroups[w]]);
+                      //loops thru all subgroups
+                      for(var r=0; r<curSubSubGroups.length; r+=1){//start 5th for
+                        //unshare from both docs
+                        //general docs
+                        //removes email from folder/file
+                        FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[45][curSubSubGroups[r]].toString());
+                        //important docs
+                        //removes email from folder/file
+                        FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[46][curSubSubGroups[r]].toString());
+                      }//end 5th for
+                      
+                      //unshare from both docs
+                      //general docs
+                      //removes email from folder/file
+                      FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[45][curSubGroups[w]].toString());
+                      //important docs
+                      //removes email from folder/file
+                      FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[46][curSubGroups[w]].toString());
+                      
+                    }//end 4th for
+                    
+                  }//end 5th if
+                  
+                  //Member Profiles
+                  else if(newGroupPerms[i][1][y].toString() === "Member Profiles"){//start 5th if/else
+                    //removes email from folder/file
+                    FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[42][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Member Profiles");
+                    permListForDetails.push(dllscv[40][x].toString() + " ~ Member Profiles");
+                  }//end 5th if/else
+                  
+                  //Group Profile
+                  else if(newGroupPerms[i][1][y].toString() === "Group Profile"){//start 5th if/else
+                    //removes email from folder/file
+                    FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[43][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Group Profile");
+                    permListForDetails.push(dllscv[40][x].toString() + " ~ Group Profile");
+                  }//end 5th if/else
+                  
+                  //Reports
+                  else if(newGroupPerms[i][1][y].toString() === "Reports"){//start 5th if/else
+                    //removes email from folder/file
+                    FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[44][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Reports");
+                    permListForDetails.push(dllscv[40][x].toString() + " ~ Reports");
+                  }//end 5th if/else
+                  
+                  //General Documents
+                  else if(newGroupPerms[i][1][y].toString() === "General Documents"){//start 5th if/else
+                    //removes email from folder/file
+
+                    FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[45][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": General Documents");
+                    permListForDetails.push(dllscv[40][x].toString() + " ~ General Documents");
+                  }//end 5th if/else
+                  
+                  //Important Documents
+                  else if(newGroupPerms[i][1][y].toString() === "Important Documents"){//start 5th if/else
+                    //removes email from folder/file
+                    FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[46][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Important Documents");
+                    permListForDetails.push(dllscv[40][x].toString() + " ~ Important Documents");
+                  }//end 5th if/else
+                }//end 3rd for
+                
+              }//end 4th if
+            }//end 2nd for
+            
+          }//end 1st for
+        }//end 3rd if
+        
+        
+        //compare old perms and new perms to add to them and get new perm string for pmdcms
+        var newPerms = [[], [], [], []];
+        
+        
+        //compare misc first
+        if(newMiscPerms.toString() === "N/A"){//start 4th if
+          //cycles thru new perms and adds as it goes
+          for(var i=0; i<memberInfo[4][0].length; i+=1){//start 1st for
+            newPerms[0].push([memberInfo[4][0][i].toString()]);
+          }//end 1st for
+        }//end 4th if
+        
+        //if they did have perms beforehand
+        else if(newMiscPerms.toString() !== "N/A"){//start 4th if/else
+          if(newMiscPerms[0].toString() === "All Miscellaneous Folders"){//start 1st if
+            newPerms[0] = "";
+          }//end 1st if
+          else{
+            //cycles thru old perms and compares them to the new perms
+            for(var i=0; i<memberInfo[4][0].length; i+=1){//start 1st for
+              //cycles thru inputted perms
+              for(var x=0; x<newMiscPerms.length; x+=1){//start 2nd for
+                //if the names match
+                if(memberInfo[4][0][i].toString() === newMiscPerms[x].toString()){//start 5th if
+                  x = newMiscPerms.length + 1;
+                }//end 5th if
+                //if names dont match and its the end of the inputted perms array
+                else if(memberInfo[4][0][i].toString() !== newMiscPerms[x].toString()  &&  x === newMiscPerms.length-1){//start 5th if/else
+                  newPerms[0].push([memberInfo[4][0][i].toString()]);
+                }//end 5th if/else
+              }//end 2nd for
+            }//end 1st for
+          }
+        }//end 4th if/else
+        //filter for all inclusion
+        for(var i=0; i<newPerms[0].length; i+=1){//start 1st for
+          if(newPerms[0][i].toString() === "All Miscellaneous Folders"){//start 4th if
+            newPerms[0] = [["All Miscellaneous Folders"]];
+          }//end 4th if
+        }//end 1st for
+        
+        //if the new misc perms portion of newPerms is empty
+        if(newPerms[0].toString() === ""){//start 1st if
+          newPerms[0] = [["N/A"]];
+        }//end 1st if
+        
+        
+        //hubs
+        if(newHubPerms.toString() === "N/A"){//start 4th if
+          //cycles thru new perms and adds as it goes
+          for(var i=0; i<memberInfo[4][1].length; i+=1){//start 1st for
+            newPerms[1].push([memberInfo[4][1][i].toString()]);
+          }//end 1st for
+        }//end 4th if
+        
+        //if they did have perms beforehand
+        else if(newHubPerms.toString() !== "N/A"){//start 4th if/else
+          if(newHubPerms[0].toString() === "All Hubs"){//start 1st if
+            newPerms[1] = "";
+          }//end 1st if
+          else{
+            //cycles thru old perms and compares them to the new perms
+            for(var i=0; i<memberInfo[4][1].length; i+=1){//start 1st for
+              //cycles thru inputted perms
+              for(var x=0; x<newHubPerms.length; x+=1){//start 2nd for
+                //if the names match
+                if(memberInfo[4][1][i].toString() === newHubPerms[x].toString()){//start 5th if
+                  x = newHubPerms.length + 1;
+                }//end 5th if
+                //if names dont match and its the end of the inputted perms array
+                else if(memberInfo[4][1][i].toString() !== newHubPerms[x].toString()  &&  x === newHubPerms.length-1){//start 5th if/else
+                  newPerms[1].push([memberInfo[4][1][i].toString()]);
+                }//end 5th if/else
+              }//end 2nd for
+            }//end 1st for
+          }
+        }//end 4th if/else
+        //filter for all inclusion
+        for(var i=0; i<newPerms[1].length; i+=1){//start 1st for
+          if(newPerms[1][i].toString() === "All Hubs"){//start 4th if
+            newPerms[1] = [["All Hubs"]];
+          }//end 4th if
+        }//end 1st for
+        
+        //if the new misc perms portion of newPerms is empty
+        if(newPerms[1].toString() === ""){//start 1st if
+          newPerms[1] = [["N/A"]];
+        }//end 1st if
+        
+        
+        //data centers
+        if(newDataCenterPerms.toString() === "N/A"){//start 4th if
+          //cycles thru new perms and adds as it goes
+          for(var i=0; i<memberInfo[4][2].length; i+=1){//start 1st for
+            newPerms[2].push([memberInfo[4][2][i].toString()]);
+          }//end 1st for
+        }//end 4th if
+        
+        //if they did have perms beforehand
+        else if(newDataCenterPerms.toString() !== "N/A"){//start 4th if/else
+          if(newDataCenterPerms[0].toString() === "All Data Centers"){//start 1st if
+            newPerms[2] = "";
+          }//end 1st if
+          else{
+            //cycles thru old perms and compares them to the new perms
+            for(var i=0; i<memberInfo[4][2].length; i+=1){//start 1st for
+              //cycles thru inputted perms
+              for(var x=0; x<newDataCenterPerms.length; x+=1){//start 2nd for
+                //if the names match
+                if(memberInfo[4][2][i].toString() === newDataCenterPerms[x].toString()){//start 5th if
+                  x = newDataCenterPerms.length + 1;
+                }//end 5th if
+                //if names dont match and its the end of the inputted perms array
+                else if(memberInfo[4][2][i].toString() !== newDataCenterPerms[x].toString()  &&  x === newDataCenterPerms.length-1){//start 5th if/else
+                  newPerms[2].push([memberInfo[4][2][i].toString()]);
+                }//end 5th if/else
+              }//end 2nd for
+            }//end 1st for
+          }
+        }//end 4th if/else
+        
+        //filter for all inclusion
+        for(var i=0; i<newPerms[2].length; i+=1){//start 1st for
+          if(newPerms[2][i].toString() === "All Data Centers"){//start 4th if
+            newPerms[2] = [["All Data Centers"]];
+          }//end 4th if
+        }//end 1st for
+        
+        //if the new misc perms portion of newPerms is empty
+        if(newPerms[2].toString() === ""){//start 1st if
+          newPerms[2] = [["N/A"]];
+        }//end 1st if
+
+        
+        //compares group next
+        //if inputted group perms is empty
+        if(newGroupPerms[0].toString() === "N/A"){//start 4th if
+          //cycles thru new perms and adds as it goes
+          for(var i=0; i<memberInfo[4][3].length; i+=1){//start 1st for
+            newPerms[3].push(memberInfo[4][3][i]);
+          }//end 1st for
+        }//end 4th if
+        
+        //if inputted group perms isnt empty
+        else if(newGroupPerms[0].toString() !== "N/A"){//start 4th if/else
+          //cycles thru old perms first
+          for(var i=0; i<memberInfo[4][3].length; i+=1){//start 1st for
+            //cycles thru inputted perms
+            for(var x=0; x<newGroupPerms.length; x+=1){//start 2nd for
+              //if group names match
+              if(memberInfo[4][3][i][0].toString() === newGroupPerms[x][0].toString()){//start 5th if
+                var tempPerms = [];
+                
+                
+                //if old val is 'Everything' and new perm choice isnt 'Everything'
+                if(memberInfo[4][3][i][1][0].toString() === "Everything"  &&  newGroupPerms[x][1][0].toString() !== "Everything"){//start 6th if
+                  tempPerms = [["Everything"]];
+                }//end 6th if
+                else if(newGroupPerms[x][1][0].toString() === "Everything"){}
+                else{
+                  //needs to then compare the individual group perms
+                  //cycles thru old group perms choices
+                  for(var y=0; y<memberInfo[4][3][i][1].length; y+=1){//start 3rd for
+                    //cycles thru inputted group perms choices
+                    for(var z=0; z<newGroupPerms[x][1].length; z+=1){//start 4th for
+                      //if group perm choice names match
+                      if(memberInfo[4][3][i][1][y].toString() === newGroupPerms[x][1][z].toString()){//start 6th if
+                        z = newGroupPerms[x][1].length + 1;
+                      }//end 6th if
+                      //if group perm choice names dont match and its the end of the 4th for loop
+                      else if(memberInfo[4][3][i][1][y].toString() !== newGroupPerms[x][1][z].toString()  &&  z === newGroupPerms[x][1].length-1){//start 6th if/else
+                        tempPerms.push([memberInfo[4][3][i][1][y].toString()]);
+                      }//end 6th if/else
+                      
+                    }//end 4th for
+                  }//end 3rd for
+                }
+                //if temp perms has something
+                if(tempPerms.toString() !== ""){//start 6th if
+                  newPerms[3].push([memberInfo[4][3][i][0].toString(), tempPerms]);
+                }//end 6th if
+                x = newGroupPerms.length + 1;
+              }//end 5th if
+              
+              //if names dont match and its the end of the loop adds the current perm group to the list
+              else if(memberInfo[4][3][i][0].toString() !== newGroupPerms[x][0].toString()  &&  x === newGroupPerms.length-1){//start 5th if/else
+                newPerms[3].push(memberInfo[4][3][i]);
+              }//end 5th if/else
+              
+            }//end 2nd for
+          }//end 1st for
+        }//end 4th if/else
+        
+        //if the new group perms portion of newPerms is empty
+        if(newPerms[3].toString() === ""){//start 1st if
+          newPerms[3] = ["N/A"];
+        }//end 1st if
+        
+        //sorts array in order of groups if its not [N/A]
+        if(newPerms[3].toString() !== "N/A"){//start 4th if
+          newPerms[3] = FunctionContainer.permissionArraySort(dllscv, newPerms[3]);
+        }//end 4th if
+        
+        
+        //creates text file to send thru discord
+        var detailsFileID = DriveApp.getFolderById(dllscv[107][4].toString())
+          .createFile("Permission Change for " + memberInfo[1] + " on " + FunctionContainer.dateReplace(pfrscv[0].toString()) + " at " + FunctionContainer.timeRetrieval12Cycle(pfrscv[0]),
+            "You no longer have access to the following folders and files in the database: (if you did or didn't already)"
+            + docPermList, MimeType.PLAIN_TEXT)
+          .addViewer(memberInfo[3]).getId();
+        
+        
+        //adds file id to perm docs
+        if(memberInfo[9].toString() === ""){//start 1st if
+          memberInfo[9] = [[detailsFileID]];
+        }//end 1st if
+        else{memberInfo[9].push([detailsFileID])}
+        
+        //paste new perm string in pmdcms
+        if(memberInfo[0] === "Current"){//start 1st if
+          pmdcmscv[memberInfo[6]-2][6] = FunctionContainer.permissionEncoder(newPerms);
+          pmdcmscv[memberInfo[6]-2][29] = FunctionContainer.array1LevelIntoString(memberInfo[9]);
+          FunctionContainer.tripleTrySetSSValues(pmdcms, memberInfo[6], 1, 1, pmdcmscv[memberInfo[6]-2].length, [pmdcmscv[memberInfo[6]-2]]);
+          //adds info to details var for tech form entry
+          details = "Taking Away Permissions in Database ~ Member in Question: " + memberInfo[1] 
+            + "\n• Permissions Taken: " + FunctionContainer.array1LevelIntoString(permListForDetails) 
+            + "\n• Old Permissions: " + memberInfo[10] + "\nNew Permissions: " + pmdcmscv[memberInfo[6]-2][6];
+        }//end 1st if
+        
+        else{
+          pmddmscv[memberInfo[6]-2][6] = FunctionContainer.permissionEncoder(newPerms);
+          pmddmscv[memberInfo[6]-2][29] = FunctionContainer.array1LevelIntoString(memberInfo[9]);
+          FunctionContainer.tripleTrySetSSValues(pmddms, memberInfo[6], 1, 1, pmddmscv[memberInfo[6]-2].length, [pmddmscv[memberInfo[6]-2]]);
+          //adds info to details var for tech form entry
+          details = "Taking Away Permissions in Database ~ Member in Question: " + memberInfo[1] 
+            + "\n• Permissions Taken: " + FunctionContainer.array1LevelIntoString(permListForDetails) 
+            + "\n• Old Permissions: " + memberInfo[10] + "\nNew Permissions: " + pmddmscv[memberInfo[6]-2][6];
+        }
+        
+        
+        //sends discord pm with url to text file for perms that were changed
+        FunctionContainer.discordPermissionFormSend("dm$e$^" + memberInfo[2]
+          + "^Your Permissions Have Changed^This [text document](" + DriveApp.getFolderById(detailsFileID).getUrl()
+          + ") has the information about what has been shared with you from the database. Sorry for any excess emails, there isn't a way to share something without having an email be sent out about having anything shared with you when you don't manually share them.^^^^PXE Database Permission Updates");
+        
+        
+        
+        
+      }//end 3rd if/else
+      
+      
+      
+    }//end 2nd if/else
+    
+    
+    
+    
+    
+      
+    //Remove All Permissions
+    if(operation === "Remove All Permissions"){//start 2nd if/else
+      
+      //checks if email is already in system throw error otherwise
+      if(memberInfo[3].toString() === ""){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted a member with no email in the database while trying to remove all of the member's permissions in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+      }//end 3rd if
+      
+      //turns off forms
+      FunctionContainer.formTurnOff(["all"], dllscv);
+      
+      //waits 15 seconds for scripts running to complete
+      Utilities.sleep(15000);
+      
+      
+      //first it goes thru misc perms
+      if(memberInfo[4][0].toString() !== "N/A"){//start 3rd if
+        for(var i=0; i<memberInfo[4][0].length; i+=1){//start 1st for
+          
+          if(memberInfo[4][0][i].toString() === "All Miscellaneous Folders"){//start 4th if
+            //removes old email
+            FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[98][0].toString());
+            for(var x=0; x<10; x+=1){//start 2nd for
+              //removes old email
+              FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[100][x].toString());
+            }//end 2nd for
+            i = 100;
+          }//end 4th if
+          
+          else{//start 4th if/else
+            for(var x=0; x<10; x+=1){//start 2nd for
+              if(dllscv[101][x].toString() === memberInfo[4][0][i].toString()){//start 4th if
+                //removes old email
+                FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[100][x].toString());
+                x = 100;
+              }//end 4th if
+            }//end 2nd for
+          }//end 4th if/else
+          
+        }//end 1st for
+      }//end 3rd if
+      
+      
+      //next is hubs
+      //if they have any perms for hubs
+      if(memberInfo[4][1].toString() !== "N/A"){//start 3rd if
+        for(var i=0; i<memberInfo[4][1].length; i+=1){//start 1st for
+          
+          if(memberInfo[4][1][i].toString() === "All Hubs"){//start 4th if
+            //removes old email
+            FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[97][0].toString());
+            
+            //cycles thru dllscv find matching hub name to get id
+            for(var x=0; x<5; x+=1){//start 2nd for
+              //removes old email
+              FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], dllscv[82][x].toString());
+            }//end 2nd for
+            
+            i = 100;
+          }//end 4th if
+          
+          else{//start 4th if/else
+            //cycles thru dllscv find matching hub name to get id
+            for(var x=0; x<5; x+=1){//start 2nd for
+              if(dllscv[81][x].toString() === memberInfo[4][1][i].toString()){//start 5th if
+                //removes old email
+                FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], dllscv[82][x].toString());
+                x = 100;
+              }//end 5th if
+            }//end 2nd for
+          }//end 4th if/else
+          
+        }//end 1st for
+      }//end 3rd if
+
+      
+      //next is data centers
+      //if they have any perms for data centers
+      if(memberInfo[4][2].toString() !== "N/A"){//start 3rd if
+        for(var i=0; i<memberInfo[4][2].length; i+=1){//start 1st for
+          
+          if(memberInfo[4][2][i].toString() === "All Data Centers"){//start 4th if
+            //removes old email
+            FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[105][0].toString());
+            
+            //goes thru each data centerto remove them all
+            for(var x=0; x<5; x+=1){//start 2nd for
+              //file
+              if(dllscv[108][x].toString() === "File"){//start 1st if
+                //removes old email
+                FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], dllscv[107][x].toString());
+              }//end 1st if
+              
+              //folder
+              else if(dllscv[108][x].toString() === "Folder"){//start 1st if/else
+                //removes old email
+                FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[107][x].toString());
+              }//end 1st if/else
+            }//end 2nd for
+            
+            i = 100;
+          }//end 4th if
+          
+          else{//start 4th if/else
+            //cycles thru dllscv find matching hub name to get id
+            for(var x=0; x<5; x+=1){//start 2nd for
+              if(dllscv[106][x].toString() === memberInfo[4][2][i].toString()){//start 5th if
+                
+                //file
+                if(dllscv[108][x].toString() === "File"){//start 1st if
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], dllscv[107][x].toString());
+                }//end 1st if
+                
+                //folder
+                else if(dllscv[108][x].toString() === "Folder"){//start 1st if/else
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[107][x].toString());
+                }//end 1st if/else
+                
+                x = 100;
+              }//end 5th if
+            }//end 2nd for
+          }//end 4th if/else
+          
+        }//end 1st for
+      }//end 3rd if
+      
+      
+      //next is groups
+      //if they have any perms for groups
+      if(memberInfo[4][3].toString() !== "N/A"){//start 3rd if
+        for(var i=0; i<memberInfo[4][3].length; i+=1){//start 1st for
+          //cycles thru dllscv find matching group name to then look for what perms they have
+          for(var x=0; x<57; x+=1){//start 2nd for
+            
+            //if group names match
+            if(dllscv[40][x].toString() === memberInfo[4][3][i][0].toString()){//start 4th if
+              
+              //cycles thru each individual group perm the member has
+              for(var y=0; y<memberInfo[4][3][i][1].length; y+=1){//start 3rd for
+                
+                //Everything
+                if(memberInfo[4][3][i][1][y].toString() === "Everything"){//start 5th if
+                  //main folder
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[41][x].toString());  
+                  //general docs
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[45][x].toString());
+                  //important docs
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[46][x].toString());
+                  
+                  //loops thru all subgroups
+                  var curSubGroups = FunctionContainer.splitEmUp(dllscv[67][x]);
+                  for(var w=0; w<curSubGroups.length; w+=1){//start 4th for
+                    
+                    var curSubSubGroups = FunctionContainer.splitEmUp(dllscv[67][curSubGroups[w]]);
+                    //loops thru all subgroups
+                    for(var r=0; r<curSubSubGroups.length; r+=1){//start 5th for
+                      //unshare from both docs
+                      //general docs
+                      //removes old email
+                      FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[45][curSubSubGroups[r]].toString());
+                      //important docs
+                      //removes old email
+                      FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[46][curSubSubGroups[r]].toString());
+                      //member profiles
+                      FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[42][curSubSubGroups[r]].toString());
+                      //group profile files
+                      FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[43][curSubSubGroups[r]].toString());
+                      //reports
+                      FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[44][curSubSubGroups[r]].toString());
+                    }//end 5th for
+                    
+                    //unshare from both docs
+                    //general docs
+                    //removes old email
+                    FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[45][curSubGroups[w]].toString());
+                    //important docs
+                    //removes old email
+                    FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[46][curSubGroups[w]].toString());
+                    //member profiles
+                    FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[42][curSubGroups[w]].toString());
+                    //group profile files
+                    FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[43][curSubGroups[w]].toString());
+                    //reports
+                    FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[44][curSubGroups[w]].toString());
+                    
+                  }//end 4th for
+                  
+                }//end 5th if
+                
+                //Member Profiles
+                else if(memberInfo[4][3][i][1][y].toString() === "Member Profiles"){//start 5th if/else
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[42][x].toString());
+                }//end 5th if/else
+                
+                //Group Profile
+                else if(memberInfo[4][3][i][1][y].toString() === "Group Profile"){//start 5th if/else
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[43][x].toString());
+                }//end 5th if/else
+                
+                //Reports
+                else if(memberInfo[4][3][i][1][y].toString() === "Reports"){//start 5th if/else
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderViewer(memberInfo[3], dllscv[44][x].toString());
+                }//end 5th if/else
+                
+                //General Documents
+                else if(memberInfo[4][3][i][1][y].toString() === "General Documents"){//start 5th if/else
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[45][x].toString());
+                }//end 5th if/else
+                
+                //Important Documents
+                else if(memberInfo[4][3][i][1][y].toString() === "Important Documents"){//start 5th if/else
+                  //removes old email
+                  FunctionContainer.tripleTryUnshareEmailForFolderEditor(memberInfo[3], dllscv[46][x].toString());
+                }//end 5th if/else
+              }//end 3rd for
+              
+            }//end 4th if
+          }//end 2nd for
+          
+        }//end 1st for
+      }//end 3rd if
+      
+      
+      //next is member profiles
+      for(var i=0; i<memberInfo[5].length; i+=1){//start 1st for
+        //removes old email
+        FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], FunctionContainer.pmdcmsIdRetrieval(memberInfo[5][i]));
+      }//end 1st for
+      
+      
+//      //next is perm docs
+//      for(var i=0; i<memberInfo[9].length; i+=1){//start 1st for
+//        Logger.log(memberInfo[9][i]);
+//        //removes old email
+//        FunctionContainer.tripleTryUnshareEmailForFileViewer(memberInfo[3], FunctionContainer.pmdcmsIdRetrieval(memberInfo[9][i]));
+//      }//end 1st for
+      
+      
+      //sends disc update pm
+      FunctionContainer.discordPermissionFormSend("dm$e$^" + memberInfo[2]
+        + "^Your Permissions Have Been Revoked^All of your permissions within the database have been removed. Sorry for any excess emails, there isn't a way to share something without having an email be sent out about having anything shared with you when you don't manually share them.^^^^PXE Database Permission Updates");
+      
+      
+      //adds email to previous emails
+      if(memberInfo[8].toString() === ""){//start 4th if
+        memberInfo[8] = memberInfo[3];
+      }//end 4th if
+      else{
+        memberInfo[8].push([memberInfo[3]]);
+        memberInfo[8] = FunctionContainer.array1LevelIntoString(memberInfo[8]);
+      }
+      
+      
+      //resets perms in pmd
+      if(memberInfo[0] === "Current"){//start 3rd if
+        pmdcmscv[memberInfo[6]-2][6] = "N/A || N/A || N/A || N/A";
+        pmdcmscv[memberInfo[6]-2][9] = "";
+        pmdcmscv[memberInfo[6]-2][24] = memberInfo[8];
+        FunctionContainer.tripleTrySetSSValues(pmdcms, memberInfo[6], 1, 1, pmdcmscv[memberInfo[6]-2].length, [pmdcmscv[memberInfo[6]-2]]);
+      }//end 3rd if
+      else if(memberInfo[0] === "Discharged"){//start 3rd if/else
+        pmddmscv[memberInfo[6]-2][6] = "N/A || N/A || N/A || N/A";
+        pmddmscv[memberInfo[6]-2][9] = "";
+        pmddmscv[memberInfo[6]-2][24] = memberInfo[8];
+        FunctionContainer.tripleTrySetSSValues(pmddms, memberInfo[6], 1, 1, pmddmscv[memberInfo[6]-2].length, [pmddmscv[memberInfo[6]-2]]);
+      }//end 3rd if/else
+      
+    }//end 2nd if/else
+    
+    
+    
+    
+    
+      
+    //Send Current Permissions to Member
+    if(operation === "Send Current Permissions to Member"){//start 2nd if/else
+      
+      //checks if member is discharged
+      if(memberInfo[0].toString() === "Discharged"){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted a discharged member with while trying send all permissions held by said member in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+      }//end 3rd if
+      
+      if(memberInfo[3].toString() === ""){//start 1st if
+        //sends discord pm with url to text file for perms that were changed
+        FunctionContainer.discordPermissionFormSend("dm$e$^" + memberInfo[2]
+          + "^PXE Database Permission Query^You have no permissions inside of the PXE Database. If you would like to add your email and gain permissions contact the proper chain of command.^^^^PXE Database Permission Updates");
+        
+        Utilities.sleep(1000);
+        
+        //sends discord pm with url to text file for perms that were changed
+        FunctionContainer.discordPermissionFormSend("dm$e$^" + FunctionContainer.getDiscordNickname(perpitraitor, dllscv, pmdcmscv)
+          + "^PXE Database Permission Query^__**" + memberInfo[1] + "**__ does not have any permissions in the database. There is also no email on record attached to this member.^^^^PXE Database Permission Updates");
+      }//end 1st if
+      else{
+        docPermList = "\nCurrent Permissions: " + memberInfo[10];
+        
+        //first it goes thru misc perms
+        if(memberInfo[4][0].toString() !== "N/A"){//start 3rd if
+          docPermList = docPermList + "\n\nMiscellaneous Folders:";
+          for(var i=0; i<memberInfo[4][0].length; i+=1){//start 1st for
+            
+            if(memberInfo[4][0][i].toString() === "All Miscellaneous Folders"){//start 4th if
+              docPermList = docPermList + ("\n • All Miscellaneous Folders ~ " + dllscv[98][1].toString());
+              for(var x=0; x<10; x+=1){//start 2nd for
+                docPermList = docPermList + ("\n • " + dllscv[99][x].toString() + " ~ " + dllscv[102][x].toString());
+              }//end 2nd for
+              i = 100;
+            }//end 4th if
+            
+            else{//start 4th if/else
+              for(var x=0; x<10; x+=1){//start 2nd for
+                if(dllscv[101][x].toString() === memberInfo[4][0][i].toString()){//start 4th if
+                  docPermList = docPermList + ("\n • " + dllscv[99][x].toString() + " ~ " + dllscv[102][x].toString());
+                  x = 100;
+                }//end 4th if
+              }//end 2nd for
+            }//end 4th if/else
+            
+          }//end 1st for
+        }//end 3rd if
+        
+        
+        //next is hubs
+        //if they have any perms for hubs
+        if(memberInfo[4][1].toString() !== "N/A"){//start 3rd if
+          docPermList = docPermList + "\n\nHubs:";
+          for(var i=0; i<memberInfo[4][1].length; i+=1){//start 1st for
+            
+            if(memberInfo[4][1][i].toString() === "All Hubs"){//start 4th if
+              docPermList = docPermList + ("\n • All Hubs ~ " + dllscv[97][1].toString());
+              
+              //cycles thru dllscv find matching hub name to get id
+              for(var x=0; x<5; x+=1){//start 2nd for
+                docPermList = docPermList + ("\n • " + dllscv[81][x].toString() + " ~ " + dllscv[83][x].toString());
+              }//end 2nd for
+              
+              i = 100;
+            }//end 4th if
+            
+            else{//start 4th if/else
+              //cycles thru dllscv find matching hub name to get id
+              for(var x=0; x<5; x+=1){//start 2nd for
+                if(dllscv[81][x].toString() === memberInfo[4][1][i].toString()){//start 5th if
+                  docPermList = docPermList + ("\n • " + dllscv[81][x].toString() + " ~ " + dllscv[83][x].toString());
+                  x = 100;
+                }//end 5th if
+              }//end 2nd for
+            }//end 4th if/else
+            
+          }//end 1st for
+        }//end 3rd if
+        
+        
+        //next is data centers
+        //if they have any perms for data centers
+        if(memberInfo[4][2].toString() !== "N/A"){//start 3rd if
+          docPermList = docPermList + "\n\nData Centers:";
+          for(var i=0; i<memberInfo[4][2].length; i+=1){//start 1st for
+            
+            if(memberInfo[4][2][i].toString() === "All Data Centers"){//start 4th if
+              docPermList = docPermList + ("\n • All Data Centers ~ " + dllscv[105][1].toString());
+              
+              //goes thru each data centerto remove them all
+              for(var x=0; x<5; x+=1){//start 2nd for
+                docPermList = docPermList + ("\n • " + dllscv[106][x].toString() + " ~ " + dllscv[109][x].toString());
+              }//end 2nd for
+              
+              i = 100;
+            }//end 4th if
+            
+            else{//start 4th if/else
+              //cycles thru dllscv find matching hub name to get id
+              for(var x=0; x<5; x+=1){//start 2nd for
+                if(dllscv[106][x].toString() === memberInfo[4][2][i].toString()){//start 5th if
+                  docPermList = docPermList + ("\n • " + dllscv[106][x].toString() + " ~ " + dllscv[109][x].toString());
+                  x = 100;
+                }//end 5th if
+              }//end 2nd for
+            }//end 4th if/else
+            
+          }//end 1st for
+        }//end 3rd if
+        
+        
+        //next is groups
+        //if they have any perms for groups
+        if(memberInfo[4][3].toString() !== "N/A"){//start 3rd if
+          docPermList = docPermList + "\n\nGroups:";
+          for(var i=0; i<memberInfo[4][3].length; i+=1){//start 1st for
+            //cycles thru dllscv find matching group name to then look for what perms they have
+            for(var x=0; x<57; x+=1){//start 2nd for
+              
+              //if group names match
+              if(dllscv[40][x].toString() === memberInfo[4][3][i][0].toString()){//start 4th if
+                
+                //cycles thru each individual group perm the member has
+                for(var y=0; y<memberInfo[4][3][i][1].length; y+=1){//start 3rd for
+                  
+                  //Everything
+                  if(memberInfo[4][3][i][1][y].toString() === "Everything"){//start 5th if
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Everything ~ "+dllscv[49][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Member Profiles ~ "+dllscv[56][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Group Profile ~ "+dllscv[48][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Reports ~ "+dllscv[57][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": General Documents ~ "+dllscv[58][x].toString());
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Important Documents ~ "+dllscv[59][x].toString());
+                    //loops thru all subgroups
+                    var curSubGroups = FunctionContainer.splitEmUp(dllscv[67][x]);
+                    for(var w=0; w<curSubGroups.length; w+=1){//start 4th for
+                      
+                      var curSubSubGroups = FunctionContainer.splitEmUp(dllscv[67][curSubGroups[w]]);
+                      //loops thru all subgroups
+                      for(var r=0; r<curSubSubGroups.length; r+=1){//start 5th for
+                        docPermList = docPermList + ("\n • " + dllscv[40][curSubSubGroups[r]].toString() + ": Everything ~ "+dllscv[49][curSubSubGroups[r]].toString());
+                        docPermList = docPermList + ("\n • " + dllscv[40][curSubSubGroups[r]].toString() + ": Member Profiles ~ "+dllscv[56][curSubSubGroups[r]].toString());
+                        docPermList = docPermList + ("\n • " + dllscv[40][curSubSubGroups[r]].toString() + ": Group Profile ~ "+dllscv[48][curSubSubGroups[r]].toString());
+                        docPermList = docPermList + ("\n • " + dllscv[40][curSubSubGroups[r]].toString() + ": Reports ~ "+dllscv[57][curSubSubGroups[r]].toString());
+                        docPermList = docPermList + ("\n • " + dllscv[40][curSubSubGroups[r]].toString() + ": General Documents ~ "+dllscv[58][curSubSubGroups[r]].toString());
+                        docPermList = docPermList + ("\n • " + dllscv[40][curSubSubGroups[r]].toString() + ": Important Documents ~ "+dllscv[59][curSubSubGroups[r]].toString());
+                      }//end 5th for
+                      docPermList = docPermList + ("\n • " + dllscv[40][curSubGroups[w]].toString() + ": Everything ~ "+dllscv[49][curSubGroups[w]].toString());
+                      docPermList = docPermList + ("\n • " + dllscv[40][curSubGroups[w]].toString() + ": Member Profiles ~ "+dllscv[56][curSubGroups[w]].toString());
+                      docPermList = docPermList + ("\n • " + dllscv[40][curSubGroups[w]].toString() + ": Group Profile ~ "+dllscv[48][curSubGroups[w]].toString());
+                      docPermList = docPermList + ("\n • " + dllscv[40][curSubGroups[w]].toString() + ": Reports ~ "+dllscv[57][curSubGroups[w]].toString());
+                      docPermList = docPermList + ("\n • " + dllscv[40][curSubGroups[w]].toString() + ": General Documents ~ "+dllscv[58][curSubGroups[w]].toString());
+                      docPermList = docPermList + ("\n • " + dllscv[40][curSubGroups[w]].toString() + ": Important Documents ~ "+dllscv[59][curSubGroups[w]].toString());
+                    }//end 4th for
+                    
+                  }//end 5th if
+                  
+                  //Member Profiles
+                  else if(memberInfo[4][3][i][1][y].toString() === "Member Profiles"){//start 5th if/else
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Member Profiles ~ "+dllscv[56][x].toString());
+                  }//end 5th if/else
+                  
+                  //Group Profile
+                  else if(memberInfo[4][3][i][1][y].toString() === "Group Profile"){//start 5th if/else
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Group Profile ~ "+dllscv[48][x].toString());
+                  }//end 5th if/else
+                  
+                  //Reports
+                  else if(memberInfo[4][3][i][1][y].toString() === "Reports"){//start 5th if/else
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Reports ~ "+dllscv[57][x].toString());
+                  }//end 5th if/else
+                  
+                  //General Documents
+                  else if(memberInfo[4][3][i][1][y].toString() === "General Documents"){//start 5th if/else
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": General Documents ~ "+dllscv[58][x].toString());
+                  }//end 5th if/else
+                  
+                  //Important Documents
+                  else if(memberInfo[4][3][i][1][y].toString() === "Important Documents"){//start 5th if/else
+                    docPermList = docPermList + ("\n • " + dllscv[40][x].toString() + ": Important Documents ~ "+dllscv[59][x].toString());
+                  }//end 5th if/else
+                }//end 3rd for
+                
+              }//end 4th if
+            }//end 2nd for
+            
+          }//end 1st for
+        }//end 3rd if
+        
+        //creates text file to send thru discord
+        var detailsFileID = DriveApp.getFolderById(dllscv[107][4].toString())
+          .createFile("Permission Query for " + memberInfo[1] + " on " + FunctionContainer.dateReplace(pfrscv[0].toString()) + " at " + FunctionContainer.timeRetrieval12Cycle(pfrscv[0]),
+            "bruh", MimeType.PLAIN_TEXT).addViewer(memberInfo[3]).getId();
+        
+        
+        //adds file id to perm docs
+        if(memberInfo[9].toString() === ""){//start 1st if
+          memberInfo[9] = [[detailsFileID]];
+        }//end 1st if
+        else{memberInfo[9].push([detailsFileID])}
+        
+        
+        //next is member profiles
+        docPermList = docPermList + "\n\n" + memberInfo[1] + "'s Profiles:";
+        for(var i=0; i<memberInfo[7].length; i+=1){//start 1st for
+          docPermList = docPermList + "\n • " + memberInfo[7][i].toString();
+        }//end 1st for
+        
+        
+        docPermList = docPermList + "\n\n" + memberInfo[1] + "'s Permission Documents:";
+        for(var i=0; i<memberInfo[9].length; i+=1){//start 1st for
+          var curFile = DriveApp.getFileById(memberInfo[9][i].toString());
+          docPermList = docPermList + "\n • " + curFile.getName() + " ~ " + curFile.getUrl();
+        }//end 1st for
+        
+        
+        DriveApp.getFileById(detailsFileID).setContent("Listed below are all of the folders and files in the database " + memberInfo[1] 
+          + " currently has access to:" + docPermList);
+        
+        
+        pmdcmscv[memberInfo[6]-2][29] = FunctionContainer.array1LevelIntoString(memberInfo[9]);
+        FunctionContainer.tripleTrySetSSValues(pmdcms, memberInfo[6], 1, 1, pmdcmscv[memberInfo[6]-2].length, [pmdcmscv[memberInfo[6]-2]]);
+        
+        
+        //sends discord pm with url to text file for perms that were changed
+        FunctionContainer.discordPermissionFormSend("dm$e$^" + memberInfo[2]
+          + "^PXE Database Permission Query^This [text document](" + DriveApp.getFolderById(detailsFileID).getUrl()
+          + ") contains all of your current permissions within the database. Sorry for any excess emails, there isn't a way to share something without having an email be sent out about having anything shared with you when you don't manually share them.^^^^PXE Database Permission Updates");
+        
+        Utilities.sleep(1000);
+        
+        //sends discord pm with url to text file for perms that were changed
+        FunctionContainer.discordPermissionFormSend("dm$e$^" + FunctionContainer.getDiscordNickname(perpitraitor, dllscv, pmdcmscv)
+          + "^PXE Database Permission Query^This [text document](" + DriveApp.getFolderById(detailsFileID).getUrl()
+          + ") contains all the current permissions for __" + memberInfo[1] + "__.^^^^PXE Database Permission Updates");
+      
+      }//end 3rd if/else
+    }//end 2nd if/else
+    
+    
+    
+    
+    
+    
+    //pastes vals into miscellaneous Form Hub Entries Sheet
+    FunctionContainer.miscFormHubEntry("Permission Form", FunctionContainer.dateReplace(pfrscv[0].toString()), 
+      FunctionContainer.timeRetrieval12Cycle(pfrscv[0]), details, perpitraitor, dllscv);
+    
+    
+      
+    //turns on forms
+    FunctionContainer.formTurnOn(["all"], dllscv);
+    
+  }//end 1st if
+  
+  
+  //if code is wrong
+  else{
+    FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Permission Form Errors", dllscv);
+    FunctionContainer.indFormErrorReport(perpitraitor, "permission form", "inputted an incorrect code in an entry for __" + memberInfo[1] + "__", pfrslri, dllscv[88][9].toString());
+  }//end 1st else
+  
+  
+}//end main

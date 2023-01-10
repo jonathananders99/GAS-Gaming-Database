@@ -1,0 +1,149 @@
+function schedulingFormListUpdate(){
+  errorCheck("4:05",2,"schedulingFormListUpdate","SchedulingFormListUpdate");
+}//end schedulingFormListUpdate
+
+
+function errorCheck(time,col,functionName,projectName){
+  try{main();triggerCreator(time,col,functionName);}//end 1st try
+  catch(error){console.log(error);
+    if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+      try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 2nd try
+      catch(error){console.log(error);
+        if(error.name.toString()==="Exception"&&error.message.toString().indexOf("a server error occurred")!==-1){
+          try{Utilities.sleep(5000);triggerCreator(time,col,functionName);}//end 3rd try
+          catch(error){console.log(error);
+            FunctionContainer.discErrorReport(error, functionName, projectName);}}//end 3rd catch
+        else{FunctionContainer.discErrorReport(error, functionName, projectName);}}}//end 2nd catch
+    else{FunctionContainer.discErrorReport(error, functionName, projectName);}}//end 1st catch
+}//end errorCheck
+
+
+function triggerCreator(ct,tColNum,scriptName){
+  var datSheetOriginal=FunctionContainer.tripleTryOpenSheet("", "Dates");var cdd=datSheetOriginal.getRange(1,1,15,datSheetOriginal.getLastColumn()).getValues();var triggerChangesMade = [];var vals = [[],[],[],[],[],[],[],[],[],[],[]];
+  triggerChangesMade.push("Old Trigger Id's and Dates:\nTrigger ID: "+cdd[9][tColNum-1].toString()+" For Date: "+cdd[1][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[10][tColNum-1].toString()+" For Date: "+cdd[4][tColNum-1].toString()+" ~\nTrigger ID: "+cdd[11][tColNum-1].toString()+" For Date: "+cdd[5][tColNum-1].toString());
+  if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[1][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())){
+    var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){if(t[i].getUniqueId()===cdd[9][tColNum-1].toString()){ScriptApp.deleteTrigger(t[i]);triggerChangesMade.push("\nTrigger Deleted ~ "+cdd[9][tColNum-1].toString()+" for date: "+cdd[1][tColNum-1].toString());}}
+    var bruhX3 = cdd[3][0].toString();for(var iii = 0;iii<4;iii++){cdd[iii][0]=cdd[iii][0].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    for(var m=0;m<months.length;m++){if(bruhX3.indexOf(months[m].toString())!==-1){m=m+1;triggerTime = bruhX3[11].toString()+bruhX3[12].toString()+bruhX3[13].toString()+bruhX3[14].toString()+"-"+m+"-"+bruhX3[8].toString()+bruhX3[9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[0] = [cdd[4][tColNum-1]];vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[3] = [cdd[5][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];
+    vals[8] = [cdd[10][tColNum-1]];vals[9] = [cdd[11][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}
+  else if(FunctionContainer.dateReplace(cdd[1][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[0][0].toString())&&FunctionContainer.dateReplace(cdd[4][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[2][0].toString())&&FunctionContainer.dateReplace(cdd[5][tColNum-1].toString())===FunctionContainer.dateReplace(cdd[3][0].toString())){triggerChangesMade.push("\nNo Trigger Changes Made");}
+  else{var t=ScriptApp.getProjectTriggers();for(var i=0;i<t.length;i++){triggerChangesMade.push("\nTrigger Deleted ~ "+t[i].getUniqueId());ScriptApp.deleteTrigger(t[i]);}var cd=datSheetOriginal.getRange(1,1,4).getValues();
+    for(var iii = 0;iii<4;iii++){cd[iii]=cd[iii].toString()}var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[0].indexOf(months[m].toString())!==-1){
+    m=m+1;triggerTime = cd[0][11].toString()+cd[0][12].toString()+cd[0][13].toString()+cd[0][14].toString()+"-"+m+"-"+cd[0][8].toString()+cd[0][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(2,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();
+    var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[0] = [tt];vals[8] = [uniqueTriggerID];var triggerTime="";
+    var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[2].indexOf(months[m].toString())!==-1){m=m+1;triggerTime = cd[2][11].toString()+cd[2][12].toString()+cd[2][13].toString()+cd[2][14].toString()+"-"+m+"-"+cd[2][8].toString()+cd[2][9].toString()+" "+ct;break}}
+    var tt=datSheetOriginal.getRange(5,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());
+    vals[3] = [tt];vals[9] = [uniqueTriggerID];var triggerTime="";var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];for(var m=0;m<months.length;m++){if(cd[3].indexOf(months[m].toString())!==-1){m=m+1;
+    triggerTime = cd[3][11].toString()+cd[3][12].toString()+cd[3][13].toString()+cd[3][14].toString()+"-"+m+"-"+cd[3][8].toString()+cd[3][9].toString()+" "+ct;break}}var tt=datSheetOriginal.getRange(6,tColNum).setValue(triggerTime).setNumberFormat('M/d/yyyy H:mm:ss').getValue();var uniqueTriggerID = ScriptApp.newTrigger(scriptName).timeBased().at(tt).create().getUniqueId();
+    triggerChangesMade.push("\nTrigger Added ~ "+uniqueTriggerID+" For Date: "+tt.toString());vals[1] = [cdd[2][tColNum-1]];vals[2] = [cdd[3][tColNum-1]];vals[4] = [tt];vals[5] = [cdd[6][tColNum-1]];vals[6] = [cdd[7][tColNum-1]];vals[7] = [cdd[8][tColNum-1]];vals[10] = [uniqueTriggerID];datSheetOriginal.getRange(2,tColNum,vals.length).setValues(vals);}console.log(triggerChangesMade);
+}//end triggerCreator
+
+
+function main(){
+  try{var lock = LockService.getScriptLock();lock.waitLock(150000);}catch(lockError){console.log(lockError)};
+  
+  
+  //PXE Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  formListUpdate(dllscv, pmdcmscv);
+  
+  
+  
+}//end main
+
+
+function formListUpdate(dllscv, pmdcmscv){
+  //Scheduling Form
+  var sf = FormApp.openById(dllscv[85][10]);
+  //FunctionContainer.getDaFormIds(dllscv[85][10]);
+  
+  
+  //Participating Group(s)
+  var eventGroups = [["Everyone"]];
+  
+  for(var i = 1; i<265; i+=13){
+    //Participating Group(s)
+    for(var x = 0; x<8; x+=1){
+      if(dllscv[x][i]==="Active"){
+        eventGroups.push([dllscv[x][i-1].toString()]);
+      }//end 1st if
+    }//end 2nd for
+  }//end 1st for
+  
+  //new event section
+  sf.getItemById("1434533369").asCheckboxItem().setChoiceValues(FunctionContainer.arrayDuplicateFilter(eventGroups));
+  
+  //edit event section
+  sf.getItemById("224479983").asCheckboxItem().setChoiceValues(FunctionContainer.arrayDuplicateFilter(eventGroups));
+  
+  
+  
+  //Leader
+  var leaders = [["TBD"]];
+  var leaderCreds = FunctionContainer.splitEmUp(dllscv[94][0].toString());
+  for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+    var curCreds = FunctionContainer.splitEmUp(pmdcmscv[i][4].toString());
+    for(var x=0; x<curCreds.length; x+=1){//start 2nd for
+      
+      for(var y=0; y<leaderCreds.length; y+=1){//start 3rd for
+        //if they have a cred thats included in leadercreds for scheduling form
+        if(curCreds[x].toString() === leaderCreds[y].toString()){//start 1st if
+          leaders.push(pmdcmscv[i][0].toString());
+          x = curCreds.length+1;
+          y = leaderCreds.length+1;
+        }//end 1st if
+        
+      }//end 3rd for
+    }//end 2nd for
+  }//end 1st for
+  
+  //new event
+  sf.getItemById("1853248156").asListItem().setChoiceValues(leaders);
+  
+  //change event
+  sf.getItemById("427322696").asListItem().setChoiceValues(leaders);
+  
+  //Title of Event That Will be Modified (Only Events Within 365 Days)
+  FunctionContainer.updateSchedulingFormEvents(dllscv);
+  
+  
+  /*New Member Form
+  [22-02-13 20:00:15:908 EST] [Code, TEXT, 1029497134]
+  [22-02-13 20:00:15:965 EST] [Update Discord?, MULTIPLE_CHOICE, 1150761566]
+  [22-02-13 20:00:16:019 EST] [New Event or Modify Existing Event?, MULTIPLE_CHOICE, 148595670]
+  
+  [22-02-13 20:00:16:070 EST] [New Event, PAGE_BREAK, 1532260120]
+  [22-02-13 20:00:16:122 EST] [Title, TEXT, 688753754]
+  [22-02-13 20:00:16:180 EST] [Event Group(s), CHECKBOX, 1434533369]
+  [22-02-13 20:00:16:239 EST] [Event Date, DATE, 1320826572]
+  [22-02-13 20:00:16:293 EST] [Start Time (ET), TIME, 117456211]
+  [22-02-13 20:00:16:346 EST] [Expected Length, LIST, 1506338356]
+  [22-02-13 20:00:16:411 EST] [Leader, LIST, 1853248156]
+  [22-02-13 20:00:16:472 EST] [Extra Details, PARAGRAPH_TEXT, 1920341306]
+  
+  [22-02-13 20:00:16:529 EST] [Modify Existing Event, PAGE_BREAK, 298601606]
+  [22-02-13 20:00:16:587 EST] [Title of Event That Will be Modified (Only Events Within 90 Days), LIST, 1325614275]
+  [22-02-13 20:00:16:645 EST] [Operation, MULTIPLE_CHOICE, 1273119535]
+  [22-02-13 20:00:16:704 EST] [Edit Event, PAGE_BREAK, 1650702257]
+  [22-02-13 20:00:16:760 EST] [Title Change, TEXT, 1009491412]
+  [22-02-13 20:00:16:814 EST] [Event Group(s) Change, CHECKBOX, 224479983]
+  [22-02-13 20:00:16:868 EST] [Event Date Change, DATE, 444419113]
+  [22-02-13 20:00:16:932 EST] [Start Time Change, TIME, 1789183849]
+  [22-02-13 20:00:16:991 EST] [Expected Length Change, LIST, 1938648364]
+  [22-02-13 20:00:17:047 EST] [Leader Change, LIST, 427322696]
+  [22-02-13 20:00:17:106 EST] [Extra Details, PARAGRAPH_TEXT, 185699676]
+  [22-02-13 20:00:17:162 EST] [Deletion, CHECKBOX, 902965249]
+  */
+}//end formListUpdate

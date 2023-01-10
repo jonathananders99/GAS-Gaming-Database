@@ -1,0 +1,705 @@
+function forgeFormResponseUpdate(){
+  errorCheck("forgeFormResponseUpdate","ForgeFormResponseUpdate");
+}//end forgeFormResponseUpdate
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  
+  //Forge Form Response Sheet
+  var ffrs = FunctionContainer.tripleTryOpenSheet("","FF Responses");
+  var ffrslri = FunctionContainer.tripleTryGetLastRow(ffrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  var ffrscv = FunctionContainer.tripleTryGetValues(ffrs,ffrslri,1,1,45)[0];
+//  FunctionContainer.positionsInsideArray(ffrscv);
+//  FunctionContainer.specificCellArrayBuilder(ffrscv, "Attendees");
+//  Logger.log(ree);
+  
+  /*
+  [Timestamp[0], Email Address[1], Code[2], Type of Update[3], Map Name[4], 
+  Associated Gametype[5], Purpose[6], Group (who does the map belong too)[7], 
+  Description[8], Map Owner[9], Creator[10], Assistant Creator(s)[11], 
+  Date of Creation (when it was verified as a map)[12], Verification Personnel[13], 
+  Number of Players Supported[14], Active Map in Question[15], Inactive Map in Question[16], 
+  Edit Description[17], Date of Edit[18], Editor(s)[19], Map Name[20], Associated Gametype[21], 
+  Purpose[22], Group (who does the map belong too)[23], Description[24], Map Owner[25], 
+  Creator[26], Assistant Creator(s)[27], Date of Creation (when it was verified as a map)[28], 
+  Verification Personnel[29], Number of Players Supported[30], Activate/Deactivate[31], 
+  Delete or Post Map Callouts in Discord?[32], Which Discord Channel?[33], What Clan's Map?[34], 
+  Map Selection[35], Map Selection[36], [37], [38], [39], [40], [41], [42], [43], [44]]
+  */
+  
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  var curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  var currentDate = FunctionContainer.dateReplace(dllscv[10][0]);
+  
+  
+  //Forge Hub All Entries Sheet
+  curVals = FunctionContainer.getfhfescv("min", dllscv);
+  var fhfes = curVals[0];
+  var fhfeslri = curVals[1];
+  curVals = undefined;
+  
+  
+  //Forge form dates sheet
+  var ffds = FunctionContainer.tripleTryOpenSheet(dllscv[86][0].toString(),"FF Dates");
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(ffrscv[1].toString().trim(), pmdcmscv);
+  
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "inputed an email not in the database (perp will not recieve pm with details)",ffrslri,dllscv[88][1].toString());
+  }//end 2nd if
+  
+  
+  //trims everything and checks for illegal characters
+  var formTrimList = [1,2,4,5,14,17,20,21,24,30,33];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    if(ffrscv[formTrimList[i]] === " "){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "didnt put anything but a space in a required question (perp will not recieve pm with details)",ffrslri,dllscv[88][1].toString());
+    }//end 1st if
+    
+    ffrscv[formTrimList[i]] = ffrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(ffrscv[formTrimList[i]].indexOf("~") !== -1  ||  ffrscv[formTrimList[i]].indexOf("^") !== -1){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "included special characters ~ or ^ (perp will not recieve pm with details because ^ and ~ interfere with the bot commands)",ffrslri,dllscv[88][1].toString());
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  
+  
+  //** DATA GATHERING **//
+  
+  if(ffrscv[3].toString()==="New Map"){//start 1st if
+    
+    //in case there arent any assistant creators
+    if(ffrscv[11].toString()===""){//start 3rd if
+      ffrscv[11] = "N/A";
+    }//end 3rd if
+    
+    
+    //date for creation
+    var dateOfCreation = FunctionContainer.dateRetrieval(ffrscv[12]);
+    
+    
+    //gets map name
+    if(ffrscv[4].toString()!==""){//start 2nd if
+      var mapName = ffrscv[4].toString();
+    }//end 2nd if
+    
+    
+    //error info
+    var errorInfo = "\n\n • Type of Entry:** " + ffrscv[3].toString() + "**\n\n • Date of Entry:** " + dateOfCreation + "**\n\n • Map Name:** " 
+      + ffrscv[4].toString() + "**\n\n • Original Overall Creator:** " + ffrscv[10].toString() + "**\n\n • Assistant Creator(s):** " 
+      + ffrscv[11].toString() + "**\n\n • Verification Personnel:** " + ffrscv[13].toString() + "**\n\n • Group:** " 
+      + ffrscv[7].toString() + "**\n\n • Map Purpose:** " + ffrscv[6].toString() + "**\n\n • Map Owner:** " + ffrscv[9].toString() 
+      + "**\n\n • Description:** " + ffrscv[8].toString() + "**\n\n • Number of Players Supported:** " + ffrscv[14].toString()
+      + "**\n\n • Associated Gametype:** " + ffrscv[5].toString() + "**";
+    
+  }//end 1st if
+  
+  
+  else if(ffrscv[3].toString()==="Map Edit"){//start 1st if/else
+    
+    if(ffrscv[15].toString()!=="N/A"){
+      var mapInQuestion = ffrscv[15].toString();
+    }//end 3rd if
+    if(ffrscv[16].toString()!=="N/A"){
+      var mapInQuestion = ffrscv[16].toString();
+    }//end 3rd if
+    
+    //date for creation
+    var dateOfEdit = FunctionContainer.dateRetrieval(ffrscv[18]);
+    
+    //gets map name
+    var mapName = "";
+    if(ffrscv[20].toString()!==""){//start 2nd if
+      mapName = ffrscv[20].toString();
+    }//end 2nd if
+    
+    //date for creation
+    if(ffrscv[12].toString() !== ""){//start 1st if
+      //date for creation
+      var dateOfCreation = FunctionContainer.dateRetrieval(ffrscv[28]);
+    }//end 1st if
+    else{var dateOfCreation = "N/A"};
+    
+   /*
+   Edit Description[17], 
+   Date of Edit[18], 
+   Editor(s)[19], 
+   Map Name[20], 
+   Associated Gametype[21], 
+   Purpose[22], 
+   Group (who does the map belong too)[23], 
+   Description[24], 
+   Map Owner[25], 
+   Creator[26], 
+   Assistant Creator(s)[27], 
+   Date of Creation (when it was verified as a map)[28], 
+   Verification Personnel[29], 
+   Number of Players Supported[30], 
+   */
+    
+    //error info
+    var errorInfo = "\n\n • Type of Entry:** " + ffrscv[3].toString() + "**\n\n • Date of Entry:** " + dateOfEdit 
+      + "**\n\n • Map in Question:** " + mapInQuestion + "**\n\n • Map Name:** " 
+      + ffrscv[20].toString() + "**\n\n • Edit Description:** " + ffrscv[17].toString()
+      + "**\n\n • Original Overall Creator:** " + ffrscv[26].toString() + "**\n\n • Assistant Creator(s):** " 
+      + ffrscv[27].toString() + "**\n\n • Verification Personnel:** " + ffrscv[29].toString() + "**\n\n • Group:** " 
+      + ffrscv[23].toString() + "**\n\n • Map Purpose:** " + ffrscv[22].toString() + "**\n\n • Map Owner:** " + ffrscv[25].toString() 
+      + "**\n\n • Description:** " + ffrscv[24].toString() + "**\n\n • Number of Players Supported:** " + ffrscv[30].toString()
+      + "**\n\n • Creation Date:** " + dateOfCreation + "**\n\n • Associated Gametype:** " + ffrscv[21].toString() + "**";
+    
+  }//end 1st if/else
+  
+  
+  else if(ffrscv[3].toString()==="Map Callouts"){//start 1st if/else
+    
+    //date for edit
+    var dateOfEdit = FunctionContainer.dateReplace(ffrscv[0]);
+    
+    if(ffrscv[35].toString() !== ""){//start 1st if
+      var mapInQuestion = ffrscv[35].toString();
+    }//end 1st if
+    if(ffrscv[36].toString() !== ""){//start 1st if
+      var mapInQuestion = ffrscv[36].toString();
+    }//end 1st if
+    
+    var discChannel = ffrscv[33].toString();
+    
+    var maps = [];
+    var newMaps = "";
+    
+   /*
+   Delete or Post Map Callouts in Discord?[32], 
+   Which Discord Channel? (all lower case with spaces as "-" EX: "event-debriefs")[33], 
+   What Clan's Map?[34], 
+   
+   //PXE Maps
+   Map Selection[35], 
+   
+   //Other Clans' Maps
+   Map Selection[36]]
+   */
+    
+    //error info
+    var errorInfo = "\n\n • Type of Entry:** " + ffrscv[3].toString() + "**\n\n • Date of Entry:** " + dateOfEdit 
+      + "**\n\n • Discord Channel:** " + discChannel + "**\n\n • Map in Question:** " + mapInQuestion + "**";
+    
+  }//end 1st if/else
+  
+  
+  
+  
+  
+//  Logger.log(ree);
+  //** CHECKS AND DATA CHANGING **//
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "ff", ffrscv[2].toString())){//start 1st if
+    
+    //Forge Hub Active Maps sheet
+    var curVals = FunctionContainer.getfhamscv("date", dllscv);
+    var fhams = curVals[0];
+    var fhamscv = curVals[1];
+    var fhamslri = curVals[2];
+    curVals = undefined;
+    
+    
+    //Forge Hub Inactive Maps sheet
+    var curVals = FunctionContainer.getfhimscv("date", dllscv);
+    var fhims = curVals[0];
+    var fhimscv = curVals[1];
+    var fhimslri = curVals[2];
+    curVals = undefined;
+    
+    
+    //** NEW MAP **//
+    if(ffrscv[3].toString()==="New Map"){//start 2nd if
+      
+      //if the map name is N/A
+      if(mapName === "N/A"){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Forge Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "tried to put the map name as __N/A__", ffrslri, dllscv[88][1].toString());
+      }//end 3rd if
+      
+      //checking to see if map name is already taken
+      for(var i=0; i<fhamscv.length; i+=1){//start 1st for
+        if(fhamscv[i][0].toString()===mapName&&mapName!==""){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Forge Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "tried to put a map name that's already taken", ffrslri, dllscv[88][1].toString());
+        }//end 3rd if
+      }//end 1st for
+      //inactive maps
+      for(var i=0; i<fhimscv.length; i+=1){//start 1st for
+        if(fhimscv[i][0].toString()===mapName&&mapName!==""){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Forge Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "tried to put a map name that's already taken", ffrslri, dllscv[88][1].toString());
+        }//end 3rd if
+      }//end 1st for
+      
+      
+      //throws error if someone is put as both creator and assistant creator
+      if(ffrscv[11].toString().indexOf(ffrscv[10].toString())!==-1){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Forge Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "tried to put someone as both a creator and assistant creator of a map", ffrslri, dllscv[88][1].toString());
+      }//end 3rd if
+        
+      //sends error if map name has a special character
+      if(mapName.toString().indexOf(",") !== -1  ||  mapName.toString().indexOf("~") !== -1  ||  mapName.toString().indexOf("]") !== -1
+        ||  mapName.toString().indexOf("^") !== -1  ||  mapName === ""  ||  mapName.toString().indexOf("[") !== -1
+        ||  mapName.toString().indexOf("(") !== -1  ||  mapName.toString().indexOf(")") !== -1  
+        ||  mapName.toString().indexOf("*") !== -1){//start 4th if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Forge Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "tried to a special character in the map name", ffrslri, dllscv[88][1].toString());
+      }//end 4th if
+      
+      
+      //adds new row and pastes vals in it and formats it correctly
+      var fhamsnv = [[ffrscv[4],ffrscv[5],ffrscv[6],ffrscv[7],ffrscv[8],ffrscv[9],ffrscv[10],ffrscv[11],dateOfCreation,ffrscv[13],ffrscv[14],0,"Wins: 0\nLosses: 0\nTies: 0","N/A","N/A"]];
+      FunctionContainer.tripleTryAddRows(fhams, 2, 1);
+      FunctionContainer.tripleTrySetSSValues(fhams, 3, 1, 1, fhamsnv[0].length, fhamsnv);
+      
+      //formats everything to make sure its correctly formatted
+      FunctionContainer.tripleTrySetRowsSize(fhams, 3, 1, 175);
+      fhams.getRange(3,1,fhamslri-1,fhamsnv[0].length).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setFontWeight(null);
+      fhams.getRange(1,1,fhamslri+1,fhamsnv[0].length).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+      
+      
+      //creates folder in map callouts
+      DriveApp.getFolderById("1KZMxZSnyhN_jpQjaAJ_yj7iDz-bee-Zv").createFolder(mapName);
+      
+      
+      //forge entry sheet new data entry
+      var fhfesnv = [[ffrscv[3].toString(),dateOfCreation,ffrscv[4].toString(),"Original Overall Creator: "+
+      ffrscv[10].toString()+" ~ Assistant Creator(s): "+ffrscv[11].toString()+" ~ Verification Personnel: "+ffrscv[13].toString(),
+      "Group: "+ffrscv[7].toString()+" ~ Map Purpose: "+ffrscv[6].toString()+" ~ Map Owner: "+ffrscv[9].toString(),perpitraitor]];
+      var fhfeslri = fhfes.getLastRow();
+      
+    }//end 2nd if
+    
+    
+    
+    //** EDIT MAP **//
+    if(ffrscv[3].toString()==="Map Edit"){//start 2nd if
+      var changes = "";
+      
+      //check to see if map is even in the system
+      if(ffrscv[15].toString()!=="N/A"){
+        var mapInQuestion = ffrscv[15].toString();
+      }//end 3rd if
+      if(ffrscv[16].toString()!=="N/A"){
+        var mapInQuestion = ffrscv[16].toString();
+      }//end 3rd if
+      
+      //throws error if someone put N/A as both map in question
+      if(ffrscv[15].toString()==="N/A"&&ffrscv[16].toString()==="N/A"){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Forge Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "put N/A for both inactive map and active map in question when editing a map", ffrslri, dllscv[88][1].toString());
+      }//end 3rd if
+      
+      //throws error if someone put N/A map name
+      if(ffrscv[20].toString()==="N/A"){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Forge Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "put N/A for the map's name change", ffrslri, dllscv[88][1].toString());
+      }//end 3rd if
+      
+      //throws error if someone tries to edit 2 maps at once
+      if(ffrscv[15].toString()!=="N/A"&&ffrscv[16].toString()!=="N/A"){//start 3rd if
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Forge Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "tried to edit 2 maps at once (need to put N/A as one of the maps in question)", ffrslri, dllscv[88][1].toString());
+      }//end 3rd if
+      
+      
+      var checkForMapNameChange = "N";
+      var fhamslri = fhams.getLastRow();
+      var fhimslri = fhims.getLastRow();
+      if(fhimslri>2){var fhimscam = fhims.getRange(3,1,fhimslri-2).getValues();}
+      if(fhimslri===2){var fhimscam = fhims.getRange(2,1,1).getValues();}
+      if(fhamslri>2){var fhamscam = fhams.getRange(3,1,fhamslri-2).getValues();}
+      if(fhamslri===2){var fhamscam = fhams.getRange(2,1,1).getValues();}
+      for(var i=0;i<fhimscam.length;i++){if(fhimscam[i].toString()===mapInQuestion){var isrowNum = i+3;}} 
+      for(var i=0;i<fhamscam.length;i++){if(fhamscam[i].toString()===mapInQuestion){var asrowNum = i+3;}}
+      
+      if(isrowNum!==undefined){
+        
+        var newCreator = "";
+        var newAsstCreators = "";
+        
+        if(ffrscv[26].toString()!==""){//start 1st if
+          newCreator = ffrscv[26].toString();
+        }//end 1st if
+        else{//start 1st else
+          newCreator = fhimscv[isrowNum-3][6].toString();
+        }//end 1st else
+        
+        if(ffrscv[27].toString()!==""){//start 1st if
+          newAsstCreators = ffrscv[27].toString();
+        }//end 1st if
+        else{//start 1st else
+          newAsstCreators = fhimscv[isrowNum-3][7].toString();
+        }//end 1st else
+        
+        //throws error if someone is put as both creator and assistant creator
+        if(newAsstCreators.toString().indexOf(newCreator)!==-1){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Forge Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "tried to put someone as both a creator and assistant creator of a map", ffrslri, dllscv[88][1].toString());
+        }//end 3rd if
+        
+        
+        fhims.getRange(isrowNum,14).setValue(FunctionContainer.dateRetrieval(ffrscv[18]));
+        fhims.getRange(isrowNum,15).setValue(ffrscv[19]);
+        if(ffrscv[20]!==""){checkForMapNameChange = "Y";fhims.getRange(isrowNum,1).setValue(ffrscv[20]);if(changes.toString()===""){changes = changes.concat("Map Name Change")}else if(changes.toString()!==""){changes = changes.concat(", Map Name Change")}}
+        if(ffrscv[21]!==""){fhims.getRange(isrowNum,2).setValue(ffrscv[21]);if(changes.toString()===""){changes = changes.concat("Associated Gametype Change")}else if(changes.toString()!==""){changes = changes.concat(", Associated Gametype Change")}}
+        if(ffrscv[22]!==""){fhims.getRange(isrowNum,3).setValue(ffrscv[22]);if(changes.toString()===""){changes = changes.concat("Purpose(s) Change")}else if(changes.toString()!==""){changes = changes.concat(", Purpose(s) Change")}}
+        if(ffrscv[23]!==""){fhims.getRange(isrowNum,4).setValue(ffrscv[23]);if(changes.toString()===""){changes = changes.concat("Group Change")}else if(changes.toString()!==""){changes = changes.concat(", Group Change")}}
+        if(ffrscv[24]!==""){fhims.getRange(isrowNum,5).setValue(ffrscv[24]);if(changes.toString()===""){changes = changes.concat("Description Change")}else if(changes.toString()!==""){changes = changes.concat(", Description Change")}}
+        if(ffrscv[25]!==""){fhims.getRange(isrowNum,6).setValue(ffrscv[25]);if(changes.toString()===""){changes = changes.concat("Map Owner Change")}else if(changes.toString()!==""){changes = changes.concat(", Map Owner Change")}}
+        if(ffrscv[26]!==""){fhims.getRange(isrowNum,7).setValue(ffrscv[26]);if(changes.toString()===""){changes = changes.concat("Creator Change")}else if(changes.toString()!==""){changes = changes.concat(", Creator Change")}}
+        if(ffrscv[27]!==""){fhims.getRange(isrowNum,8).setValue(ffrscv[27]);if(changes.toString()===""){changes = changes.concat("Assistant Creator(s) Change")}else if(changes.toString()!==""){changes = changes.concat(", Assistant Creator(s) Change")}}
+        if(ffrscv[28]!==""){fhims.getRange(isrowNum,9).setValue(FunctionContainer.dateRetrieval(ffrscv[28]));if(changes.toString()===""){changes = changes.concat("Date Created Change")}else if(changes.toString()!==""){changes = changes.concat(", Date Created Change")}}
+        if(ffrscv[29]!==""){fhims.getRange(isrowNum,10).setValue(ffrscv[29]);if(changes.toString()===""){changes = changes.concat("Verification Personnel Change")}else if(changes.toString()!==""){changes = changes.concat(", Verification Personnel Change")}}
+        if(ffrscv[30]!==""){fhims.getRange(isrowNum,11).setValue(ffrscv[30]);if(changes.toString()===""){changes = changes.concat("Number of Players Supported Change")}else if(changes.toString()!==""){changes = changes.concat(", Number of Players Supported Change")}}
+        if(ffrscv[31]!==""){fhams.insertRowAfter(2);if(changes.toString()===""){changes = changes.concat("Activated Map")}else if(changes.toString()!==""){changes = changes.concat(", Activated Map")}
+          var destination = fhams.getRange(3,1,1,15);
+          fhims.getRange(isrowNum,1,1,18).copyTo(destination,SpreadsheetApp.CopyPasteType.PASTE_NORMAL,false);
+          fhims.deleteRow(isrowNum);
+          //formats everything to make sure its correctly formatted
+          FunctionContainer.tripleTrySetRowsSize(fhams, 3, 1, 175);
+          fhams.getRange(3,1,fhamslri-1,15).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setFontWeight(null);
+          fhams.getRange(1,1,fhamslri+1,15).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);}
+      }
+      
+      if(asrowNum!==undefined){
+        
+        var newCreator = "";
+        var newAsstCreators = "";
+        
+        if(ffrscv[26].toString()!==""){//start 1st if
+          newCreator = ffrscv[26].toString();
+        }//end 1st if
+        else{//start 1st else
+          newCreator = fhamscv[asrowNum-3][6].toString();
+        }//end 1st else
+        
+        if(ffrscv[27].toString()!==""){//start 1st if
+          newAsstCreators = ffrscv[27].toString();
+        }//end 1st if
+        else{//start 1st else
+          newAsstCreators = fhamscv[asrowNum-3][7].toString();
+        }//end 1st else
+        
+        //throws error if someone is put as both creator and assistant creator
+        if(newAsstCreators.toString().indexOf(newCreator)!==-1){//start 3rd if
+          FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Forge Form Errors", dllscv);
+          FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "tried to put someone as both a creator and assistant creator of a map", ffrslri, dllscv[88][1].toString());
+        }//end 3rd if
+        fhams.getRange(asrowNum,14).setValue(FunctionContainer.dateRetrieval(ffrscv[18]));
+        fhams.getRange(asrowNum,15).setValue(ffrscv[19]);
+        if(ffrscv[20]!==""){checkForMapNameChange = "Y";fhams.getRange(asrowNum,1).setValue(ffrscv[20]);if(changes.toString()===""){changes = changes.concat("Map Name Change")}else if(changes.toString()!==""){changes = changes.concat(", Map Name Change")}}
+        if(ffrscv[21]!==""){fhams.getRange(asrowNum,2).setValue(ffrscv[21]);if(changes.toString()===""){changes = changes.concat("Associated Gametype Change")}else if(changes.toString()!==""){changes = changes.concat(", Associated Gametype Change")}}
+        if(ffrscv[22]!==""){fhams.getRange(asrowNum,3).setValue(ffrscv[22]);if(changes.toString()===""){changes = changes.concat("Purpose(s) Change")}else if(changes.toString()!==""){changes = changes.concat(", Purpose(s) Change")}}
+        if(ffrscv[23]!==""){fhams.getRange(asrowNum,4).setValue(ffrscv[23]);if(changes.toString()===""){changes = changes.concat("Group Change")}else if(changes.toString()!==""){changes = changes.concat(", Group Change")}}
+        if(ffrscv[24]!==""){fhams.getRange(asrowNum,5).setValue(ffrscv[24]);if(changes.toString()===""){changes = changes.concat("Description Change")}else if(changes.toString()!==""){changes = changes.concat(", Description Change")}}
+        if(ffrscv[25]!==""){fhams.getRange(asrowNum,6).setValue(ffrscv[25]);if(changes.toString()===""){changes = changes.concat("Map Owner Change")}else if(changes.toString()!==""){changes = changes.concat(", Map Owner Change")}}
+        if(ffrscv[26]!==""){fhams.getRange(asrowNum,7).setValue(ffrscv[26]);if(changes.toString()===""){changes = changes.concat("Creator Change")}else if(changes.toString()!==""){changes = changes.concat(", Creator Change")}}
+        if(ffrscv[27]!==""){fhams.getRange(asrowNum,8).setValue(ffrscv[27]);if(changes.toString()===""){changes = changes.concat("Assistant Creator(s) Change")}else if(changes.toString()!==""){changes = changes.concat(", Assistant Creator(s) Change")}}
+        if(ffrscv[28]!==""){fhams.getRange(asrowNum,9).setValue(FunctionContainer.dateRetrieval(ffrscv[28]));if(changes.toString()===""){changes = changes.concat("Date Created Change")}else if(changes.toString()!==""){changes = changes.concat(", Date Created Change")}}
+        if(ffrscv[29]!==""){fhams.getRange(asrowNum,10).setValue(ffrscv[29]);if(changes.toString()===""){changes = changes.concat("Verification Personnel Change")}else if(changes.toString()!==""){changes = changes.concat(", Verification Personnel Change")}}
+        if(ffrscv[30]!==""){fhams.getRange(asrowNum,11).setValue(ffrscv[30]);if(changes.toString()===""){changes = changes.concat("Number of Players Supported Change")}else if(changes.toString()!==""){changes = changes.concat(", Number of Players Supported Change")}}
+        if(ffrscv[31]!==""){fhims.insertRowAfter(2);if(changes.toString()===""){changes = changes.concat("Deactivated Map")}else if(changes.toString()!==""){changes = changes.concat(", Deactivated Map")}
+          var destination = fhims.getRange(3,1,1,15);
+          fhams.getRange(asrowNum,1,1,18).copyTo(destination,SpreadsheetApp.CopyPasteType.PASTE_NORMAL,false);
+          fhams.deleteRow(asrowNum);
+          //formats everything to make sure its correctly formatted
+          FunctionContainer.tripleTrySetRowsSize(fhims, 3, 1, 175);
+          fhims.getRange(3,1,fhimslri-1,15).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setFontWeight(null);
+          fhims.getRange(1,1,fhimslri+1,15).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);}
+      }
+      
+      else{
+        FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Forge Form Errors", dllscv);
+        FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "tried to put a map not found in database", ffrslri, dllscv[88][1].toString());
+      }
+      
+      
+      //map name change check
+      if(checkForMapNameChange === "Y"){//start 3rd if
+        
+        //** CHANGES NAME IF THERE IS A FOLDER IN MAP CALLOUTS **//
+        var pxeMapFolder = DriveApp.getFolderById("1KZMxZSnyhN_jpQjaAJ_yj7iDz-bee-Zv").getFolders();
+        
+        while(pxeMapFolder.hasNext()){
+          var indPXEMapFolderID = pxeMapFolder.next().getId();
+          var indPXEMapFolderName = DriveApp.getFolderById(indPXEMapFolderID).getName();
+          if(indPXEMapFolderName===mapInQuestion){
+            DriveApp.getFolderById(indPXEMapFolderID).setName(ffrscv[20]);
+          }//end 4th if  
+        }//end 1st while
+        
+        
+        //** CHANGES ALL EVENT DEBRIEF MAP(S) USED ENTRIES **//
+        //Event Debrief Hub All Event Debriefs sheet
+        //[edhaeds,edhaedscvn,edhaedslri]
+        curVals = FunctionContainer.getedhaedscv("date", dllscv);
+        var edhaeds = curVals[0];
+        var edhaedscv = curVals[1];
+        var edhaedslri = curVals[2];
+        curVals = undefined;
+        
+        //finds and changes any matching map name
+        for(var i=0; i<edhaedscv.length; i+=1){//start 1st for
+          
+          var newVal1 = FunctionContainer.splitEmUp(edhaedscv[i][11]);
+          
+          for(var x=0; x<newVal1.length; x+=1){//start 2nd for
+            
+            if(newVal1[x].toString()===mapInQuestion){//start 4th if
+              newVal1[x] = ffrscv[20].toString();
+              x = newVal1.length;
+            }//end 4th if
+            
+            edhaedscv[i][11] = FunctionContainer.array1LevelIntoString(newVal1);
+            
+          }//end 2nd for
+        }//end 1st for
+        
+        //pastes new data
+        FunctionContainer.tripleTrySetSSValues(edhaeds, 3, 1, edhaedscv.length, edhaedscv[0].length, edhaedscv);
+        
+      }//end 3rd if
+      
+      
+      //change check
+      if(changes===""){
+        changes = "N/A";
+      }//end 3rd if
+      
+      
+      
+      
+      //forge entry sheet new data entry
+      var fhfesnv = [[ffrscv[3].toString(),FunctionContainer.dateRetrieval(ffrscv[18]),mapInQuestion,"Editor(s): "+ffrscv[19].toString(),
+      "Description of Edit: "+ffrscv[17].toString()+" ~ Changes Made: "+changes.toString(),perpitraitor]];
+      
+    }//end 2nd if
+    
+    
+    
+    //** MAP CALLOUTS **//
+    if(ffrscv[3].toString()==="Map Callouts"){//start 2nd if
+      //pxe map
+      if(ffrscv[35].toString()!==""){
+        var pxeMapFolder = DriveApp.getFolderById("1KZMxZSnyhN_jpQjaAJ_yj7iDz-bee-Zv").getFolders();
+        
+        while(pxeMapFolder.hasNext()){
+        
+          var indPXEMapFolderID = pxeMapFolder.next().getId();
+          var indPXEMapFolderName = DriveApp.getFolderById(indPXEMapFolderID).getName();
+          
+          if(indPXEMapFolderName===ffrscv[35].toString()){
+          
+            var indPXEMapFolderFiles = DriveApp.getFolderById(indPXEMapFolderID).getFiles();
+            
+            while(indPXEMapFolderFiles.hasNext()){
+            
+              var indPXEMapFolderFileID = indPXEMapFolderFiles.next().getId();
+              try{DriveApp.getFileById(indPXEMapFolderFileID).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);}catch(e){}
+              var indPXEMapFolderFileURL = DriveApp.getFileById(indPXEMapFolderFileID).getUrl();
+              var indPXEMapFolderFileName = DriveApp.getFileById(indPXEMapFolderFileID).getName();
+              var newindPXEMapFolderFileName = "";
+              
+              //if it is jpeg or png or whataver it takes off the image type at the end
+              if(indPXEMapFolderFileName.indexOf(".jpeg")!==-1){
+                for(var i=0; i<indPXEMapFolderFileName.length-5; i+=1){
+                  newindPXEMapFolderFileName = newindPXEMapFolderFileName+indPXEMapFolderFileName[i];
+                }//end 1st for
+              }//end 5th if
+              else if(indPXEMapFolderFileName.indexOf(".jpg")!==-1||indPXEMapFolderFileName.indexOf(".png")!==-1){
+                for(var i=0; i<indPXEMapFolderFileName.length-4; i+=1){
+                  newindPXEMapFolderFileName = newindPXEMapFolderFileName+indPXEMapFolderFileName[i];
+                }//end 1st for
+              }//end 5th if/else
+              
+              maps.push([newindPXEMapFolderFileName,"["+newindPXEMapFolderFileName+"]("+indPXEMapFolderFileURL+")"]);
+              
+            }//end 2nd while
+            
+            maps = FunctionContainer.specialSort(maps);
+            
+                for(var i=0; i<maps.length; i+=1){
+                  if(i===0){
+                    newMaps = maps[i][1].toString();
+                  }//end 6th if
+                  else{
+                    newMaps = newMaps+"\n"+maps[i][1].toString();
+                  }//end 1st else
+                }//end 1st for
+            
+            FunctionContainer.discordMapCallouts(indPXEMapFolderName,newMaps,ffrscv[33].toString(),ffrscv[32].toString());
+          }//end 4th if  
+        }//end 1st while
+        //forge entry sheet new data entry
+        var fhfesnv = [[ffrscv[3].toString(),currentDate,indPXEMapFolderName,"N/A","Post or Delete: "+ffrscv[32].toString()+" ~ Channel: "+ffrscv[33].toString(),perpitraitor]];
+      }//end 3rd if
+      
+      
+      //other clans map
+      else if(ffrscv[36].toString()!==""){
+        var stopper = ffrscv[36].toString().indexOf("~");
+        var clan = "";
+        var map = "";
+        for(var i=0; i<stopper-1; i+=1){
+          clan = clan+ffrscv[36].toString()[i];
+        }//end 1st for
+        for(var i=stopper+2; i<ffrscv[36].toString().length; i+=1){
+          map = map+ffrscv[36].toString()[i];
+        }//end 1st for
+        var otherClanFolders = DriveApp.getFolderById("1fRH49Utx3tbpqze03AKEFlcQUMmrdC6L").getFolders();
+        while(otherClanFolders.hasNext()){
+          var otherClanFoldersIndFolderId = otherClanFolders.next().getId();
+          var otherClanFoldersIndFolderName = DriveApp.getFolderById(otherClanFoldersIndFolderId).getName();
+          if(otherClanFoldersIndFolderName===clan){
+            var otherClanFoldersIndFolderIdFolders = DriveApp.getFolderById(otherClanFoldersIndFolderId).getFolders();
+            while(otherClanFoldersIndFolderIdFolders.hasNext()){
+              var otherClanFoldersIndFolderIdFoldersIndFolderId = otherClanFoldersIndFolderIdFolders.next().getId();
+              var otherClanFoldersIndFolderIdFoldersIndFolderName = DriveApp.getFolderById(otherClanFoldersIndFolderIdFoldersIndFolderId).getName();
+              if(otherClanFoldersIndFolderIdFoldersIndFolderName===map){
+                var otherClanFoldersIndFolderIdFoldersIndFolderIdFiles = DriveApp.getFolderById(otherClanFoldersIndFolderIdFoldersIndFolderId).getFiles();
+                while(otherClanFoldersIndFolderIdFoldersIndFolderIdFiles.hasNext()){
+                  var fileId = otherClanFoldersIndFolderIdFoldersIndFolderIdFiles.next().getId();
+                  var fileName = DriveApp.getFileById(fileId).getName();
+                  try{DriveApp.getFileById(fileId).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);}catch(e){}
+                  var fileUrl = DriveApp.getFileById(fileId).getUrl();
+                  var newFileName = "";
+                  
+                  //if it is jpeg or png or whatever it takes off the image type at the end
+                  if(fileName.indexOf(".jpeg")!==-1){
+                    for(var i=0; i<fileName.length-5; i+=1){
+                      newFileName = newFileName+fileName[i];
+                    }//end 1st for
+                  }//end 6th if
+                  else if(fileName.indexOf(".jpg")!==-1||fileName.indexOf(".png")!==-1){
+                    for(var i=0; i<fileName.length-4; i+=1){
+                      newFileName = newFileName+fileName[i];
+                    }//end 1st for
+                  }//end 6th if/else
+                  
+                  maps.push([newFileName,"["+newFileName+"]("+fileUrl+")"]);
+                  
+                }//end 3rd while
+                
+                maps = FunctionContainer.specialSort(maps);
+                for(var i=0; i<maps.length; i+=1){
+                  if(i===0){
+                    newMaps = maps[i][1].toString();
+                  }//end 6th if
+                  else{
+                    newMaps = newMaps+"\n"+maps[i][1].toString();
+                  }//end 1st else
+                }//end 1st for
+                
+                FunctionContainer.discordMapCallouts(ffrscv[36].toString(),newMaps,ffrscv[33].toString(),ffrscv[32].toString());
+                
+              }//end 5th if
+            }//end 2nd while
+          }//end 4th if
+        }//end 1st while
+      
+        //forge entry sheet new data entry
+        var fhfesnv = [[ffrscv[3].toString(),currentDate,ffrscv[36].toString(),"N/A","Post or Delete: "+ffrscv[32].toString()+" ~ Channel: "+ffrscv[33].toString(),perpitraitor]];
+      }//end 3rd if/else
+      
+    }//end 2nd if
+    
+    
+    
+    
+    //** FINALIZES DATA AND SENDS DICORD MESSAGES **//
+    
+    //adds vals to fhfes
+    
+    //Event Forge Hub All Event Forges sheet
+    curVals = FunctionContainer.getfhfescv("min", dllscv);
+    var fhfes = curVals[0];
+    var fhfeslri = curVals[1];
+    curVals = undefined;
+    
+    //adds new row and pastes vals in it and formats it correctly
+    //create new variable for vals
+    FunctionContainer.tripleTryAddRows(fhfes, 2, 1);
+    FunctionContainer.tripleTrySetRowsSize(fhfes, 3, 1, 175);
+    FunctionContainer.tripleTrySetSSValues(fhfes, 3, 1, 1, fhfesnv[0].length, fhfesnv);
+
+    //formats everything to make sure its correctly formatted
+    fhfes.getRange(3,1,fhfeslri-1,fhfesnv[0].length).setBorder(true, true, true, true, true, true, '#000000', SpreadsheetApp.BorderStyle.SOLID).setFontWeight(null);
+    fhfes.getRange(1,1,fhfeslri+1,fhfesnv[0].length).setBorder(true, true, true, true, null, null, '#000000', SpreadsheetApp.BorderStyle.SOLID_THICK);
+    
+    
+    //reorganize hub
+    //Reorganizes by date desc
+    //Forge Hub All Entries Sheet
+    curVals = FunctionContainer.getfhfescv("both", dllscv);
+    var fhfes = curVals[0];
+    var fhfescv = curVals[1];
+    var fhfescvn = curVals[2];
+    curVals = undefined;
+    
+    for(var i=0; i<fhfescvn.length; i+=1){//start 1st for
+      fhfescvn[i] = [fhfescvn[i][1], fhfescvn[i][0], fhfescvn[i][2], fhfescvn[i][3], fhfescvn[i][4], fhfescvn[i][5]];
+    }//end 1st for
+    
+    fhfescvn = FunctionContainer.specialSortDesc(fhfescvn);
+    
+    for(var i=0; i<fhfescvn.length; i+=1){//start 1st for
+      fhfescvn[i] = [fhfescvn[i][1], fhfescvn[i][0], fhfescvn[i][2], fhfescvn[i][3], fhfescvn[i][4], fhfescvn[i][5]];
+    }//end 1st for
+    
+    //pastes new data
+    FunctionContainer.tripleTrySetSSValues(fhfes, 3, 1, fhfescv.length, fhfescv[0].length, fhfescvn);
+    
+    
+    //updates forge form list
+    ForgeFormListUpdate.formListUpdate(dllscv, pmdcmscv);
+    
+  }//end 1st if
+  
+  
+  
+  //if code is wrong
+  else{
+    FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Forge Form Errors", dllscv);
+    FunctionContainer.indFormErrorReport(perpitraitor, "forge form", "inputed an incorrect code", ffrslri, dllscv[88][1].toString());
+  }//end 1st else
+  
+}//end main

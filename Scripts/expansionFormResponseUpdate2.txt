@@ -1,0 +1,998 @@
+function expansionFormResponseUpdate2(){
+  errorCheck("expansionFormResponseUpdate2","ExpansionFormResponseUpdate2");
+}//end expansionFormResponseUpdate2
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  //Expansion Form Response Sheet
+  var efrs = FunctionContainer.tripleTryOpenSheet("","EF Responses");
+  var efrslri = FunctionContainer.tripleTryGetLastRow(efrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  //vals
+  var efrscv = FunctionContainer.tripleTryGetValues(efrs, efrslri, 1, 1, 40)[0];
+//  FunctionContainer.positionsInsideArray(efrscv);
+  /*
+    [Timestamp[0], Email Address[1], Code[2], Operation[3], New Group Name[4], Activate or Deactivate?[5], 
+    Operation[6], New Time (in weeks)[7], Member(s) in Question[8], New Cushion Date[9], Desired Profile Pages[10], 
+    Things To be Included[11], Which Alert Preference[12], New Value[13], Days[14], Credential Change Operation[15], 
+    Old Credential Name[16], New Credential Type[17], New Credential Name[18], Old Training Type Name[19], 
+    New Training Type Name[20], New Rank Name[21], New Abbreviated Rank Name[22], Current Discord Nickname[23], 
+    Old Gamertag[24], Old Channel Name[25], New Channel Name[26], Group Type Name[27], Code[28], 
+    All Forms Included With The Specified Code[29], Member in Question[30], Rank in Question[31], 
+    Group in Question[32], Group Type in Question[33], [34], [35], [36], [37], [38], [39]]
+  */
+  
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(efrscv[1].toString().trim(),pmdcmscv);
+  
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    throw new Error('Form filled out wrong');
+  }//end 2nd if
+
+  
+  //trims the necessary values
+  var formTrimList = [1, 2, 4, 7, 13, 14, 18, 20, 21, 22, 23, 24, 26, 27];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    efrscv[formTrimList[i]] = efrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(efrscv[formTrimList[i]].indexOf("^")!==-1){//end 1st if
+      throw new Error('Form filled out wrong');
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  var errorInfo = "";
+  
+  
+  var operation = efrscv[3];
+  
+  ///*** DATA GATHERING ***///
+  
+  if(operation === "Group Change"){//start 1st if
+    //declares the new name of group if there is one
+    var newGroupName = efrscv[4].toString();
+    //declares old group name
+    var oldGroupName = efrscv[32].toString();
+    //declares variable for if they are deactivating the group or not
+    var activeOrNah = efrscv[5].toString();
+    if(activeOrNah === ""){//start 2nd if
+      activeOrNah = "N/A";
+    }//end 2nd if
+    var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Group in Question:** " 
+      + oldGroupName + "**\n\n • New Group Name:** " + newGroupName 
+      + "**\n\n • Activate or Deactivate:** " + activeOrNah + "**";
+  }//end 1st if
+  
+  
+  else if(operation === "Preference Change"){//start 1st if/else
+    var prefOp = efrscv[6];
+    //Min Time for Rankup
+    if(prefOp === "Min Time for Rankup"){//start 2nd if
+      var newTimeToRankup = efrscv[7];
+      var rankInQuestion = efrscv[31];
+      //finds location of rank
+      var rankLoc = -1;
+      for(var x=0; x<20; x+=1){//start 1st for
+        if(dllscv[24][x].toString() === rankInQuestion){//start 2nd if
+          rankLoc = x;
+        }//end 2nd if
+      }//end 1st for
+      var oldTimeToRankup = dllscv[26][rankLoc].toString();
+      var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Preference Operation:** " 
+        + prefOp + "**\n\n • Rank in Question:** " + rankInQuestion 
+        + "**\n\n • New Time (in weeks):** " + newTimeToRankup + "**";
+    }//end 2nd if
+    
+    //Cushion Date
+    else if(prefOp === "Cushion Date"){//start 2nd if/else
+      var membersInQuestion = efrscv[8];
+      var newDate = FunctionContainer.dateReplace(efrscv[9]);
+      var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Preference Operation:** " 
+        + prefOp + "**\n\n • Member(s) in Question:** " + membersInQuestion 
+        + "**\n\n • New Cushion Date:** " + newDate + "**";
+    }//end 2nd if/else
+    
+    //Group Profile Type Inclusion
+    else if(prefOp === "Group Profile Type Inclusion"){//start 2nd if/else
+      var desiredPages = efrscv[10];
+      var groupTypeInQuestion = efrscv[33];
+      var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Preference Operation:** " 
+        + prefOp + "**\n\n • Group Type in Question:** " + groupTypeInQuestion 
+        + "**\n\n • Desired Profile Pages:** " + desiredPages + "**";
+      //sheet names
+      var profileSheetNames = [["evs","Events"], ["mus","Member Updates"], ["mrs","Member Reports"], 
+        ["mds","Reprimands"], ["nms","New Members"], ["mas","Maps"], ["dms","Discharged Members"]];
+      var groupTypeCol = -1;
+      //gets old sheets
+      for(var i=0; i<25; i+=1){//start 1st for
+        if(dllscv[60][i].toString() === groupTypeInQuestion){//start 3rd if
+          groupTypeCol = i;
+          i = 26;
+        }//end 3rd if
+      }//end 1st for
+      var oldProfileSheets = FunctionContainer.splitEmUp(dllscv[65][groupTypeCol].toString());
+      var desiredPagesArray = FunctionContainer.splitEmUp(desiredPages);
+      for(var i=0; i<desiredPagesArray.length; i+=1){//start 1st for
+        for(var x=0; x<profileSheetNames.length; x+=1){//start 2nd for
+          if(desiredPagesArray[i].toString() === profileSheetNames[x][1].toString()){//start 1st if
+            desiredPagesArray[i] = [profileSheetNames[x][0]];
+          }//end 1st if
+        }//end 2nd for
+      }//end 1st for
+    }//end 2nd if/else
+    
+    //Group Type Leadership Inclusion
+    else if(prefOp === "Group Type Leadership Inclusion"){//start 2nd if/else
+      var desiredThings = efrscv[11];
+      var groupTypeInQuestion = efrscv[33];
+      var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Preference Operation:** " 
+        + prefOp + "**\n\n • Group Type in Question:** " + groupTypeInQuestion 
+        + "**\n\n • Things To be Included:** " + desiredThings + "**";
+      var groupTypeCol = -1;
+      //gets old sheets
+      for(var i=0; i<25; i+=1){//start 1st for
+        if(dllscv[60][i].toString() === groupTypeInQuestion){//start 3rd if
+          groupTypeCol = i;
+          i = 26;
+        }//end 3rd if
+      }//end 1st for
+    }//end 2nd if/else
+    
+    //Alert Preferences
+    else if(prefOp === "Alert Preferences"){//start 2nd if/else
+      var alertPref = efrscv[12];
+      var newPrefVal = efrscv[13];
+      var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Preference Operation:** " 
+        + prefOp + "**\n\n • Which Alert Preference:** " + alertPref 
+        + "**\n\n • New Value:** " + newPrefVal + "**";
+    }//end 2nd if/else
+    
+    //Days Till Marked as Inactive
+    else if(prefOp === "Days Till Marked as Inactive"){//start 2nd if/else
+      var days = efrscv[14];
+      var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Preference Operation:** " 
+        + prefOp + "**\n\n • Days:** " + days + "**";
+    }//end 2nd if/else
+    
+  }//end 1st if/else
+  
+  
+  else if(operation === "Credential Change"){//start 1st if/else
+    var credChangeOperation = efrscv[15];
+    var oldCredName = efrscv[16];
+    var newCredType = efrscv[17];
+    var newCredName = efrscv[18];
+    var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Credential Change Operation:** " 
+      + credChangeOperation + "**\n\n • Old Credential Name:** " + oldCredName + "**\n\n • New Credential Name:** " 
+      + newCredName + "**\n\n • New Credential Type:** " + newCredType + "**";
+    var credExists = false;
+    for(var i=16; i<23; i+=2){//start 1st for
+      if(dllscv[i][0].toString() === newCredType){//start 1st if
+        var newCredRowNum = i;
+      }//end 1st if
+      for(var x=1; x<100; x+=1){//start 2nd for
+        if(oldCredName === dllscv[i][x].toString()){//start 2nd if
+          var oldCredType = dllscv[i][0].toString();
+          var oldCredColNum = x;
+          var oldCredRowNum = i;
+        }//end 2nd if
+        if(newCredName === dllscv[i][x].toString()){//start 2nd if
+          credExists = true;
+        }//end 2nd if
+      }//end 2nd for
+    }//end 1st for
+  }//end 1st if/else
+  
+  
+  else if(operation === "Training Types Change"){//start 1st if/else
+    var oldTrainingType = efrscv[19];
+    var newTrainingType = efrscv[20];
+    var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • New Training Type:** "
+      + newTrainingType + "**\n\n • Old Training Type:** " + oldTrainingType + "**";
+  }//end 1st if/else
+  
+  
+  else if(operation === "Rank/Abbreviated Rank Name Change"){//start 1st if/else
+    var newRankName = efrscv[21];
+    var newRankAbbr = efrscv[22];
+    var oldRankName = efrscv[31];
+    var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • New Rank Name:** "
+      + newRankName + "**\n\n • New Abbreviated Rank Name:** " + newRankAbbr
+      + "**\n\n • Old Rank Name:** " + oldRankName + "**";
+    var newRankNameExists = false;
+    var newRankAbbrExists = false;
+    for(var i=0; i<20; i+=1){//start 1st for
+      if(dllscv[24][i].toString() === newRankName  &&  newRankName !== ""){//start 2nd if
+        newRankNameExists = true;
+      }//end 2nd if
+      if(dllscv[25][i].toString() === newRankAbbr  &&  newRankAbbr !== ""){//start 2nd if
+        newRankAbbrExists = true;
+      }//end 2nd if
+      if(dllscv[24][i].toString() === oldRankName){//start 2nd if
+        var oldRankCol = i;
+        var oldRankAbbr = dllscv[25][i].toString();
+      }//end 2nd if
+    }//end 1st for
+  }//end 1st if/else
+  
+  
+  else if(operation === "Member Discord Reset"){//start 1st if/else
+    var currentDiscName = efrscv[23];
+    var memberInQuestion = efrscv[30];
+    var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Current Discord Nickname:** "
+      + currentDiscName + "**\n\n • Member In Question:** " + memberInQuestion + "**";
+  }//end 1st if/else
+  
+  
+  else if(operation === "Member Record Retrieval"){//start 1st if/else
+    var oldGt = efrscv[24];
+    var memberInQuestion = efrscv[30];
+    var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Old Gamertag:** "
+      + oldGt + "**\n\n • Member In Question:** " + memberInQuestion + "**";
+  }//end 1st if/else
+  
+  
+  else if(operation === "Channel Options Change"){//start 1st if/else
+    var oldChannelName = efrscv[25];
+    var newChannelName = efrscv[26];
+    var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Old Channel Name:** "
+      + oldChannelName + "**\n\n • New Channel Name:** " + newChannelName + "**";
+  }//end 1st if/else
+  
+  
+  else if(operation === "Group Type Name Change"){//start 1st if/else
+    var newGroupTypeName = efrscv[27];
+    var oldGroupTypeName = efrscv[33];
+    var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Old Group Type Name:** "
+      + oldGroupTypeName + "**\n\n • New Group Type Name:** " + newGroupTypeName + "**";
+    var typeExists = false;
+    for(var i=0; i<25; i+=1){//start 1st for
+      if(dllscv[60][i].toString() === newGroupTypeName){//start 1st if
+        typeExists = true;
+      }//end 1st if
+      if(dllscv[60][i].toString() === oldGroupTypeName){//start 1st if
+        var groupTypeCol = i;
+      }//end 1st if
+    }//end 1st for
+  }//end 1st if/else
+  
+  
+  else if(operation === "Code Inclusion Change"){//start 1st if/else
+    var codeInQuestion = efrscv[28];
+    var formsIncluded = efrscv[29];
+    var errorInfo = "\n\n • Form Operation:** " + operation + "**\n\n • Code In Question:** "
+      + codeInQuestion + "**\n\n • All Forms Included With The Specified Code:** " + formsIncluded + "**";
+  }//end 1st if/else
+  
+  
+  
+  //** CHECKS AND DATA CHANGING **//
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "ef", efrscv[2].toString())){//start 1st if
+    
+    
+    //date of entry
+    var dateOfEntry = FunctionContainer.dateReplace(efrscv[0].toString());
+    
+    //details
+    var details = undefined;
+    
+    
+    //Group Change
+    if(operation === "Group Change"){//start 2nd if
+        
+      //finds group's column in row 41 in dllscv
+      var groupCol = "";
+      for(var i=0; i<57; i+=1){//start 1st for
+        if(dllscv[40][i].toString() === oldGroupName){//start 3rd if
+          groupCol = i;
+          i = dllscv[40].length;
+        }//end 3rd if
+      }//end 1st for
+      
+      
+      //new name checks
+      if(newGroupName !== ""){//start 3rd if
+        
+        //sends error if group name is N/A
+        if(newGroupName === "N/A"){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //if length is above 40
+        if(newGroupName.length > 40){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //if length is above 40
+        if(newGroupName === oldGroupName){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //if gamertag is the same as any of the group names
+        for(var i=0; i<57; i+=1){//start 1st for
+          //sends error if group name matches
+          if(newGroupName.toString() === dllscv[40][i].toString()  &&  i !== groupCol){//start 4th if
+            throw new Error('Form filled out wrong');
+          }//end 4th if
+          //sends error if group name contains input
+          else if(dllscv[40][i].toString().indexOf(newGroupName.toString()) !== -1  &&  i !== groupCol){//start 4th if
+            throw new Error('Form filled out wrong');
+          }//end 4th if
+        }//end 1st for
+        
+        //checks to see if group name is already a gamertag
+        for(var i=0; i<pmdcmscv.length; i+=1){//start 1st for
+          if(pmdcmscv[i][0].toString() === newGroupName){//start 4th if
+            throw new Error('Form filled out wrong');
+          }//end 4th if
+          if(pmdcmscv[i][1].toString() === newGroupName){//start 4th if
+            throw new Error('Form filled out wrong');
+          }//end 4th if
+        }//end 1st for
+        
+        //sends error if group name has a special character
+        if(newGroupName.toString().indexOf(",") !== -1  ||  newGroupName.toString().indexOf("~") !== -1  
+          ||  newGroupName === "|"  ||  newGroupName.toString().indexOf("[") !== -1
+          ||  newGroupName.toString().indexOf("(") !== -1  ||  newGroupName.toString().indexOf(")") !== -1  
+          ||  newGroupName.toString().indexOf("]") !== -1  ||  newGroupName.toString().indexOf("*") !== -1){//start 4th if
+            throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //if name doesnt contain the group type
+        if(newGroupName.indexOf(dllscv[60][dllscv[53][groupCol]].toString()) === -1){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+      }//end 3rd if
+      
+      
+    }//end 2nd if
+    
+    
+    //Preference Change
+    if(operation === "Preference Change"){//start 2nd if
+      //Min Time for Rankup
+      if(prefOp === "Min Time for Rankup"){//start 3rd if
+        
+        //checks to see if the new time matches old time
+        if(oldTimeToRankup === newTimeToRankup){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //checks to see if the new time is an acceptable answer/time
+        if(newTimeToRankup !== "N/A"  &&  parseInt(newTimeToRankup)-parseInt(newTimeToRankup) !== 0){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //checks to see if the new time isnt too large
+        if(parseInt(newTimeToRankup)-parseInt(newTimeToRankup) === 0  &&  newTimeToRankup.length > 2){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //checks to see if the new time is a verified number
+        if(parseInt(newTimeToRankup)-parseInt(newTimeToRankup) === 0){//start 4th if
+          if(parseInt(newTimeToRankup)%1 !== 0  ||  parseInt(newTimeToRankup) >= 100  ||  parseInt(newTimeToRankup) <= 0){//start 1st if
+            throw new Error('Form filled out wrong');
+          }//end 1st if
+        }//end 4th if
+      }//end 3rd if
+    }//end 2nd if
+    
+    
+    //Credential Change
+    if(operation === "Credential Change"){//start 2nd if
+      details = "Credential Change ~ Change Operation: " + credChangeOperation;
+      
+      //illegal input
+      if(oldCredName === "N/A"  &&  newCredName === "N/A"){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      if(credChangeOperation === "Name Change"){//start 3rd if
+        
+        //if names are the same
+        if(oldCredName === newCredName){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //name is N/A for either one
+        if(oldCredName === "N/A"  ||  newCredName === "N/A"){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //if cred already exists with that same name
+        if(credExists){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //sends error if cred has a special character
+        if(newCredName.toString().indexOf(",") !== -1  ||  newCredName.toString().indexOf("~") !== -1  ||  newCredName.toString().indexOf("]") !== -1
+          ||  newCredName === ""  ||  newCredName.toString().indexOf("[") !== -1
+          ||  newCredName.toString().indexOf("(") !== -1  ||  newCredName.toString().indexOf(")") !== -1  
+          ||  newCredName.toString().indexOf("*") !== -1){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //if length is above 40
+        if(newCredName.length > 40){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+      }//end 3rd if
+      
+      
+      else if(credChangeOperation === "LDI Credentials Change"){//start 3rd if/else
+        
+        //if names are the same
+        if(oldCredName === newCredName){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //adding
+        if(oldCredName === "N/A"){//start 4th if
+          details = details + " ~ Adding Credential: " + newCredName;
+          for(var i=0; i<100; i+=1){//start 1st for
+            //already exists in ldi creds
+            if(dllscv[33][i].toString() === newCredName){//start 5th if
+              throw new Error('Form filled out wrong');
+            }//end 5th if
+            else if(i === 99){//start 5th if
+              dllscv[33][i] = newCredName;
+            }//end 5th if
+          }//end 1st for
+        }//end 4th if
+        
+        //removal
+        else if(newCredName === "N/A"){//start 4th if/else
+          details = details + " ~ Removing Credential: " + oldCredName;
+          for(var i=0; i<100; i+=1){//start 1st for
+            //exists in ldi creds
+            if(dllscv[33][i].toString() === oldCredName){//start 5th if
+              dllscv[33][i] = "";
+              i = 101;
+            }//end 5th if
+            //end of loop and doesnt exist in creds
+            else if(i === 99){//start 5th if
+              throw new Error('Form filled out wrong');
+            }//end 5th if
+          }//end 1st for
+        }//end 4th if/else
+        
+        //switching
+        else if(oldCredName !== "N/A"  &&  oldCredName !== "N/A"){//start 4th if/else
+          throw new Error('Form filled out wrong');
+        }//end 4th if/else
+        else{//start 4th if/else
+          throw new Error('Form filled out wrong');
+        }//end 4th if/else
+        
+      }//end 3rd if/else
+      
+      
+      else if(credChangeOperation === "Forge Credentials Change"){//start 3rd if/else
+        var curForgeCreds = FunctionContainer.splitEmUp(dllscv[34][0]);
+        
+        //if names are the same
+        if(oldCredName === newCredName){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+
+        //adding
+        if(oldCredName === "N/A"){//start 4th if
+          details = details + " ~ Adding Credential: " + newCredName;
+          for(var i=0; i<curForgeCreds.length; i+=1){//start 1st for
+            //already exists in ldi creds
+            if(curForgeCreds[i].toString() === newCredName){//start 5th if
+              throw new Error('Form filled out wrong');
+            }//end 5th if
+            else if(i === curForgeCreds.length-1){//start 5th if
+              curForgeCreds.push([newCredName]);
+              i = curForgeCreds.length+1;
+            }//end 5th if
+          }//end 1st for
+        }//end 4th if
+        
+        //removal
+        else if(newCredName === "N/A"){//start 4th if/else
+          details = details + " ~ Removing Credential: " + oldCredName;
+          for(var i=curForgeCreds.length-1; i>=0; i-=1){//start 1st for
+            //exists in ldi creds
+            if(curForgeCreds[i].toString() === oldCredName){//start 5th if
+              curForgeCreds.splice(i);
+              i = -1;
+            }//end 5th if
+            //end of loop and doesnt exist in creds
+            else if(i === 0){//start 5th if
+              throw new Error('Form filled out wrong');
+            }//end 5th if
+          }//end 1st for
+        }//end 4th if/else
+        
+        //switching
+        else if(oldCredName !== "N/A"  &&  oldCredName !== "N/A"){//start 4th if/else
+          throw new Error('Form filled out wrong');
+        }//end 4th if/else
+        else{//start 4th if/else
+          throw new Error('Form filled out wrong');
+        }//end 4th if/else
+      }//end 3rd if/else
+      
+      
+      else if(credChangeOperation === "Verification Personnel Credentials Change"){//start 3rd if/else
+        var curVerificationCreds = FunctionContainer.splitEmUp(dllscv[35][0]);
+        
+        //if names are the same
+        if(oldCredName === newCredName){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+
+        //adding
+        if(oldCredName === "N/A"){//start 4th if
+          details = details + " ~ Adding Credential: " + newCredName;
+          for(var i=0; i<curVerificationCreds.length; i+=1){//start 1st for
+            //already exists in ldi creds
+            if(curVerificationCreds[i].toString() === newCredName){//start 5th if
+              throw new Error('Form filled out wrong');
+            }//end 5th if
+            else if(i === curVerificationCreds.length-1){//start 5th if
+              curVerificationCreds.push([newCredName]);
+              i = curVerificationCreds.length+1;
+            }//end 5th if
+          }//end 1st for
+        }//end 4th if
+        
+        //removal
+        else if(newCredName === "N/A"){//start 4th if/else
+          details = details + " ~ Removing Credential: " + oldCredName;
+          for(var i=curVerificationCreds.length-1; i>=0; i-=1){//start 1st for
+            //exists in ldi creds
+            if(curVerificationCreds[i].toString() === oldCredName){//start 5th if
+              curVerificationCreds.splice(i);
+              i = -1;
+            }//end 5th if
+            //end of loop and doesnt exist in creds
+            else if(i === 0){//start 5th if
+              throw new Error('Form filled out wrong');
+            }//end 5th if
+          }//end 1st for
+        }//end 4th if/else
+        
+        //switching
+        else if(oldCredName !== "N/A"  &&  oldCredName !== "N/A"){//start 4th if/else
+          throw new Error('Form filled out wrong');
+        }//end 4th if/else
+        else{//start 4th if/else
+          throw new Error('Form filled out wrong');
+        }//end 4th if/else
+      }//end 3rd if/else
+      
+      
+      else if(credChangeOperation === "Scheduling Event Leaders Credential Change"){//start 3rd if/else
+        var curSchedulingCreds = FunctionContainer.splitEmUp(dllscv[94][0]);
+        
+        //if names are the same
+        if(oldCredName === newCredName){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+
+        //adding
+        if(oldCredName === "N/A"){//start 4th if
+          details = details + " ~ Adding Credential: " + newCredName;
+          for(var i=0; i<curSchedulingCreds.length; i+=1){//start 1st for
+            //already exists in ldi creds
+            if(curSchedulingCreds[i].toString() === newCredName){//start 5th if
+              throw new Error('Form filled out wrong');
+            }//end 5th if
+            else if(i === curSchedulingCreds.length-1){//start 5th if
+              curSchedulingCreds.push([newCredName]);
+              i = curSchedulingCreds.length+1;
+            }//end 5th if
+          }//end 1st for
+        }//end 4th if
+        
+        //removal
+        else if(newCredName === "N/A"){//start 4th if/else
+          details = details + " ~ Removing Credential: " + oldCredName;
+          for(var i=curSchedulingCreds.length-1; i>=0; i-=1){//start 1st for
+            //exists in ldi creds
+            if(curSchedulingCreds[i].toString() === oldCredName){//start 5th if
+              curSchedulingCreds.splice(i);
+              i = -1;
+            }//end 5th if
+            //end of loop and doesnt exist in creds
+            else if(i === 0){//start 5th if
+              throw new Error('Form filled out wrong');
+            }//end 5th if
+          }//end 1st for
+        }//end 4th if/else
+        
+        //switching
+        else if(oldCredName !== "N/A"  &&  oldCredName !== "N/A"){//start 4th if/else
+          throw new Error('Form filled out wrong');
+        }//end 4th if/else
+        else{//start 4th if/else
+          throw new Error('Form filled out wrong');
+        }//end 4th if/else
+      }//end 3rd if/else
+      
+      
+      else if(credChangeOperation === "Credential Type Change"){//start 3rd if/else
+        
+        details = details + " ~ Credential In Question: " + oldCredName + " ~ Old Credential Type: " + oldCredType + " ~ New Credential Type: " + newCredType;
+        
+        if(oldCredType === newCredType){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        dllscv[oldCredRowNum][oldCredColNum] = "";
+        
+        for(var i=1; i<100; i+=1){//start 1st for
+          if(dllscv[newCredRowNum][i].toString() === ""){//start 4th if
+            dllscv[newCredRowNum][i] = oldCredName;
+            i = 101;
+          }//end 4th if
+        }//end 1st for
+        
+      }//end 3rd if/else
+      
+      
+      else if(credChangeOperation === "Add Credential"){//start 3rd if/else
+        
+        details = details + " ~ New Credential: " + newCredName + " ~ New Credential Type: " + newCredType;
+        
+        //if cred already exists
+        if(credExists){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //sends error if cred is N/A
+        if(newCredName === "N/A"){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //sends error if cred has a special character
+        if(newCredName.toString().indexOf(",") !== -1  ||  newCredName.toString().indexOf("~") !== -1  ||  newCredName.toString().indexOf("]") !== -1
+          ||  newCredName === ""  ||  newCredName.toString().indexOf("[") !== -1
+          ||  newCredName.toString().indexOf("(") !== -1  ||  newCredName.toString().indexOf(")") !== -1  
+          ||  newCredName.toString().indexOf("*") !== -1){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //if length is above 40
+        if(newCredName.length > 40){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+      }//end 3rd if/else
+    }//end 2nd if
+    
+    
+    //Training Types Change
+    if(operation === "Training Types Change"){//start 2nd if
+      
+      //sends error if cred is N/A
+      if(newTrainingType === oldTrainingType){//start 4th if
+        throw new Error('Form filled out wrong');
+      }//end 4th if
+      
+      
+      //adding training type
+      if(oldTrainingType === "N/A"){//start 4th if
+        details = "Training Types Change ~ Adding Training Type: " + newTrainingType;
+        
+        //if length is above 40
+        if(newTrainingType.length > 40){//start 5th if
+          throw new Error('Form filled out wrong');
+        }//end 5th if
+        
+        //sends error if training type has a special character
+        if(newTrainingType.toString().indexOf(",") !== -1  ||  newTrainingType.toString().indexOf("~") !== -1  ||  newTrainingType.toString().indexOf("]") !== -1
+          ||  newTrainingType === ""  ||  newTrainingType.toString().indexOf("[") !== -1
+          ||  newTrainingType.toString().indexOf("(") !== -1  ||  newTrainingType.toString().indexOf(")") !== -1  
+          ||  newTrainingType.toString().indexOf("*") !== -1){//start 5th if
+          throw new Error('Form filled out wrong');
+        }//end 5th if
+        
+        //checks to see if training type already exists
+        for(var i=1; i<100; i+=1){//start 1st for
+          if(dllscv[14][i].toString() === newTrainingType  &&  dllscv[14][i].toString() !== ""){//start 5th if
+            throw new Error('Form filled out wrong');
+            i = 101;
+          }//end 5th if
+        }//end 1st for
+      }//end 4th if
+      
+      
+      //removing training type
+      else if(newTrainingType === "N/A"){//start 4th if/else
+        
+      }//end 4th if/else
+      
+      
+      //renaming trining type
+      else{//start 4th if/else
+        details = "Training Types Change ~ Renaming Training Type ~ Old Training Type Name: " + oldTrainingType + " ~ New Training Type Name: " + newTrainingType;
+        
+        //if length is above 40
+        if(newTrainingType.length > 40){//start 5th if
+          throw new Error('Form filled out wrong');
+        }//end 5th if
+        
+        //sends error if training type has a special character
+        if(newTrainingType.toString().indexOf(",") !== -1  ||  newTrainingType.toString().indexOf("~") !== -1  ||  newTrainingType.toString().indexOf("]") !== -1
+          ||  newTrainingType === ""  ||  newTrainingType.toString().indexOf("[") !== -1
+          ||  newTrainingType.toString().indexOf("(") !== -1  ||  newTrainingType.toString().indexOf(")") !== -1  
+          ||  newTrainingType.toString().indexOf("*") !== -1){//start 5th if
+          throw new Error('Form filled out wrong');
+        }//end 5th if
+        
+        //checks to see if training type already exists
+        for(var i=1; i<100; i+=1){//start 1st for
+          if(dllscv[14][i].toString() === newTrainingType  &&  dllscv[14][i].toString() !== ""){//start 5th if
+            throw new Error('Form filled out wrong');
+            i = 101;
+          }//end 5th if
+        }//end 1st for
+        
+        //renames it in dllscv
+        for(var i=1; i<100; i+=1){//start 1st for
+          if(dllscv[14][i].toString() === oldTrainingType){//start 1st if
+            dllscv[14][i] = newTrainingType;
+            i = 101;
+          }//end 1st if
+        }//end 1st for
+        
+      }//end 4th if/else
+      
+    }//end 2nd if
+    
+    
+    //Rank/Abbreviated Rank Name Change
+    if(operation === "Rank/Abbreviated Rank Name Change"){//start 2nd if
+      
+      details = "Rank/Abbreviated Rank Name Change";
+      
+      //if length is above 40
+      if(newRankName.length > 40){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //if length is above 4
+      if(newRankAbbr.length > 4){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //n/a as rank name
+      if(newRankName === "N/A"){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //n/a as rank abbr
+      if(newRankAbbr === "N/A"){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //same name exists
+      if(newRankNameExists){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //same abbr exists
+      if(newRankAbbrExists){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+        
+      //sends error if newRankName has a special character
+      if(newRankName.toString().indexOf(",") !== -1  ||  newRankName.toString().indexOf("~") !== -1  ||  newRankName.toString().indexOf("]") !== -1
+        ||  newRankName === ""  ||  newRankName.toString().indexOf("[") !== -1
+        ||  newRankName.toString().indexOf("(") !== -1  ||  newRankName.toString().indexOf(")") !== -1  
+        ||  newRankName.toString().indexOf("*") !== -1){//start 5th if
+        throw new Error('Form filled out wrong');
+      }//end 5th if
+        
+      //sends error if newRankName has a special character
+      if(newRankAbbr.toString().indexOf(",") !== -1  ||  newRankAbbr.toString().indexOf("~") !== -1  ||  newRankAbbr.toString().indexOf("]") !== -1
+        ||  newRankAbbr === ""  ||  newRankAbbr.toString().indexOf("[") !== -1
+        ||  newRankAbbr.toString().indexOf("(") !== -1  ||  newRankAbbr.toString().indexOf(")") !== -1  
+        ||  newRankAbbr.toString().indexOf("*") !== -1){//start 5th if
+        throw new Error('Form filled out wrong');
+      }//end 5th if
+    }//end 2nd if
+    
+    
+    if(operation === "Member Discord Reset"){//start 2nd if
+      
+    }//end 2nd if
+    
+    
+    if(operation === "Member Record Retrieval"){//start 2nd if
+      details = "Member Record Retrieval ~ Old Gamertag: " + oldGt + " ~ Member In Question: " + memberInQuestion;
+      
+      //Phoenix Member Data Discharged Members Sheet
+      var curVals = FunctionContainer.getpmddmscv();
+      var pmddms = curVals[0];
+      var pmddmscv = curVals[1];
+      var pmddmslri = curVals[2];
+      curVals = undefined;
+      
+      var oldMemRow = -1;
+      for(var i=0; i<pmddmscv.length; i+=1){//start 1st for
+        if(pmddmscv[i][0] === oldGt){//start 3rd if
+          oldMemRow = i;
+          i = pmddmscv.length+1;
+        }//end 3rd if
+      }//end 1st for
+      
+      //oldMemRow isnt found
+      if(oldMemRow === -1){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+    }//end 2nd if
+    
+    
+    if(operation === "Channel Options Change"){//start 2nd if
+      details = "Channel Options Change ~ Old Channel Name: " + oldChannelName + " ~ New Channel Name: " + newChannelName;
+      
+      var curChannels = [];
+      for(var i=0; i<150; i+=1){//start 1st for
+        if(dllscv[32][i].toString() !== ""){//start 1st if
+          curChannels.push([dllscv[32][i].toString()]);
+        }//end 1st if
+      }//end 1st for
+      
+      //channels match
+      if(oldChannelName === newChannelName){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //adding
+      if(oldChannelName === "N/A"){//start 3rd if
+        //channel name has a space(s)
+        if(newChannelName.indexOf(" ") !== -1){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        //sees if it already exists
+        for(var i=0; i<curChannels.length; i+=1){//start 1st for
+          curChannels[i] = curChannels[i].toString();
+          if(curChannels[i].toString() === oldChannelName){//start 4th if
+            throw new Error('Form filled out wrong');
+          }//end 4th if
+          //doesnt exist adds to array
+          else if(i === curChannels.length-1){//start 4th if
+            curChannels.push(newChannelName);
+            i = curChannels.length+1;
+          }//end 4th if
+        }//end 1st for
+      }//end 3rd if
+      
+      //removing
+      else if(newChannelName === "N/A"){//start 3rd if/else
+        //sees if it already exists
+        for(var i=curChannels.length-1; i>=0; i-=1){//start 1st for
+          curChannels[i] = curChannels[i].toString();
+          if(curChannels[i].toString() === oldChannelName){//start 4th if
+            curChannels.splice(i);
+            i = -1;
+          }//end 4th if
+          //doesnt exist adds to array
+          else if(i === 0){//start 4th if
+            throw new Error('Form filled out wrong');
+          }//end 4th if
+        }//end 1st for
+      }//end 3rd if/else
+      
+      //renaming
+      else if(oldChannelName !== "N/A"  &&  newChannelName !== "N/A"){//start 3rd if/else
+        //channel name has a space(s)
+        if(newChannelName.indexOf(" ") !== -1){//start 4th if
+          throw new Error('Form filled out wrong');
+        }//end 4th if
+        
+        //sees if it already exists
+        for(var i=0; i<curChannels.length; i+=1){//start 1st for
+          curChannels[i] = curChannels[i].toString();
+          if(curChannels[i].toString() === newChannelName){//start 4th if
+            throw new Error('Form filled out wrong');
+          }//end 4th if
+        }//end 1st for
+        
+        for(var i=0; i<curChannels.length; i+=1){//start 1st for
+          if(curChannels[i].toString() === oldChannelName){//start 4th if
+            curChannels[i] = newChannelName;
+            i = curChannels.length+1;
+          }//end 4th if
+          //doesnt exist adds to array
+          else if(i === curChannels.length-1){//start 4th if
+            throw new Error('Form filled out wrong');
+          }//end 4th if
+        }//end 1st for
+      }//end 3rd if/else
+      
+    }//end 2nd if
+    
+    
+    if(operation === "Group Type Name Change"){//start 2nd if
+      details = "Group Type Name Change ~ Old Group Type Name: " + oldGroupTypeName + " ~ New Group Type Name: " + newGroupTypeName;
+      //oldGroupTypeName
+      //newGroupTypeName
+      //type names match
+      if(oldGroupTypeName === newGroupTypeName){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //type names are N/A
+      if(newGroupTypeName === "N/A"){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      //type name exists
+      if(typeExists){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+    }//end 2nd if
+    
+    
+    if(operation === "Code Inclusion Change"){//start 2nd if
+      
+    }//end 2nd if
+    
+    Utilities.sleep(20000);
+    
+    //gets current data
+    //Phoenix Member Data Current Members Sheet
+    var curVals = FunctionContainer.getpmdcmscv();
+    var pmdcms = curVals[0];
+    var pmdcmscv = curVals[1];
+    curVals = undefined;
+    
+    // Data Lists Lists Sheet
+    curVals = FunctionContainer.getdllscv();
+    var dlls = curVals[0];
+    var dllscv = curVals[1];
+    curVals = undefined;
+    
+    //updates forms
+    FunctionContainer.updateAllFormLists2(dllscv, pmdcmscv);
+    
+  }//end 1st if
+  
+  
+  //if code is wrong
+  else{
+    throw new Error('Form filled out wrong');
+  }//end 1st else
+  
+  
+}//end main

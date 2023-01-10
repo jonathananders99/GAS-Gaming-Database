@@ -1,0 +1,238 @@
+function updateControlFormResponseUpdate2(){
+  errorCheck("updateControlFormResponseUpdate2","UpdateControlFormResponseUpdate2");
+}//end updateControlFormResponseUpdate1
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  //Update Control Form Response Sheet
+  var ucfrs = FunctionContainer.tripleTryOpenSheet("","UCF Responses");
+  var ucfrslri = FunctionContainer.tripleTryGetLastRow(ucfrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  //vals
+  var ucfrscv = FunctionContainer.tripleTryGetValues(ucfrs, ucfrslri, 1, 1, 15)[0];
+//  FunctionContainer.positionsInsideArray(ucfrscv);
+  /*
+    [Timestamp[0], Email Address[1], Code[2], Operation[3], 
+    Group(s) in Question[4], Form(s) in Question[5], 
+    Available Position Codes[6], Which Test[7], Test[8], 
+    [9], [10], [11], [12], [13], [14]]
+  */
+  
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcms = curVals[0];
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(ucfrscv[1].toString().trim(),pmdcmscv);
+  
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    throw new Error('Form filled out wrong');
+  }//end 2nd if
+
+  
+  //trims the necessary values
+  var formTrimList = [1, 2, 3, 4, 5, 6, 7, 8];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    ucfrscv[formTrimList[i]] = ucfrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(ucfrscv[formTrimList[i]].indexOf("^")!==-1){//end 1st if
+      throw new Error('Form filled out wrong');
+    }//end 1st if
+    
+  }//end 1st for
+  
+  
+  
+  
+  
+  
+  ///*** DATA GATHERING ***///
+  
+  var operation = ucfrscv[3];
+  
+  var errorInfo = "\n\n • Form Operation:** " + operation + "**";
+
+  var dateOfEntry = FunctionContainer.dateReplace(ucfrscv[0].toString());
+  
+  var details = operation;
+  
+  
+  if(operation === "Member Profile Update"  ||  operation === "Group Profile Update"){//start 1st if
+    var groupsInQuestion = ucfrscv[4];
+    var groupsInQuestionArray = FunctionContainer.splitEmUp(groupsInQuestion);
+    details = details + " ~ Group(s) in Question: " + groupsInQuestion;
+    var errorInfo = errorInfo + "\n\n • Group(s) in Question:** " + groupsInQuestion + "**";
+    var groupNumList = [];
+    for(var i=FunctionContainer.splitNumberInto2(groupsInQuestionArray.length)[0]; i<groupsInQuestionArray.length; i+=1){//start 1st for
+      for(var x=0; x<49; x+=1){//start 2nd for
+        if(dllscv[40][x].toString() === groupsInQuestionArray[i].toString()){//start 2nd if
+          groupNumList.push(x);
+          x = 50;
+        }//end 2nd if
+      }//end 2nd for
+    }//end 1st for
+  }//end 1st if
+  
+  else if(operation === "Turn **Off** Form Responses"  
+          ||  operation === "Turn **On** Form Responses"  
+          ||  operation === "Rerun Form Responses"  
+          ||  operation === "Form Lists Update"){//start 1st if/else
+    var formsInQuestion = ucfrscv[5];
+    var formsInQuestionArray = FunctionContainer.splitEmUp(formsInQuestion);
+    details = details + " ~ Form(s) in Question: " + formsInQuestion;
+    var errorInfo = errorInfo + "\n\n • Form(s) in Question:** " + formsInQuestion + "**";
+  }//end 1st if/else
+  
+  else if(operation === "Testing"){//start 1st if/else
+    var testOperation = ucfrscv[7];
+    var testInput = ucfrscv[8];
+    details = details + " ~ Test Operation: " + testOperation + " ~ Test Input: " + testInput;
+    var errorInfo = errorInfo + "**\n\n • Test Operation:** " + testOperation
+      + "\n\n • Test Input:** " + testInput + "**";
+  }//end 1st if/else
+  
+  
+  
+  //** CHECKS AND DATA CHANGING **//
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "ucf", ucfrscv[2].toString())){//start 1st if
+    
+    //Member Profile Update
+    if(operation === "Member Profile Update"){//start 2nd if
+      //runs member updates
+      MemberProfileUpdate.memberProfileUpdate(groupNumList);
+    }//end 2nd if
+    
+    
+    //Group Profile Update
+    else if(operation === "Group Profile Update"){//start 2nd if/else
+      //runs group updates
+      GroupProfileUpdate.groupProfileUpdate(groupNumList);
+    }//end 2nd if/else
+    
+    
+    //Discord Schedule
+    else if(operation === "Discord Schedule"){//start 2nd if/else
+      //nothing
+    }//end 2nd if/else
+    
+    
+    //Form Lists Update
+    else if(operation === "Form Lists Update"){//start 2nd if/else
+      //nothing
+    }//end 2nd if/else
+    
+    
+    //Member Hub
+    else if(operation === "Member Hub"){//start 2nd if/else
+      //nothing
+    }//end 2nd if/else
+    
+    
+    //Miscellaneous Daily Updates
+    else if(operation === "Miscellaneous Daily Updates"){//start 2nd if/else
+      //nothing
+    }//end 2nd if/else
+    
+    
+    //Miscellaneous Daily Checks
+    else if(operation === "Miscellaneous Daily Checks"){//start 2nd if/else
+      //nothing
+    }//end 2nd if/else
+    
+    
+    //Turn **Off** Form Responses
+    else if(operation === "Turn **Off** Form Responses"){//start 2nd if/else
+      //nothing
+    }//end 2nd if/else
+    
+    
+    //Turn **On** Form Responses
+    else if(operation === "Turn **On** Form Responses"){//start 2nd if/else
+      //nothing
+    }//end 2nd if/else
+    
+    
+    //Testing
+    else if(operation === "Testing"){//start 2nd if/else
+      if(testInput === ""){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+    }//end 2nd if/else
+    
+    
+    //Rerun Form Responses
+    else if(operation === "Rerun Form Responses"){//start 2nd if/else
+      //checks for illegal input
+      if(formsInQuestion.toString() === "All Forms"  
+         ||  formsInQuestion.toString() === "All Minus Expansion Form and Update Control Form"
+         ||  formsInQuestionArray.length>1){//start 3rd if
+        throw new Error('Form filled out wrong');
+      }//end 3rd if
+      
+      else if(formsInQuestion.toString() === "New Member Form"){//start 3rd if/else
+        //New Member Form
+        NewMemberFormResponseUpdate2.main();
+      }//end 3rd if/else
+      
+      else if(formsInQuestion.toString() === "Member Update Form"){//start 3rd if/else
+        //Member Update Form
+        MemberUpdateFormResponseUpdate2.main();
+      }//end 3rd if/else
+      
+      else if(formsInQuestion.toString() === "Expansion Form"){//start 3rd if/else
+        //Expansion Form
+        throw new Error('Form filled out wrong');
+      }//end 3rd if/else
+        
+      else if(formsInQuestion.toString() === "Fixer Form"){//start 3rd if/else
+        //Fixer Form
+        throw new Error('Form filled out wrong');
+      }//end 3rd if/else
+      
+      else if(formsInQuestion.toString() === "Update Control Form"){//start 3rd if/else
+        throw new Error('Form filled out wrong');
+      }//end 3rd if/else
+      
+    }//end 2nd if/else
+    
+    
+    //pastes vals into miscellaneous Form Hub Entries Sheet
+    FunctionContainer.miscFormHubEntry("Update Control Form", FunctionContainer.dateReplace(ucfrscv[0].toString()), 
+      FunctionContainer.timeRetrieval12Cycle(ucfrscv[0]), details, perpitraitor, dllscv);
+    
+  }//end 1st if
+  
+  
+  //if code is wrong
+  else{
+    throw new Error('Form filled out wrong');
+  }//end 1st else
+  
+}//end main

@@ -1,0 +1,103 @@
+function embeddedMessageFormResponseUpdate(){
+  errorCheck("embeddedMessageFormResponseUpdate","EmbeddedMessageFormResponseUpdate");
+}//end embeddedMessageFormResponseUpdate
+
+
+function errorCheck(functionName,projectName){
+  try{main();}//end 1st try
+  catch(error){console.log(error);
+    FunctionContainer.discErrorReport(error,functionName,projectName)}//end 1st catch
+}//end errorCheck
+
+
+function main(){
+  
+  //embedded message Form Response Sheet
+  var emfrs = FunctionContainer.tripleTryOpenSheet("","EM Responses");
+  var emfrslri = FunctionContainer.tripleTryGetLastRow(emfrs);
+  
+  try{var lock = LockService.getScriptLock();lock.waitLock(50000);}catch(lockError){console.log(lockError)};
+  
+  //vals
+  var emfrscv = FunctionContainer.tripleTryGetValues(emfrs,emfrslri,1,1,6)[0];
+//  FunctionContainer.positionsInsideArray(emfrscv);
+  //[Timestamp[0], Email Address[1], Code[2], Channel[3], Title[4], Message[5]]
+  
+  
+  //Phoenix Member Data Current Members Sheet
+  var curVals = FunctionContainer.getpmdcmscv();
+  var pmdcmscv = curVals[1];
+  curVals = undefined;
+  
+  
+  // Data Lists Lists Sheet
+  curVals = FunctionContainer.getdllscv();
+  var dlls = curVals[0];
+  var dllscv = curVals[1];
+  curVals = undefined;
+  
+  
+  //gets perp
+  var perpitraitor = FunctionContainer.perpFinder(emfrscv[1].toString().trim(),pmdcmscv);
+  
+  //email check
+  //sends error if perp is ???
+  if(perpitraitor==="???"){//start 2nd if
+    FunctionContainer.indFormErrorReport(perpitraitor, "embedded message form", "inputed an email not in the database", emfrslri, dllscv[88][7].toString());
+  }//end 2nd if
+
+  
+  //trims the necessary values
+  var formTrimList = [1,2,4,5];
+  for(var i=0; i<formTrimList.length; i+=1){//start 1st for
+    
+    emfrscv[formTrimList[i]] = emfrscv[formTrimList[i]].toString().trim();
+    
+    //if there is any special characters that cannot be used it sends an error message
+    if(emfrscv[formTrimList[i]].indexOf("^")!==-1){//end 1st if
+      FunctionContainer.indFormErrorReport(perpitraitor, "embedded message form", "included special character ^ (perp will not recieve pm with details because ^ interferes with the bot commands)", emfrslri, dllscv[88][7].toString());
+    }//end 1st if
+    
+  }//end 1st for
+  
+
+  //gets info for error if perp gets wrong code
+  var errorInfo = "\n\n • Channel: **" + emfrscv[3].toString() + "**\n\n • Title: **" + emfrscv[4].toString() 
+    + "**\n\n • Message: **" + emfrscv[5].toString() + "**";
+    
+  //gets info for misc form hub
+  var details = "Channel: " + emfrscv[3].toString() + "\nTitle: " + emfrscv[4].toString() 
+    + "\nMessage: " + emfrscv[5].toString();
+  
+  
+  //code check
+  if(FunctionContainer.formCodeCheck(dllscv, "emf", emfrscv[2].toString())){//start 1st if
+    
+    //gets author disc nickname
+    var author = FunctionContainer.getDiscordNickname(perpitraitor,dllscv,pmdcmscv);
+    
+    
+    //makes message
+    var message = "s$e$^"+emfrscv[4].toString()+"^"+emfrscv[5].toString()+"^"+author+"^^^Phoenix Era Announcements^"+emfrscv[3].toString();
+    //s$e$^Title^Description^Author^Author Avatar^Image^Footer^Channel Name
+    
+    
+    //sends message
+    FunctionContainer.discordEmbeddedMessageFormSend(message);
+    
+    //posts data to misc form hub
+    FunctionContainer.miscFormHubEntry("Embedded Message Form", FunctionContainer.dateReplace(emfrscv[0].toString()), 
+      FunctionContainer.timeRetrieval12Cycle(emfrscv[0]), details, perpitraitor, dllscv);
+    
+    
+  }//end 1st if
+  
+  
+  //if code is wrong
+  else{
+    FunctionContainer.discordErrorPms(pmdcmscv, perpitraitor, errorInfo, "Embedded Message Form Errors", dllscv);
+    FunctionContainer.indFormErrorReport(perpitraitor, "embedded message form", "inputed an incorrect code", emfrslri, dllscv[88][7].toString());
+  }//end 1st else
+  
+  
+}//end main
